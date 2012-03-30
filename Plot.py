@@ -33,6 +33,7 @@ class Plot(hf.module.ModuleBase):
         else:
             data.update({
                 "plot_file": '',
+                "status": 0.0,
                 "error_string": "Plot was not downloaded :"+self.plot.error,
                 "source_url": self.plot.getSourceUrl(),
             })
