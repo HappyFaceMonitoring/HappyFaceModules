@@ -21,7 +21,7 @@ class Plot(hf.module.ModuleBase):
             except KeyError, e:
                 pass
             
-        self.plot = hf.downloadService.DownloadFile(url)
+        self.plot = hf.downloadService.addDownload(url)
         
     def extractData(self):
         data = {
