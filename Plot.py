@@ -28,11 +28,11 @@ class Plot(hf.module.ModuleBase):
             "source_url": self.plot.getSourceUrl()
         }
         if self.plot.isDownloaded():
-            self.plot.copyToArchive(self.instance_name+".jpg")
-            data["plot_file"] = self.plot.getFileUrl()
+            self.plot.copyToArchive(self.instance_name+".png")
+            data["plot_file"] = self.plot
         else:
             data.update({
-                "plot_file": '',
+                "plot_file": None,
                 "status": 0.0,
                 "error_string": "Plot was not downloaded :"+self.plot.error,
                 "source_url": self.plot.getSourceUrl(),
