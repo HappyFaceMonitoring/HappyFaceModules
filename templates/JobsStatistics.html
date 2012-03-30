@@ -44,7 +44,7 @@
   <tr class="ok">
  % elif group['status'] >= 0.5:
   <tr class="warning">
- % elif group['status'] >= 0.5:
+ % else:
   <tr class="critical">
  % endif
    <td style="padding-left: ${group['indentation']*15}px;"><input type="checkbox" id="${module.instance_name}_constraint_' . $i . '" value="${group['group']}" checked="checked" />${group['group']}</td>
@@ -80,7 +80,7 @@
  <tr class="ok">
  % elif info['status'] >= 0.5:
  <tr class="warning">
- % elif info['status'] >= 0.5:
+ % else:
  <tr class="critical">
  % endif
   <td>${info['user'] | h}</td>
