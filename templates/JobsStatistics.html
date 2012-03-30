@@ -61,7 +61,7 @@
 <input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
 <div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
 % if len(dataset['details_group']) > 0:
- <p>Note: This table shows users of the group <strong>${dataset['details_group']}</strong> only</p>
+ <p>Note: This table shows users of the group <strong>${dataset['details_group'] | h}</strong> only</p>
 % endif
  <table class="TableDetails">
   <tr class="TableHeader">
@@ -83,7 +83,7 @@
  % elif info['status'] >= 0.5:
  <tr class="critical">
  % endif
-  <td>${info['user']}</td>
+  <td>${info['user'] | h}</td>
   <td>${info['total']}</td>
   <td>${info['running']}</td>
   <td>${info['waiting']}</td>
