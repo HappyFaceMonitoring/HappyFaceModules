@@ -30,7 +30,7 @@ class Plot(hf.module.ModuleBase):
         if self.plot.isDownloaded():
             self.plot.copyToArchive(self.instance_name+".jpg")
             self.status = 1.0
-            return {"plot_file": self.plot.getFilename()}
+            return {"plot_file": self.plot.getFilename(), "source_url": self.plot.getSourceUrl()}
         else:
             self.status = 0.0
             return {"plot_file": ""}
