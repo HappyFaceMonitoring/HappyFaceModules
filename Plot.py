@@ -3,10 +3,6 @@ import hf, time
 from sqlalchemy import *
 
 class Plot(hf.module.ModuleBase):
-    def __init__(self, *pargs, **kwargs):
-        hf.module.ModuleBase.__init__(self, *pargs, **kwargs)
-        self.module_table = plot_table
-    
     def prepareAcquisition(self, run):
         url = self.config["plot_url"]
         use_start_end_time = False
@@ -35,7 +31,7 @@ class Plot(hf.module.ModuleBase):
             self.status = 0.0
             return {"plot_file": ""}
 
-plot_table = hf.module.generateModuleTable("plot", [
+plot_table = hf.module.generateModuleTable(Plot, "plot", [
         Column("plot_file", TEXT)
         ])
 
