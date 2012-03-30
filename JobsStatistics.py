@@ -214,6 +214,11 @@ class JobsStatistics(hf.module.ModuleBase):
             appendChildren('')
         self.logger.debug(group_tree_list)
         data['group_list'] = group_tree_list
+        
+        # get the detailed information from database
+        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        data['info_list'] = map(lambda x: dict(x), info_list)
+        
         return data
 
 module_table = hf.module.generateModuleTable(JobsStatistics, "jobs_statistics", [
