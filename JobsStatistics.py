@@ -176,10 +176,44 @@ class JobsStatistics(hf.module.ModuleBase):
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        data['group_list'] = groups_table.select().where(groups_table.c.parent_id==self.dataset['id']).execute().fetchall()
-        self.logger.debug(repr(data['group_list']))
-        if data['group_list'] is None:
-            data['group_list'] = []
+        
+        group_list = groups_table.select().where(groups_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        if group_list is None:
+            group_list = []
+            
+        # convert RowProxy to dicts
+        group_list = map(lambda x: dict(x), group_list)
+        
+        group_parents = dict((group['group'], group['parentgroup']) for group in group_list)
+        group_children = {}
+        for group in group_list:
+            if group['parentgroup'] not in group_children:
+                group_children[group['parentgroup']] = [group]
+            else:
+                group_children[group['parentgroup']].append(group)
+        
+        # calculate the level of indentation (num. of parents) for each group
+        for idx,group in enumerate(group_list):
+            num_parents = 0
+            parent = group['parentgroup']
+            while len(parent) > 0:
+                num_parents += 1
+                parent = group_parents[parent]
+            group_list[idx]['indentation'] = num_parents
+        self.logger.debug(group_list)
+        
+        # build the list again with the correct tree-like ordering
+        group_tree_list = []
+        def appendChildren(group):
+            if group not in group_children:
+                return
+            for child in group_children[group]:
+                group_tree_list.append(child)
+                appendChildren(child['group'])
+        if '' in group_children:
+            appendChildren('')
+        self.logger.debug(group_tree_list)
+        data['group_list'] = group_tree_list
         return data
 
 module_table = hf.module.generateModuleTable(JobsStatistics, "jobs_statistics", [

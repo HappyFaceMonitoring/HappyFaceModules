@@ -40,8 +40,14 @@
    <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_both_button()">Plot Selected</button></td>
   </tr>
 % for group in group_list:
-  <tr class="' . $status_class . '">
-   <td style="padding-left: ' . ($indentation*15) . 'px;"><input type="checkbox" id=\"""" + self.__module__ + """_constraint_' . $i . '" value="${group['group']}" checked="checked" />${group['group']}</td>
+ % if group['status'] >= 1.0:
+  <tr class="ok">
+ % elif group['status'] >= 0.5:
+  <tr class="warning">
+ % elif group['status'] >= 0.5:
+  <tr class="critical">
+ % endif
+   <td style="padding-left: ${group['indentation']*15}px;"><input type="checkbox" id=\"""" + self.__module__ + """_constraint_' . $i . '" value="${group['group']}" checked="checked" />${group['group']}</td>
    <td>${group['total']}</td>
    <td>${group['running']}</td>
    <td>${group['ratio10']}</td>
