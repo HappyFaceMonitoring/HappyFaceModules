@@ -1,0 +1,85 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form method="get" action="plot_generator.php" onsubmit="javascript:submitFormToWindow(this);">
+ <table style="font: bold 0.7em sans-serif; width:800px; background-color: #ddd; border: 1px #999 solid;">
+  <tr>
+   <td>Start:</td>
+   <td>
+    <input name="date0" type="text" size="10" style="text-align:center;" value="' . strftime("%Y-%m-%d", strtotime("$date_string $time_string - 48*60*60) . '" />
+    <input name="time0" type="text" size="5" style="text-align:center;" value="' . strftime("%H:%M", strtotime("$date_string $time_string - 48*60*60) . '" />
+   </td>
+   <td>End:</td>
+   <td>
+    <input name="date1" type="text" size="10" style="text-align:center;" value="' . $date_string . '" />
+    <input name="time1" type="text" size="5" style="text-align:center;" value="' . $time_string . '" />
+   </td>
+   <td align="right">
+    <input type="checkbox" name="renormalize" value="1" style="vertical-align: middle; margin: 0px;" />&nbsp;Show Trend plot
+    <input type="hidden" name="module" value="' + self.__module__ + '" />
+    <input type="hidden" name="subtable" value="' + self.__module__ + '_table_groups" />
+    <input type="hidden" id="' + self.__module__ + '_constraint" name="constraint" value="" />
+    <input type="hidden" id="' + self.__module__ + '_variables" name="variables" value="" />
+    <input type="hidden" id="' + self.__module__ + '_squash" name="squash" value="1" />
+   </td>
+  </tr>
+ </table>
+ <table class="TableData">
+  <tr class="TableHeader">
+   <td>Group</td>
+   <td><input type="checkbox" id=\"""" + self.__module__ + """_variable_0" value="total" checked="checked" />Total jobs</td>
+   <td><input type="checkbox" id=\"""" + self.__module__ + """_variable_1" value="running" checked="checked" />Running jobs</td>
+   <td><input type="checkbox" id=\"""" + self.__module__ + """_variable_2" value="ratio10" checked="checked" />Jobs with wallratio &lt; 10%</td>
+   <td>Plot jobs</td>
+  </tr>
+  <tr class="TableHeader">
+   <td><input type="button" value="Toggle Selection" onfocus="this.blur()" onclick="' + self.__module__ + '_toggle_button()" /></td>
+   <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_col_button(\\\'total\\\">Plot Col</button></td>
+   <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_col_button(\\\'running\\\">Plot Col</button></td>
+   <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_col_button(\\\'ratio10\\\">Plot Col</button></td>
+   <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_both_button()">Plot Selected</button></td>
+  </tr>
+% for group in group_list:
+  <tr class="' . $status_class . '">
+   <td style="padding-left: ' . ($indentation*15) . 'px;"><input type="checkbox" id=\"""" + self.__module__ + """_constraint_' . $i . '" value="${group['group']}" checked="checked" />${group['group']}</td>
+   <td>${group['total']}</td>
+   <td>${group['running']}</td>
+   <td>${group['ratio10']}</td>
+   <td><button onfocus="this.blur()" onclick=\"""" + self.__module__ + """_row_button(\\\'' . $info['group'] . '\\\">Plot Row</button></td>
+  </tr>
+% endfor
+ </table>
+</form>
+<br />
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+ ' . (($data['group'] != ' ? ('<p>Note: This table shows users of the group <strong>' . htmlentities($data['group']) . '</strong> only</p> : (') . '
+ <table class="TableDetails">
+  <tr class="TableHeader">
+   <td>User</td>
+   <td>Total</td>
+   <td>Running</td>
+   <td>Waiting</td>
+   <td>Queued</td>
+   <td>Eff. > 80%</td>
+   <td>80% > Eff. > 30%</td>
+   <td>30% > Eff. > 10%</td>
+   <td>10% > Eff.</td>
+  </tr>
+
+ <tr class="' . $status_class . '">
+  <td>' . htmlentities($info['user']) . '</td>
+  <td>' . $info['total'] . '</td>
+  <td>' . $info['running'] . '</td>
+  <td>' . $info['waiting'] . '</td>
+  <td>' . $info['pending'] . '</td>
+  <td>' . $info['ratio100'] . '</td>
+  <td>' . $info['ratio80'] . '</td>
+  <td>' . $info['ratio30'] . '</td>
+  <td>' . $info['ratio10'] . '</td>
+ </tr>
+ </table>
+</div>
+<br />
+</%def>
