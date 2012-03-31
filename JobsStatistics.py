@@ -36,6 +36,7 @@ class JobsStatistics(hf.module.ModuleBase):
         
         if self.qstat_xml.errorOccured() or not self.qstat_xml.isDownloaded():
             data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.qstat_xml.error
+            data['status'] = -1
             return data
         
         source_tree = etree.parse(open(self.qstat_xml.getTmpPath()))
