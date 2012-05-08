@@ -1,0 +1,44 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+<tr>
+<td class="UschiTableHeader">
+<table class="UschiSubTable">
+<tr>
+<td class="UschiSubTableHeaderLeft">
+Last USCHI execution (every ${module.dataset["frequency"]} minutes):
+</td>
+<td class="UschiSubTableHeaderRight">
+${module.dataset["uschi_timestamp"]}
+</td>
+</tr>
+</table>
+</td>
+<th rowspan="3">error code: ${module.dataset["result"]}</th>
+</tr>
+<tr>
+<td class="UschiTableHeader">
+<table class="UschiSubTable">
+<tr>
+<td class="UschiSubTableHeaderLeft">
+Last Module execution (every ${module.dataset["frequency_module"]} minutes):
+</td>
+<td class="UschiSubTableHeaderRight">
+${module.dataset["uschi_timestamp_module"]}
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="UschiTableInfo">${module.dataset["about"]}</td>
+</tr>
+</table>
+<br/>
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+${module.dataset["log"]}
+</div>
+</%def>
