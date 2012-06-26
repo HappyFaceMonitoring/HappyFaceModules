@@ -1,10 +1,9 @@
-
 import hf, lxml, logging, datetime
 from sqlalchemy import *
 from lxml import etree
 
 class JobsStatistics(hf.module.ModuleBase):
-    
+
     def prepareAcquisition(self):
         # read configuration
         try:
@@ -19,29 +18,30 @@ class JobsStatistics(hf.module.ModuleBase):
             self.rating_groups = self.config["rating_groups"].split(',')
         except KeyError, e:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
-        
+
         if len(self.groups) == 0 or self.groups[0] == '':
             self.groups = None
         if len(self.rating_groups) == 0 or self.rating_groups[0] == '':
             self.rating_groups = None
-        
+
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
-        
+
         self.groups_db_value_list = []
         self.details_db_value_list = []
-    
+
+
     def extractData(self):
         data = {'result_timestamp': 0, 'details_group': ''}
-        
+
         if self.qstat_xml.errorOccured() or not self.qstat_xml.isDownloaded():
             data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.qstat_xml.error
             data['status'] = -1
             return data
-        
+
         source_tree = etree.parse(open(self.qstat_xml.getTmpPath()))
         root = source_tree.getroot()
-        
+
         # Check input file timestamp
         date = 0
         for element in root:
@@ -72,6 +72,7 @@ class JobsStatistics(hf.module.ModuleBase):
                             continue
 
                         total = 0
+                        ncpus = 0
                         running = 0
                         pending = 0
                         waiting = 0
@@ -80,6 +81,8 @@ class JobsStatistics(hf.module.ModuleBase):
                             try:
                                 if subchild.tag == 'jobs' and subchild.text is not None:
                                     total = int(subchild.text.strip())
+                                if subchild.tag == 'ncpus' and subchild.text is not None:
+                                    ncpus = int(subchild.text.strip())
                                 if subchild.tag == 'running' and subchild.text is not None:
                                     running = int(subchild.text.strip())
                                 if subchild.tag == 'pending' and subchild.text is not None:
@@ -107,12 +110,13 @@ class JobsStatistics(hf.module.ModuleBase):
                         groups_db_values["parentgroup"] = parent
                         groups_db_values["total"] = total
                         groups_db_values["running"] = running
+                        groups_db_values["ncpus"] = ncpus
                         groups_db_values["pending"] = pending
                         groups_db_values["waiting"] = waiting
                         groups_db_values["ratio10"] = ratio10
                         groups_db_values["status"] = status
                         self.groups_db_value_list.append(groups_db_values)
-                        
+
         users = {}
         for element in root:
             if element.tag == "jobs":
@@ -135,16 +139,20 @@ class JobsStatistics(hf.module.ModuleBase):
                                     state = subchild.text.strip()
                                 if subchild.tag == 'cpueff' and subchild.text is not None:
                                     cpueff = float(subchild.text.strip())
+                                if subchild.tag == 'ncpus' and subchild.text is not None:
+                                    ncpus = int(subchild.text.strip())
                             except ValueError:
                                 # in case conversion fails
                                 pass
 
                         if user == '' or state == '': continue
                         if user not in users:
-                                users[user] = { 'total': 0, 'running': 0, 'pending': 0, 'waiting': 0, 'ratio100': 0, 'ratio80': 0, 'ratio30': 0, 'ratio10': 0 };
+                                users[user] = { 'total': 0, 'ncpus': 0, 'running': 0, 'pending': 0, 'waiting': 0, 'ratio100': 0, 'ratio80': 0, 'ratio30': 0, 'ratio10': 0 };
 
                         users[user]['total'] += 1
-                        if state == 'running': users[user]['running'] += 1
+                        if state == 'running':
+                        	users[user]['running'] += 1
+                        	users[user]['ncpus'] += ncpus
                         elif state == 'pending': users[user]['pending'] += 1
                         elif state == 'waiting': users[user]['waiting'] += 1
 
@@ -168,23 +176,25 @@ class JobsStatistics(hf.module.ModuleBase):
                 status = 0.0
             users[user]['status'] = status
         self.details_db_value_list = users.values()
-        
+
         return data
-        
+
+
     def fillSubtables(self, parent_id):
         groups_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.groups_db_value_list])
         details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        
+
         group_list = groups_table.select().where(groups_table.c.parent_id==self.dataset['id']).execute().fetchall()
         if group_list is None:
             group_list = []
-            
+
         # convert RowProxy to dicts
         group_list = map(lambda x: dict(x), group_list)
-        
+
         group_parents = dict((group['group'], group['parentgroup']) for group in group_list)
         group_children = {}
         for group in group_list:
@@ -192,7 +202,7 @@ class JobsStatistics(hf.module.ModuleBase):
                 group_children[group['parentgroup']] = [group]
             else:
                 group_children[group['parentgroup']].append(group)
-        
+
         # calculate the level of indentation (num. of parents) for each group
         for idx,group in enumerate(group_list):
             num_parents = 0
@@ -202,7 +212,7 @@ class JobsStatistics(hf.module.ModuleBase):
                 parent = group_parents[parent]
             group_list[idx]['indentation'] = num_parents
         self.logger.debug(group_list)
-        
+
         # build the list again with the correct tree-like ordering
         group_tree_list = []
         def appendChildren(group):
@@ -215,12 +225,13 @@ class JobsStatistics(hf.module.ModuleBase):
             appendChildren('')
         self.logger.debug(group_tree_list)
         data['group_list'] = group_tree_list
-        
+
         # get the detailed information from database
         info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
         data['info_list'] = map(lambda x: dict(x), info_list)
-        
+
         return data
+
 
 module_table = hf.module.generateModuleTable(JobsStatistics, "jobs_statistics", [
     Column('details_group', TEXT),
@@ -232,6 +243,7 @@ groups_table = hf.module.generateModuleSubtable("groups", module_table, [
     Column('parentgroup', TEXT),
     Column('total', INT),
     Column('running', INT),
+    Column('ncpus', INT),
     Column('waiting', INT),
     Column('pending', INT),
     Column('ratio10', INT),
@@ -242,6 +254,7 @@ details_table = hf.module.generateModuleSubtable("details", module_table, [
     Column('user', TEXT),
     Column('total', INT),
     Column('running', INT),
+    Column('ncpus', INT),
     Column('pending', INT),
     Column('waiting', INT),
     Column('ratio100', INT),
