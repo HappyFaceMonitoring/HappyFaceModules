@@ -6,13 +6,17 @@
   <tr>
    <td>Start:</td>
    <td>
-    <input name="date0" type="text" size="10" style="text-align:center;" value="' . strftime("%Y-%m-%d", strtotime("$date_string $time_string - 48*60*60) . '" />
-    <input name="time0" type="text" size="5" style="text-align:center;" value="' . strftime("%H:%M", strtotime("$date_string $time_string - 48*60*60) . '" />
+    <%
+    import datetime
+    backintime = run['time']-datetime.timedelta(days=2)
+    %>
+    <input name="date0" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+    <input name="time0" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
    </td>
    <td>End:</td>
    <td>
-    <input name="date1" type="text" size="10" style="text-align:center;" value="' . $date_string . '" />
-    <input name="time1" type="text" size="5" style="text-align:center;" value="' . $time_string . '" />
+    <input name="date1" type="text" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+    <input name="time1" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
    </td>
    <td align="right">
     <input type="checkbox" name="renormalize" value="1" style="vertical-align: middle; margin: 0px;" />&nbsp;Show Trend plot
