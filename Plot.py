@@ -2,6 +2,13 @@
 import hf, time
 from sqlalchemy import *
 
+try:
+    import imghdr
+except ImportError:
+    self.logger.warning("imghdr module not found, Plot module will not be able \
+to check if downloaded file is actuallly an image.")
+    imghdr = None
+
 class Plot(hf.module.ModuleBase):
     def prepareAcquisition(self):
         
@@ -28,8 +35,20 @@ class Plot(hf.module.ModuleBase):
             "source_url": self.plot.getSourceUrl()
         }
         if self.plot.isDownloaded():
-            self.plot.copyToArchive(self.instance_name+".png")
-            data["plot_file"] = self.plot
+            if imghdr:
+                extension = imghdr.what(self.plot.getTmpPath())
+            else:
+                extension = 'png'
+            if extension is not None:
+                self.plot.copyToArchive(self.instance_name + "." + extension)
+                data["plot_file"] = self.plot
+            else:
+                data.update({
+                "plot_file": None,
+                "status": -1.0,
+                "error_string": "Downloaded file was not an image, probably source server failed to deliver file.",
+                "source_url": self.plot.getSourceUrl(),
+            })
         else:
             data.update({
                 "plot_file": None,
