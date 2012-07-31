@@ -23,6 +23,7 @@ class Uschi(hf.module.ModuleBase):
                 'uschi_timestamp_module': '',
                 'frequency': -1,
                 'frequency_module': -1,
+                'status': -1,
                 'result': -1,
                 'log': '',
                 'about': ''}
@@ -77,6 +78,7 @@ class Uschi(hf.module.ModuleBase):
         data['result'] = self.result
         data['log'] = self.log
         data['about'] = self.about
+        data['status'] = self.status
 
         return data
 
@@ -92,6 +94,7 @@ module_table = hf.module.generateModuleTable(Uschi, "uschi", [
     Column('result', INT),
     Column('log', TEXT),
     Column('about', TEXT),
+    Column('status', FLOAT),
 ])
 
 hf.module.addModuleClass(Uschi)
