@@ -19,7 +19,8 @@ class Uschi(hf.module.ModuleBase):
         self.uschi_xml = hf.downloadService.addDownload(self.config['uschi_xml'])
                 
     def extractData(self):
-        data = {'uschi_timestamp': '',
+        data = {'source_url': self.uschi_xml.getSourceUrl(),
+                'uschi_timestamp': '',
                 'uschi_timestamp_module': '',
                 'frequency': -1,
                 'frequency_module': -1,
@@ -44,9 +45,13 @@ class Uschi(hf.module.ModuleBase):
         self.log = ""
         self.about = ""
 
+        self.test_found = False
+
         # get the test specific information (result, log, about)
         for sec in root.findall("tests/test"):
             if sec.get('name') == self.testname_string:
+
+                self.test_found = True
 
                 # test logic
                 self.result = int(sec.get('result'))
@@ -69,6 +74,11 @@ class Uschi(hf.module.ModuleBase):
                 for info in about_data:
                     for line in info.text.splitlines():
                         self.about += line
+        
+        if not self.test_found:
+            data['error_string'] = 'Test was not found in data source.'
+            data['status'] = -1
+            return data
 
         # definition fo the database table values
         data['uschi_timestamp'] = self.uschi_timestamp
@@ -81,9 +91,6 @@ class Uschi(hf.module.ModuleBase):
         data['status'] = self.status
 
         return data
-
-    def getTemplateData(self):
-        return {"dataset" : self.dataset, "run" : self.run}
 
 
 module_table = hf.module.generateModuleTable(Uschi, "uschi", [
