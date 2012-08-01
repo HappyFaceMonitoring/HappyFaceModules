@@ -30,7 +30,7 @@ class Uschi(hf.module.ModuleBase):
                 'about': ''}
 
         if self.uschi_xml.errorOccured() or not self.uschi_xml.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.qstat_xml.error
+            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.uschi_xml.error
             data['status'] = -1
             return data
 
@@ -101,7 +101,6 @@ module_table = hf.module.generateModuleTable(Uschi, "uschi", [
     Column('result', INT),
     Column('log', TEXT),
     Column('about', TEXT),
-    Column('status', FLOAT),
 ])
 
 hf.module.addModuleClass(Uschi)
