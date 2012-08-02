@@ -1,7 +1,26 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-<form id="${module.instance_name}_plot_form" method="get" action="plot_generator.php" onsubmit="javascript:submitFormToWindow(this);">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form id="${module.instance_name}_plot_form" method="get" action="$(hf.plotgenerator.getTimeseriesUrl()}" target="_blank">
  <table style="font: bold 0.7em sans-serif; width:800px; background-color: #ddd; border: 1px #999 solid;">
   <tr>
    <td>Start:</td>
@@ -20,11 +39,6 @@
    </td>
    <td align="right">
     <input type="checkbox" name="renormalize" value="1" style="vertical-align: middle; margin: 0px;" />&nbsp;Show Trend plot
-    <input type="hidden" name="module" value="${module.instance_name}" />
-    <input type="hidden" name="subtable" value="${module.instance_name}_table_groups" />
-    <input type="hidden" id="${module.instance_name}_constraint" name="constraint" value="" />
-    <input type="hidden" id="${module.instance_name}_variables" name="variables" value="" />
-    <input type="hidden" id="${module.instance_name}_squash" name="squash" value="1" />
    </td>
   </tr>
  </table>
@@ -38,14 +52,14 @@
    <td>Plot jobs</td>
   </tr>
   <tr class="TableHeader">
-   <td><input type="button" value="Toggle Selection" onfocus="this.blur()" onclick="$" /></td>
-   <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('total')">Plot Col</button></td>
+   <td><input id="${module.instance_name}_toggle" type="button" value="Toggle Selection" onfocus="this.blur()" /></td>
+   <td><button onfocus="this.blur()" group="total" onclick="${module.instance_name}_col_button('total')">Plot Col</button></td>
    <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('running')">Plot Col</button></td>
    <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('ncpus')">Plot Col</button></td>
    <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('ratio10')">Plot Col</button></td>
    <td><button onfocus="this.blur()" onclick="${module.instance_name}_both_button()">Plot Selected</button></td>
   </tr>
-% for group in group_list:
+% for i,group in enumerate(group_list):
  % if group['status'] >= 1.0:
   <tr class="ok">
  % elif group['status'] >= 0.5:
@@ -53,7 +67,7 @@
  % else:
   <tr class="critical">
  % endif
-   <td style="padding-left: ${group['indentation']*15}px;"><input type="checkbox" id="${module.instance_name}_constraint_' . $i . '" value="${group['group']}" checked="checked" />${group['group']}</td>
+   <td style="padding-left: ${group['indentation']*15}px;"><input type="checkbox" id="${'%s_group_%i' %(module.instance_name, i)}" value="${group['group']}" checked="checked" />${group['group']}</td>
    <td>${group['total']}</td>
    <td>${group['running']}</td>
    <td>${group['ncpus']}</td>
