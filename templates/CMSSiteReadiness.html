@@ -1,0 +1,22 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form>
+ <table class="TableData">
+% for i,group in enumerate(tabledata):
+    <td bgcolor=grey >${group['name']}</td>
+    <td bgcolor=${group['01_color']}><a href = ${group['01_link']}>${group['01_data']}</a></td>
+    <td bgcolor=${group['02_color']}><a href = ${group['02_link']}>${group['02_data']}</a></td>
+    <td bgcolor=${group['03_color']}><a href = ${group['03_link']}>${group['03_data']}</a></td>
+    <td bgcolor=${group['04_color']}><a href = ${group['04_link']}>${group['04_data']}</a></td>
+    <td bgcolor=${group['05_color']}><a href = ${group['05_link']}>${group['05_data']}</a></td>
+    <td bgcolor=${group['06_color']}><a href = ${group['06_link']}>${group['06_data']}</a></td>
+    <td bgcolor=${group['07_color']}><a href = ${group['07_link']}>${group['07_data']}</a></td>
+    <td bgcolor=${group['08_color']}><a href = ${group['08_link']}>${group['08_data']}</a></td>
+    <td bgcolor=${group['09_color']}><a href = ${group['09_link']}>${group['09_data']}</a></td>
+    <td bgcolor=${group['10_color']}><a href = ${group['10_link']}>${group['10_data']}</a></td>
+  </tr>
+% endfor
+</table>
+</form>
+</%def>
