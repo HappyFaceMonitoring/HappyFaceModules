@@ -75,7 +75,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                             key ='date'
                             data_out[str(key) + '%02i' %j] = ' '
                             data_out[str(key) + '_links%02i' %j] = 'none'
-                            data_out[str(key) + '_col%02i' %j] = 'grey'
+                            data_out[str(key) + '_col%02i' %j] = 'error'
                             keyset = 'set'
                             data_out['key' + '%02i' %keycount] = key
                             keycount += 1
@@ -88,7 +88,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                                 data_out['key' + '%02i' %keycount] = key
                                 data_out[str(key) + '%02i' %j] = self.htmlcontent(tds)
                                 data_out[str(key) + '_links%02i' %j] = 'none'
-                                data_out[str(key) + '_col%02i' %j] = 'grey'
+                                data_out[str(key) + '_col%02i' %j] = 'error'
                                 j += 1
                                 keycount += 1
                             else:
@@ -100,7 +100,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                     if self.htmlcontent(tds) is None:
                         data_out[str(key) + '%02i' %j] = ' '
                         data_out[str(key) + '_links%02i' %j] = 'none'
-                        data_out[str(key) + '_col%02i' %j] = 'grey'
+                        data_out[str(key) + '_col%02i' %j] = 'error'
                         j += 1
                     else:
                         data_out[str(key) + str(j)] = self.htmlcontent(tds)
@@ -111,13 +111,13 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                         else:
                             data_out[str(key) + '_links%02i' %j] = 'none'
                         if 'green' in ltml.tostring(tds):
-                            data_out[str(key) + '_col%02i' %j] = 'green'
+                            data_out[str(key) + '_col%02i' %j] = 'ok'
                         elif 'red' in ltml.tostring(tds):
-                            data_out[str(key) + '_col%02i' %j] = 'red'
+                            data_out[str(key) + '_col%02i' %j] = 'critical'
                         elif 'yellow' in ltml.tostring(tds):
-                            data_out[str(key) + '_col%02i' %j] = 'yellow'
+                            data_out[str(key) + '_col%02i' %j] = 'warning'
                         else:
-                            data_out[str(key) + '_col%02i' %j] = 'grey'
+                            data_out[str(key) + '_col%02i' %j] = 'error'
                         j += 1
                 if key == 'date':
                     data_out['maxinput'] = j

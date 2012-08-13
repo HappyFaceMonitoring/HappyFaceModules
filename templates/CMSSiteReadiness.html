@@ -4,17 +4,76 @@
 <form>
  <table class="TableData">
 % for i,group in enumerate(tabledata):
-    <td bgcolor=grey >${group['name']}</td>
-    <td bgcolor=${group['01_color']}><a href = ${group['01_link']}>${group['01_data']}</a></td>
-    <td bgcolor=${group['02_color']}><a href = ${group['02_link']}>${group['02_data']}</a></td>
-    <td bgcolor=${group['03_color']}><a href = ${group['03_link']}>${group['03_data']}</a></td>
-    <td bgcolor=${group['04_color']}><a href = ${group['04_link']}>${group['04_data']}</a></td>
-    <td bgcolor=${group['05_color']}><a href = ${group['05_link']}>${group['05_data']}</a></td>
-    <td bgcolor=${group['06_color']}><a href = ${group['06_link']}>${group['06_data']}</a></td>
-    <td bgcolor=${group['07_color']}><a href = ${group['07_link']}>${group['07_data']}</a></td>
-    <td bgcolor=${group['08_color']}><a href = ${group['08_link']}>${group['08_data']}</a></td>
-    <td bgcolor=${group['09_color']}><a href = ${group['09_link']}>${group['09_data']}</a></td>
-    <td bgcolor=${group['10_color']}><a href = ${group['10_link']}>${group['10_data']}</a></td>
+    <td class = "ok" >${group['name']}</td>
+    <td class=${group['01_color']}> 
+    % if group['01_link']!='none':
+        <a href = ${group['01_link']}>${group['01_data']}</a> 
+    %else:
+        ${group['01_data']} 
+    % endif </td>
+
+    <td class=${group['02_color']}> 
+    % if group['02_link']!='none':
+        <a href = ${group['02_link']}>${group['02_data']}</a> 
+    %else:
+        ${group['02_data']} 
+    % endif </td>
+
+    <td class=${group['03_color']}> 
+    % if group['03_link']!='none':
+        <a href = ${group['03_link']}>${group['03_data']}</a> 
+    %else:
+        ${group['03_data']} 
+    % endif </td>
+
+    <td class=${group['04_color']}> 
+    % if group['04_link']!='none':
+        <a href = ${group['04_link']}>${group['04_data']}</a> 
+    %else:
+        ${group['04_data']} 
+    % endif </td>
+
+    <td class=${group['05_color']}> 
+    % if group['05_link']!='none':
+        <a href = ${group['05_link']}>${group['05_data']}</a> 
+    %else:
+        ${group['05_data']} 
+    % endif </td>
+
+    <td class=${group['06_color']}> 
+    % if group['06_link']!='none':
+        <a href = ${group['06_link']}>${group['06_data']}</a> 
+    %else:
+        ${group['06_data']} 
+    % endif </td>
+
+    <td class=${group['07_color']}> 
+    % if group['07_link']!='none':
+        <a href = ${group['07_link']}>${group['07_data']}</a> 
+    %else:
+        ${group['07_data']} 
+    % endif </td>
+
+    <td class=${group['08_color']}> 
+    % if group['08_link']!='none':
+        <a href = ${group['08_link']}>${group['08_data']}</a> 
+    %else:
+        ${group['08_data']} 
+    % endif </td>
+
+    <td class=${group['09_color']}> 
+    % if group['09_link']!='none':
+        <a href = ${group['09_link']}>${group['09_data']}</a> 
+    %else:
+        ${group['09_data']} 
+    % endif </td>
+    
+    <td class=${group['10_color']}> 
+    % if group['10_link']!='none':
+        <a href = ${group['10_link']}>${group['10_data']}</a> 
+    %else:
+        ${group['10_data']} 
+    % endif </td>
   </tr>
 % endfor
 </table>
