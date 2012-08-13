@@ -7,10 +7,20 @@ import lxml.html as ltml
 class CMSSiteReadiness(hf.module.ModuleBase):
     
     def prepareAcquisition(self):
-        self.site_html = hf.downloadService.addDownload(self.config['site_html'])
-        self.tracked_site = str(self.config['tracked_site'])
-        self.data = {}
-        self.autschn = []
+        try:
+            self.site_html = hf.downloadService.addDownload(self.config['site_html'])   #URL with source data
+            self.tracked_site = str(self.config['tracked_site'])                        #name of the tracked table e.g. T1_DE_KIT
+            #number of days to be shown on H.F.3 website: if zou want to change please replace all every number 11 shown in the script
+            # number - 1 = shown days
+            self.critical = int(self.config['critical'])                                
+            self.warnings = int(self.config['warning'])
+            self.data = {}
+            self.giveback = {}
+        except KeyError, e:
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+        
+        self.giveback['source_url'] = self.config['site_html']
+    
     def htmlcontent(self, tds):
         giveback = ''
         for aas in tds.iter('a'):
@@ -56,16 +66,16 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                         keyset = 'set'
                         data_out['key00'] = key
                         for j in range(6):
-                            data_out[str(key) + '%02i' %j] = 'none'
+                            data_out[str(key) + '%02i' %j] = ' '
                         j += 1
                         keycount += 1
                     else:
                         try:
                             float(self.htmlcontent(tds))
                             key ='date'
-                            data_out[str(key) + '%02i' %j] = 'none'
+                            data_out[str(key) + '%02i' %j] = ' '
                             data_out[str(key) + '_links%02i' %j] = 'none'
-                            data_out[str(key) + '_col%02i' %j] = 'none'
+                            data_out[str(key) + '_col%02i' %j] = 'grey'
                             keyset = 'set'
                             data_out['key' + '%02i' %keycount] = key
                             keycount += 1
@@ -78,7 +88,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                                 data_out['key' + '%02i' %keycount] = key
                                 data_out[str(key) + '%02i' %j] = self.htmlcontent(tds)
                                 data_out[str(key) + '_links%02i' %j] = 'none'
-                                data_out[str(key) + '_col%02i' %j] = 'none'
+                                data_out[str(key) + '_col%02i' %j] = 'grey'
                                 j += 1
                                 keycount += 1
                             else:
@@ -88,9 +98,9 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                                 keycount += 1
                 elif keyset == 'set':
                     if self.htmlcontent(tds) is None:
-                        data_out[str(key) + '%02i' %j] = 'none'
+                        data_out[str(key) + '%02i' %j] = ' '
                         data_out[str(key) + '_links%02i' %j] = 'none'
-                        data_out[str(key) + '_col%02i' %j] = 'none'
+                        data_out[str(key) + '_col%02i' %j] = 'grey'
                         j += 1
                     else:
                         data_out[str(key) + str(j)] = self.htmlcontent(tds)
@@ -107,7 +117,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                         elif 'yellow' in ltml.tostring(tds):
                             data_out[str(key) + '_col%02i' %j] = 'yellow'
                         else:
-                            data_out[str(key) + '_col%02i' %j] = 'none'
+                            data_out[str(key) + '_col%02i' %j] = 'grey'
                         j += 1
                 if key == 'date':
                     data_out['maxinput'] = j
@@ -117,7 +127,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
         for count in range(int(data_out['keycount'])):
             self.data['name'].append(data_out['key%02i' %count])
         
-        for count in range(int(int(data_out['maxinput']) - 10), int(data_out['maxinput'])):
+        for count in range(int(int(data_out['maxinput']) - 11 + 1), int(data_out['maxinput'])):
             self.data['%02i_color'%int(count - int(data_out['maxinput']) + 11)] = []
             self.data['%02i_link'%int(count - int(data_out['maxinput']) + 11)] = []
             self.data['%02i_data'%int(count - int(data_out['maxinput']) + 11)] = []
@@ -125,10 +135,21 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                 self.data['%02i_color'%int(count - int(data_out['maxinput']) + 11)].append(data_out[str(str(count2) + '_col%02i' %count)])
                 self.data['%02i_link'%int(count - int(data_out['maxinput']) + 11)].append(data_out[str(str(count2) + '_links%02i' %count)])
                 self.data['%02i_data'%int(count - int(data_out['maxinput']) + 11)].append(data_out[str(str(count2) + '%02i' %count)])
-        backpack = {}
-        backpack['status'] = 1
         
-        return backpack
+        #determine status of this module, need self.critical and self.warning if you don't show 10 days please change 09_color to (shown_days -1)_color 
+        count = 0
+        for i in self.data['09_color']:
+            if i == 'yellow' or i == 'red':
+                count += 1
+        
+        if count >= self.warnings:
+            self.giveback['status'] = 0.5
+        elif count >= self.critical:
+            self.giveback['status'] = 0.0
+        else:
+            self.giveback['status'] = 1.0
+            
+        return self.giveback
         
     def fillSubtables(self, parent_id):
         def generate():
@@ -139,8 +160,10 @@ class CMSSiteReadiness(hf.module.ModuleBase):
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).order_by(details_table.c.order.asc()).execute().fetchall()
         data['tabledata'] = map(dict, info_list)
+        
+        
         return data
 
 hf.module.addModuleClass(CMSSiteReadiness)
