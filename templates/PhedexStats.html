@@ -1,0 +1,45 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+<tr>
+<td class="PhedexStatsTableFirstCol">Start Time</td>
+<td>${module.dataset["startlocaltime"]}</td>
+</tr>
+<tr>
+<td class="PhedexStatsTableFirstCol">End Time</td>
+<td>${module.dataset["endlocaltime"]}</td>
+</tr>
+</table>
+<br />
+
+<table class="TableData">
+<tr>
+<td class="PhedexStatsTableFirstCol">Failed Transfers</td>
+<td>${module.dataset["failed_transfers"]}</td>
+</tr>
+</table>
+<br />
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class="TableDetails">
+<tr class="TableHeader">
+<td>Site Name</td>
+<td>Failed Transfers</td>
+<td>Origin</td>
+<td>Error Message</td>
+</tr>
+% for info in info_list:
+<tr class="report">
+<td>${info['site_name'] | h}</td>
+<td>${info['number']}</td>
+<td>${info['origin'] | h}</td>
+<td>${info['error_message'] | h}</td>
+</tr>
+% endfor
+</table>
+</div>
+<br />
+
+</%def>
