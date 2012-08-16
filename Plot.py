@@ -40,7 +40,7 @@ class Plot(hf.module.ModuleBase):
             else:
                 extension = 'png'
             if extension is not None:
-                self.plot.copyToArchive(self.instance_name + "." + extension)
+                self.plot.copyToArchive(self, "." + extension)
                 data["plot_file"] = self.plot
             else:
                 data.update({
