@@ -1,0 +1,92 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form>
+<strong>Group status:</strong>
+        <br />
+        <table class="TableData">
+% for i,group in enumerate(summary):
+    <tr class=${group['status']}>
+         <td>${group["name"]}</td>
+         <td>${group["nodes"]}</td>
+    </tr>
+%endfor
+    </table>
+<br/>
+<strong>Individual service status:</strong>
+        <br/>
+        <table class='TableData'>
+%for i,group in enumerate(indsum):
+    <tr class=${group['status']}>
+        <td>${group["type"]}</td>
+        <td>${group["name"]}</td>
+    </tr>
+%endfor
+</table>
+</form>
+<br/>
+
+<input type="button" value="ok results" onfocus="this.blur()" onclick="$('#${module.instance_name}_ok_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_ok_details" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Element Type</td>
+<td>Element Name</td>
+<td>Status</td>
+<td>Test Name</td>
+<td>Test Time</td>
+</tr>
+%for i,group in enumerate(ok_details):
+<tr class=${group['service_status']}>
+<td>${group['service_type']}</td>
+<td>${group['service_name']}</td>
+<td><a href=${group['url']}>${group['status']}</a></td>
+<td>${group['type']}</td>
+<td>${group['time']}</td>
+</tr>
+%endfor
+ </table>
+</div>
+<br/>
+
+<input type="button" value="error/warning results" onfocus="this.blur()" onclick="$('#${module.instance_name}_critical_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_critical_details" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Element Type</td>
+<td>Element Name</td>
+<td>Status</td>
+<td>Test Name</td>
+<td>Test Time</td>
+</tr>
+%for i,group in enumerate(critical_details):
+<tr class=${group['service_status']}>
+<td>${group['service_type']}</td>
+<td>${group['service_name']}</td>
+<td><a href=${group['url']}>${group['status']}</a></td>
+<td>${group['type']}</td>
+<td>${group['time']}</td>
+</tr>
+%endfor
+ </table>
+</div>
+</%def>
