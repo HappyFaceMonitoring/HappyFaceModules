@@ -19,7 +19,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
         except KeyError, e:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
         
-        self.giveback['source_url'] = self.config['site_html']
+        self.giveback['source_url'] = self.site_html.getSourceUrl()
     
     def htmlcontent(self, tds):
         giveback = ''
