@@ -1,0 +1,102 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form>
+<table class="TableData">
+<tr class='report' >
+<td> failed transfers </td>
+<td> ${module.dataset["summary"]}</td>
+</tr>
+<tr>
+<td colspan=2 class=center> failed transfers details </td>
+</tr>
+<tr class=${module.dataset["destination_status"]}>
+<td>failed transfers due to destination</td>
+<td> ${module.dataset["destination"]}</td>
+</tr>
+<tr class=${module.dataset["source_status"]}>
+<td>failed transfers due to source</td>
+<td> ${module.dataset["source"]}</td>
+</tr>
+<tr class=${module.dataset["transfer_status"]}>
+<td>failed transfers due to transfer</td>
+<td> ${module.dataset["transfer"]}</td>
+</tr>
+<tr class=${module.dataset["unknown_status"]}>
+<td>failed transfers due to unknown</td>
+<td> ${module.dataset["unknown"]}</td>
+</tr>
+<tr class=${module.dataset["destination_status"]}>
+<td>failed transfers due to destination</td>
+<td> ${module.dataset["frac_dest"]}%</td>
+</tr>
+<tr class=${module.dataset["source_status"]}>
+<td>failed transfers due to source</td>
+<td> ${module.dataset["frac_source"]}%</td>
+</tr>
+<tr class=${module.dataset["transfer_status"]}>
+<td>failed transfers due to transfer</td>
+<td> ${module.dataset["frac_trans"]}%</td>
+</tr>
+<tr class=${module.dataset["unknown_status"]}>
+<td>failed transfers due to unknown</td>
+<td> ${module.dataset["frac_unknown"]}%</td>
+</tr>
+</table>
+</form>
+<br/>
+<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class='TableData' >
+%for i,group in enumerate(details):
+%if group['transfer'] != 0:
+<tr>
+<td> ${group['node']}</td>
+<td> ${group['transfer']}</td>
+<td> ${group['trans_message']}</td>
+</tr>
+%endif
+%if group['source'] != 0:
+<tr>
+<td> ${group['node']}</td>
+<td> ${group['source']}</td>
+<td> ${group['source_message']}</td>
+</tr>
+%endif
+%if group['destination'] != 0:
+<tr>
+<td> ${group['node']}</td>
+<td> ${group['destination']}</td>
+<td> ${group['dest_message']}</td>
+</tr>
+%endif
+%if group['unknown'] != 0:
+<tr>
+<td> ${group['node']}</td>
+<td> ${group['unknown']}</td>
+<td> ${group['unknown_message']}</td>
+</tr>
+%endif
+%endfor
+</table>
+</div>
+</%def>
