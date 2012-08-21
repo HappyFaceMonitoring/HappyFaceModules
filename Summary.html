@@ -1,0 +1,25 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class=TableData>
+<tr class=TableHeader>
+<td width=100px align=center><small><small>Site</small></small> </td>
+% for i,group in enumerate(_00):
+<td  align=center width=100px><small><small>${group['cattitle']}</small></small></td>
+%endfor
+</tr>
+<tr class=undefined>
+<td align=center> <strong>KIT</strong> </td>
+%for i,group in enumerate(_00):
+<td class=SummaryCatCell align=center><a href=${group['catlink']}><img class=SummaryCatIcon src=${group['status']}></a></td>
+%endfor
+</tr>
+<tr class=undefined>
+<td align=center> <strong>DESY</strong> </td>
+%for i,group in enumerate(_01):
+<td class=SummaryCatCell align=center><a href=${group['catlink']}><img class=SummaryCatIcon src=${group['status']}></a></td>
+%endfor
+</tr>
+</table>
+</%def>
