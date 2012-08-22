@@ -86,7 +86,6 @@ class Summary(hf.module.ModuleBase):
                            cols['status'] = "/static/themes/armin_box_arrows/mod_unhappy.png" 
                         appender.append(cols)
             data['_' + c] = appender
-        self.logger.error(rawhelpdata)
         return data
                         
 

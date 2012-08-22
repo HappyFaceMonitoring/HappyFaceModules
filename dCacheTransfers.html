@@ -1,0 +1,91 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form>
+<table class=TableData>
+<tr>
+<td> Total number of transfers </td>
+<td>${module.dataset["total_transfers"]}</td>
+</tr>
+<tr>
+<td> Speed average [KiB/s] </td>
+<td>${module.dataset["speed_average"]}</td>
+</tr>
+<tr>
+<td> Standard deviation of speed distribution [KiB/s] </td>
+<td>${module.dataset["speed_stdev"]}</td>
+</tr>
+<tr>
+<td> Number of transfers with warning </td>
+<td>${module.dataset["warning_transfers"]}</td>
+</tr>
+<tr>
+<td> ... due to time limit </td>
+<td>${module.dataset["exceed_time_warning_limit"]}</td>
+</tr>
+<tr>
+<td> ... due to speed limit</td>
+<td>${module.dataset["below_speed_warning_limit"]}</td>
+</tr>
+<tr>
+<td> Number of critical transfers </td>
+<td>${module.dataset["critical_transfers"]}</td>
+</tr>
+<tr>
+<td> ... due to time limit </td>
+<td>${module.dataset["exceed_time_critical_limit"]}</td>
+</tr>
+<tr>
+<td> .. due to speed limit </td>
+<td>${module.dataset["below_speed_critical_limit"]}</td>
+</tr>
+</table>
+</form>
+<br/>
+<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class=TableData>
+<tr class=TableHeader>
+<td> pnfsID </td>
+<td> Pool </td>
+<td> Host </td>
+<td> Status </td>
+<td> Time dd:hh:mm:ss</td>
+<td> Trans. [GiB] </td>
+<td> Speed [KiB/s] </td>
+</tr>
+%for i,group in enumerate(details):
+<tr class=${group['status']}>
+<td> ${group['pnfsid']} </td>
+<td> ${group['pool']} </td>
+<td> ${group['host']} </td>
+<td> ${group['status_text']} </td>
+<td> ${group['since']} </td>
+<td> ${'%.3f' %group['transferred']} </td>
+<td> ${'%.3f' %group['speed']} </td>
+</tr>
+%endfor
+</table>
+</div>
+<br/>
+</%def>
