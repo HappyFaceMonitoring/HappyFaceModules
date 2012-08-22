@@ -91,11 +91,11 @@ class dCacheTransfers(hf.module.ModuleBase):
             speed_delta += 1.0 /((float(total_jobs) - 1.0) * float(total_jobs)) * (float(item['speed']) - float(speed_avg)) ** 2
         data['speed_stdev'] = int(math.sqrt(speed_delta))
         
-        if float(data['warning_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= 10:
+        if float(data['warning_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.5
-        elif float(data['warning_transfers'] + data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= 10:
+        elif float(data['warning_transfers'] + data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.5
-        elif float(data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= 10:
+        elif float(data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.0
         else:
             data['status'] = 1.0

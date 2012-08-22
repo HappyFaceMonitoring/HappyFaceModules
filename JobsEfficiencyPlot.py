@@ -8,6 +8,10 @@ from sqlalchemy import *
 from lxml import etree
 
 class JobsEfficiencyPlot(hf.module.ModuleBase):
+        config_keys = {
+        'group': ('Colon separated user groups to include in the output, leave empty for all', ''),
+        'qstat_xml': ('URL of the input qstat xml file', ''),
+    }
 
     def prepareAcquisition(self):
         try:
