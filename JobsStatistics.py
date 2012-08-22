@@ -3,7 +3,18 @@ from sqlalchemy import *
 from lxml import etree
 
 class JobsStatistics(hf.module.ModuleBase):
-
+    config_keys = {
+        'min_jobs': ('Minimum number of jobs required for determining the module status', '100'),
+        'warning_limit': ('Module turns yellow when a fraction q of the modules are ratio10', '0.3'),
+        'critical_limit': ('Module turns red when a fraction q of the modules are ratio10', '0.5'),
+        'old_result_warning_limit': ('Module turns yellow when input file is older then n hours', '1'),
+        'old_result_critical_limit': ('Module turns red when input file is older then n hours', '4'),
+        'groups': ('Colon separated user groups to include in the output, leave empty for all', ''),
+        'rating_groups': ('Colon separated groups which will determine the output status', ''),
+        'qstat_xml': ('URL of the input qstat xml file', ''),
+    }
+    config_hint = ''
+    
     def prepareAcquisition(self):
         # read configuration
         try:

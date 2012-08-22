@@ -5,7 +5,12 @@ from lxml import etree
 
 
 class Summary(hf.module.ModuleBase):
-
+    config_keys = {
+        'site_keys': ('Colon separated list of site names.\nThe name corresponds to a config entry with the actual URL', ''),
+        'categories': ('Colon separated list of HF categories to display', ''),
+        'SITE_KEY': ('URL of a HappyFace XML output.\nReplace SITE_KEY by whatever you specified in site_keys', ''),
+    }
+    config_hint = ''
     def prepareAcquisition(self):
 
         # definition of the database table keys and pre-defined values

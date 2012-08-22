@@ -10,6 +10,15 @@ to check if downloaded file is actuallly an image.")
     imghdr = None
 
 class Plot(hf.module.ModuleBase):
+    config_keys = {
+        'plot_url': ('URL of the image to display', ''),
+        'use_start_end_time': ('Enable the mechanism to include two timestamps in the GET part of the URL', 'False'),
+        'starttime_parameter_name': ('Name of the GET argument for the starting timestamp', 'starttime'),
+        'endtime_parameter_name': ('Name of the GET argument for the end timestamp, which is now', 'endtime'),
+        'timerange_seconds': ('How far in the past is the start timestamp (in seconds)', '259200'),
+    }
+    config_hint = ''
+    
     def prepareAcquisition(self):
         
         url = self.config["plot_url"]

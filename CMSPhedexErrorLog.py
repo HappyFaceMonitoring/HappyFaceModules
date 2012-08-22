@@ -6,6 +6,22 @@ from lxml import etree
 #Alles in Class umschreiben! wichtig: bewertung des moduls + der globalerrors in acquire auslesen und darauf achten, dass eingestellt werden kann ob es das to oder from  modul ist! Datetimeabfrage fuer die einzelnen errors in den files mit grundtimestamp von request der page inklusive einstellbar wie weit die fehler zeitlich davon abweichen duerfen
 class CMSPhedexErrorLog(hf.module.ModuleBase):
     
+    config_keys = {
+        'link_direction': ("""represents the way of the links, 'from' means the file comes from somewhere and goes to KIT
+'to' means the file comes from KIT and goes to somewhere else
+this is necessary to determine destination or source of the file!""", 'from'),
+        'timerange_seconds': ('Ignore errors that are older than the specified time', '3600'),
+        'source_url': ('', ''),
+        'min_error': ('minimal number of errors needed to determine status', '50'),
+        'warning_dest': ('25% = 25', '25'),
+        'critical_dest': ('25% = 25', '50'),
+        'warning_source': ('25% = 25', '100'),
+        'critical_source': ('25% = 25', '100'),
+        'warning_trans': ('25% = 25', '100'),
+        'critical_trans': ('25% = 25', '100'),
+    }
+    config_hint = ''
+    
     def prepareAcquisition(self):
         try:
             self.link_direction = self.config['link_direction']

@@ -3,6 +3,10 @@ from sqlalchemy import *
 from lxml import etree
 
 class PhedexStats(hf.module.ModuleBase):
+    config_keys = {
+        'phedex_xml': ('URL of the PhEDEx XML file', '')
+    }
+    config_hint = ''
 
     def prepareAcquisition(self):
 

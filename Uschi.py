@@ -3,10 +3,12 @@ import hf, logging
 from sqlalchemy import *
 from lxml import etree
 
-#############################################
-# class for USCHI tests (used at Tier1 GridKa)
-#############################################
 class Uschi(hf.module.ModuleBase):
+    config_keys = {
+        'testname_string': ('Name of the Test', ''),
+        'uschi_xml': ('Input file', '')
+    }
+    config_hint = ''
 
     def prepareAcquisition(self):
 

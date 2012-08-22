@@ -6,6 +6,19 @@ import json
 
 
 class Sam(hf.module.ModuleBase):
+    config_keys = {
+        'report_url': ('URL of the SAM report', ''),
+        'blacklist': ('Colon separated group to exclude from the output', ''),
+        'storageelements': ('Colon separated list of storage element to include in the output', ''),
+        'computingelements': ('Include all CEs with the given type', 'TYPE:CREAM-CE'),
+        'computingelements_warning_numerror': ('', '>1'),
+        'computingelements_error_numerror': ('', '>2'),
+        'computingelements_warning_numwarning': ('', '>3'),
+        'computingelements_warning_numtotal': ('', '<2'),
+        'storageelements_error_numerror': ('', '>0'),
+        'storageelements_error_numtotal': ('', '<1')
+    }
+    config_hint = "You're on your own with the thresholds..."
     def prepareAcquisition(self):                      
         try:
             self.report_url = self.config['report_url']

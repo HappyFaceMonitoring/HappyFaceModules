@@ -3,7 +3,17 @@ import hf, lxml, logging, datetime
 from sqlalchemy import *
 import math
 class dCacheTransfers(hf.module.ModuleBase):
-
+    config_keys = {
+        'speed_warning_limit': ('Warn if the speed is less than n KiB/s', '250'),
+        'speed_critical_limit': ('Display error if the speed is less than n KiB/s', '150'),
+        'time_warning_limit': ('Warn if age of a transfer is older than n hours', '72'),
+        'time_critical_limit': ('Display error if age of a transfer is older than n hours', '96'),
+        'rating_ratio': ('Calculate rating of the specified fraction of transfers has errors or warnings', '0.1'),
+        'rating_threshold': ('Rate only if there are more than n transfers', '10'),
+        'source_url': ('', ''),
+    }
+    config_hint = ''
+    
     def prepareAcquisition(self):
         
         try:

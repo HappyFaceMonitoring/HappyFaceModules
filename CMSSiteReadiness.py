@@ -6,6 +6,14 @@ import lxml.html as ltml
 
 class CMSSiteReadiness(hf.module.ModuleBase):
     
+    config_keys = {
+        'site_html': ('The CMS Web Site Readiness Report URL', ''),
+        'tracked_site': ('Name of the site to display the readiness report', ''),
+        'critical': ('Number of errors or warning that may occur until the site status is considered critical', '3'),
+        'warning': ('Number of errors or warning that may occur until the site status might need attention', '2'),
+    }
+    config_hint = ''
+    
     def prepareAcquisition(self):
         try:
             self.site_html = hf.downloadService.addDownload(self.config['site_html'])   #URL with source data
