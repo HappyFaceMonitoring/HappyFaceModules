@@ -1,0 +1,13 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form>
+<table class=TableData>
+<tr>
+<td> <img src=${'/'+module.dataset["filename_eff_plot"].getArchivePath()}></td>
+<td> <img src=${'/'+module.dataset["filename_rel_eff_plot"].getArchivePath()}></td>
+</tr>
+</table>
+</form>
+</%def>
