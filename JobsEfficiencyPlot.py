@@ -8,10 +8,17 @@ from sqlalchemy import *
 from lxml import etree
 
 class JobsEfficiencyPlot(hf.module.ModuleBase):
-        config_keys = {
+    config_keys = {
         'group': ('Colon separated user groups to include in the output, leave empty for all', ''),
         'qstat_xml': ('URL of the input qstat xml file', ''),
     }
+            
+    table_columns = [
+        Column("filename_eff_plot", TEXT),
+        Column("filename_rel_eff_plot", TEXT),
+        Column("result_timestamp", INT)
+    ], ['filename_eff_plot', 'filename_rel_eff_plot']
+    
 
     def prepareAcquisition(self):
         try:
@@ -253,14 +260,3 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         
         return data
         
-        
-module_table = hf.module.generateModuleTable(JobsEfficiencyPlot, "jobs_efficiency_plot", [
-    Column("filename_eff_plot", TEXT),
-    Column("filename_rel_eff_plot", TEXT),
-    Column("result_timestamp", INT)
-]) 
-
-hf.module.addColumnFileReference(module_table, "filename_eff_plot")
-hf.module.addColumnFileReference(module_table, "filename_rel_eff_plot")
-
-hf.module.addModuleClass(JobsEfficiencyPlot)

@@ -14,6 +14,31 @@ class dCacheTransfers(hf.module.ModuleBase):
     }
     config_hint = ''
     
+    table_columns = [
+        Column('speed_average', INT),
+        Column('speed_stdev', INT),
+        Column('below_speed_warning_limit', INT),
+        Column('below_speed_critical_limit', INT),
+        Column('exceed_time_warning_limit', INT),
+        Column('exceed_time_critical_limit', INT),
+        Column('total_transfers', INT),
+        Column('warning_transfers', INT),
+        Column('critical_transfers', INT)
+    ], []
+
+    details_table = {'details': ([
+        Column('protocol', TEXT),
+        Column('pnfsid', TEXT),
+        Column('pool', TEXT),
+        Column('host', TEXT),
+        Column('status_text', TEXT),
+        Column('since', INT),
+        Column('transferred', FLOAT),
+        Column('speed', INT),
+        Column('status', FLOAT)
+    ], [])}
+
+
     def prepareAcquisition(self):
         
         try:
@@ -102,11 +127,11 @@ class dCacheTransfers(hf.module.ModuleBase):
         return data
     
     def fillSubtables(self, parent_id):
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, details_list)
         
         for i,item in enumerate(data['details']):
@@ -120,30 +145,3 @@ class dCacheTransfers(hf.module.ModuleBase):
             data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600 * 1000))) + ':' + str('%02i' %int((store % (24 * 3600 * 1000)) / (3600 * 1000))) + ':' + str('%02i' %int(((store % (24 * 3600 * 1000)) % (3600 * 1000) / (60 * 1000)))) + ':' + str('%02i' %int((((store % (24 * 3600 * 1000)) % (3600 * 1000)) % (60 * 1000)) / 1000))
                 
         return data
-				
-				
-module_table = hf.module.generateModuleTable(dCacheTransfers, "dcache_transfers", [
-    Column('speed_average', INT),
-    Column('speed_stdev', INT),
-    Column('below_speed_warning_limit', INT),
-    Column('below_speed_critical_limit', INT),
-    Column('exceed_time_warning_limit', INT),
-    Column('exceed_time_critical_limit', INT),
-    Column('total_transfers', INT),
-    Column('warning_transfers', INT),
-    Column('critical_transfers', INT)
-])        
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-    Column('protocol', TEXT),
-    Column('pnfsid', TEXT),
-    Column('pool', TEXT),
-    Column('host', TEXT),
-    Column('status_text', TEXT),
-    Column('since', INT),
-    Column('transferred', FLOAT),
-    Column('speed', INT),
-    Column('status', FLOAT)
-])
-
-hf.module.addModuleClass(dCacheTransfers)

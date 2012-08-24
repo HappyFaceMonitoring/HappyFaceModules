@@ -7,6 +7,22 @@ class PhedexStats(hf.module.ModuleBase):
         'phedex_xml': ('URL of the PhEDEx XML file', '')
     }
     config_hint = ''
+    
+    
+    table_columns = [
+        Column('startlocaltime', TEXT),
+        Column('endlocaltime', TEXT),
+        Column('failed_transfers', INT),
+    ], []
+
+    subtable_columns = {'details': ([
+        Column('site_name', TEXT),
+        Column('number', INT),
+        Column('origin', TEXT),
+        Column('error_message', TEXT),
+    ], []),}
+    
+
 
     def prepareAcquisition(self):
 
@@ -55,28 +71,14 @@ class PhedexStats(hf.module.ModuleBase):
         return data
 
     def fillSubtables(self, parent_id):
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
 
-        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        info_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['info_list'] = map(dict, info_list)
 
         return data
 
 
-module_table = hf.module.generateModuleTable(PhedexStats, 'phedex_stats', [
-    Column('startlocaltime', TEXT),
-    Column('endlocaltime', TEXT),
-    Column('failed_transfers', INT),
-])
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-    Column('site_name', TEXT),
-    Column('number', INT),
-    Column('origin', TEXT),
-    Column('error_message', TEXT),
-])
-
-hf.module.addModuleClass(PhedexStats)

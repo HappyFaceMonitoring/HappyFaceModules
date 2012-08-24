@@ -9,6 +9,17 @@ class Uschi(hf.module.ModuleBase):
         'uschi_xml': ('Input file', '')
     }
     config_hint = ''
+    
+    
+    table_columns = [
+        Column('uschi_timestamp', TEXT),
+        Column('uschi_timestamp_module', TEXT),
+        Column('frequency', INT),
+        Column('frequency_module', INT),
+        Column('result', INT),
+        Column('log', TEXT),
+        Column('about', TEXT),
+    ], []
 
     def prepareAcquisition(self):
 
@@ -95,14 +106,3 @@ class Uschi(hf.module.ModuleBase):
         return data
 
 
-module_table = hf.module.generateModuleTable(Uschi, "uschi", [
-    Column('uschi_timestamp', TEXT),
-    Column('uschi_timestamp_module', TEXT),
-    Column('frequency', INT),
-    Column('frequency_module', INT),
-    Column('result', INT),
-    Column('log', TEXT),
-    Column('about', TEXT),
-])
-
-hf.module.addModuleClass(Uschi)

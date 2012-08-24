@@ -14,6 +14,14 @@ class CMSSiteReadiness(hf.module.ModuleBase):
     }
     config_hint = ''
     
+    table_columns = [], []
+
+    subtable_columns = {"rows" : ([Column("name", TEXT), Column("order", INT)] + \
+        [Column("%02i_color"%i, TEXT) for i in xrange(1,11)] + [Column("%02i_link"%i, TEXT) for i in xrange(1,11)] + \
+        [Column("%02i_data"%i, TEXT) for i in xrange(1,11)], []),
+    }
+    
+
     def prepareAcquisition(self):
         try:
             self.site_html = hf.downloadService.addDownload(self.config['site_html'])   #URL with source data
@@ -164,19 +172,10 @@ class CMSSiteReadiness(hf.module.ModuleBase):
             l = len(self.data['01_color'])
             for i in xrange(l):
                 yield dict(((key, val[i]) for key,val in self.data.iteritems()), order=i, parent_id=parent_id)
-        details_table.insert().execute([k for k in generate()])
+        self.subtable['rows'].insert().execute([k for k in generate()])
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).order_by(details_table.c.order.asc()).execute().fetchall()
+        info_list = self.subtable['rows'].select().where(self.subtable['rows'].c.parent_id==self.dataset['id']).order_by(self.subtable['rows'].c.order.asc()).execute().fetchall()
         data['tabledata'] = map(dict, info_list)        
         return data
-
-hf.module.addModuleClass(CMSSiteReadiness)
-module_table = hf.module.generateModuleTable(CMSSiteReadiness, "cms_site_readiness", [
-])
-
-details_table = hf.module.generateModuleSubtable("rows", module_table, [Column("name", TEXT), Column("order", INT)] + \
-    [Column("%02i_color"%i, TEXT) for i in xrange(1,11)] + [Column("%02i_link"%i, TEXT) for i in xrange(1,11)] + \
-    [Column("%02i_data"%i, TEXT) for i in xrange(1,11)]
-    )

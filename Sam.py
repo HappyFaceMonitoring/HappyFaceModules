@@ -19,6 +19,34 @@ class Sam(hf.module.ModuleBase):
         'storageelements_error_numtotal': ('', '<1')
     }
     config_hint = "You're on your own with the thresholds..."
+    
+    table_columns = [], []
+
+    subtable_columns = {
+        'details': ([
+            Column("service_type", TEXT),
+            Column("service_name", TEXT),
+            Column("service_status", FLOAT),
+            Column("status", TEXT),
+            Column("url", TEXT),
+            Column("type", TEXT),
+            Column("time", TEXT)
+        ], []),
+
+        'summary': ([
+            Column("name", TEXT),
+            Column("nodes", TEXT),
+            Column("status", FLOAT)
+        ], []),
+
+        'individual': ([
+            Column("name", TEXT),
+            Column("status", TEXT),
+            Column("type", TEXT)
+        ], []),
+    }
+    
+    
     def prepareAcquisition(self):                      
         try:
             self.report_url = self.config['report_url']
@@ -195,22 +223,22 @@ class Sam(hf.module.ModuleBase):
         return data
         
     def fillSubtables(self, parent_id):
-        summary_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_summary_db_value_list])
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-        individual_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.individual_db_value_list])
+        self.subtable['summary'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_summary_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['individual'].insert().execute([dict(parent_id=parent_id, **row) for row in self.individual_db_value_list])
     
     def getTemplateData(self):
         
         data = hf.module.ModuleBase.getTemplateData(self)
         helpdata = {}
         
-        details_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).order_by(details_table.c.service_name.asc()).execute().fetchall()
+        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).order_by(self.subtable['details'].c.service_name.asc()).execute().fetchall()
         helpdata['details'] = map(dict, details_list)
         
-        summary_list = summary_table.select().where(summary_table.c.parent_id==self.dataset['id']).order_by(summary_table.c.name.asc()).execute().fetchall()
+        summary_list = self.subtable['summary'].select().where(self.subtable['summary'].c.parent_id==self.dataset['id']).order_by(self.subtable['summary'].c.name.asc()).execute().fetchall()
         helpdata['summary'] = map(dict, summary_list)
         
-        individual_list = individual_table.select().where(individual_table.c.parent_id==self.dataset['id']).order_by(individual_table.c.name.asc()).execute().fetchall()
+        individual_list = self.subtable['individual'].select().where(self.subtable['individual'].c.parent_id==self.dataset['id']).order_by(self.subtable['individual'].c.name.asc()).execute().fetchall()
         data['indsum'] = map(dict, individual_list)
         
         
@@ -308,29 +336,3 @@ class Sam(hf.module.ModuleBase):
 
         return status
         
-module_table = hf.module.generateModuleTable(Sam, "sam", [
-])        
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-    Column("service_type", TEXT),
-    Column("service_name", TEXT),
-    Column("service_status", FLOAT),
-    Column("status", TEXT),
-    Column("url", TEXT),
-    Column("type", TEXT),
-    Column("time", TEXT)
-])
-
-summary_table = hf.module.generateModuleSubtable('summary', module_table, [
-    Column("name", TEXT),
-    Column("nodes", TEXT),
-    Column("status", FLOAT)
-])
-
-individual_table = hf.module.generateModuleSubtable('individual', module_table, [
-    Column("name", TEXT),
-    Column("status", TEXT),
-    Column("type", TEXT)
-])
-
-hf.module.addModuleClass(Sam)

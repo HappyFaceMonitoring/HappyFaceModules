@@ -11,6 +11,19 @@ class Summary(hf.module.ModuleBase):
         'SITE_KEY': ('URL of a HappyFace XML output.\nReplace SITE_KEY by whatever you specified in site_keys', ''),
     }
     config_hint = ''
+    
+    table_columns = [], []   
+
+    subtable_columns = {'details': ([
+            Column("site", TEXT),
+            Column("catname", TEXT),
+            Column("cattitle", TEXT),
+            Column("type", TEXT),
+            Column("status", FLOAT),
+            Column("catlink", TEXT),
+            Column("order", INT)
+    ], []),}
+    
     def prepareAcquisition(self):
 
         # definition of the database table keys and pre-defined values
@@ -56,11 +69,11 @@ class Summary(hf.module.ModuleBase):
         return data
             
     def fillSubtables(self, parent_id):
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).order_by(details_table.c.order.asc()).execute().fetchall()
+        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).order_by(self.subtable['details'].c.order.asc()).execute().fetchall()
         rawhelpdata = map(dict, details_list)
         helpdata = {}
         tempsite = ''
@@ -93,17 +106,3 @@ class Summary(hf.module.ModuleBase):
             data['_' + c] = appender
         return data
                         
-
-module_table = hf.module.generateModuleTable(Summary, "summary", [
-])        
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-        Column("site", TEXT),
-        Column("catname", TEXT),
-        Column("cattitle", TEXT),
-        Column("type", TEXT),
-        Column("status", FLOAT),
-        Column("catlink", TEXT),
-        Column("order", INT)
-])
-hf.module.addModuleClass(Summary)

@@ -8,6 +8,28 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         'source': ('URL of the dCache Dataset Restore Monitor (Lazy)', '')
     }
     config_hint = ''
+    
+    
+    table_columns = [
+        Column('total', INT),
+        Column('total_problem', INT),
+        Column('status_pool2pool', INT),
+        Column('status_staging', INT),
+        Column('status_waiting', INT),
+        Column('status_suspended', INT),
+        Column('status_unknown', INT),
+        Column('hit_retry', INT),
+        Column('hit_time', INT),
+    ], []
+
+    subtable_columns = {'details': ([
+        Column('pnfs', TEXT),
+        Column('path', TEXT),
+        Column('started_full', TEXT),
+        Column('retries', INT),
+        Column('status_short', TEXT),
+    ], [])}
+    
 
     def prepareAcquisition(self):
         
@@ -92,35 +114,13 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         return data
 
     def fillSubtables(self, parent_id):
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
 
-        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        info_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['info_list'] = map(dict, info_list)
 
         return data
 
-
-module_table = hf.module.generateModuleTable(dCacheDatasetRestoreLazy, 'dcachedatasetrestorelazy', [
-    Column('total', INT),
-    Column('total_problem', INT),
-    Column('status_pool2pool', INT),
-    Column('status_staging', INT),
-    Column('status_waiting', INT),
-    Column('status_suspended', INT),
-    Column('status_unknown', INT),
-    Column('hit_retry', INT),
-    Column('hit_time', INT),
-])
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-    Column('pnfs', TEXT),
-    Column('path', TEXT),
-    Column('started_full', TEXT),
-    Column('retries', INT),
-    Column('status_short', TEXT),
-])
-
-hf.module.addModuleClass(dCacheDatasetRestoreLazy)

@@ -22,6 +22,37 @@ this is necessary to determine destination or source of the file!""", 'from'),
     }
     config_hint = ''
     
+    table_columns = [
+        Column('summary', FLOAT),
+        Column('transfer', FLOAT),
+        Column('destination', FLOAT),
+        Column('source', FLOAT),
+        Column('unknown', FLOAT),
+        Column('frac_dest', FLOAT),
+        Column('frac_source', FLOAT),
+        Column('frac_trans', FLOAT),
+        Column('frac_unknown', FLOAT),
+        Column('transfer_status', TEXT),
+        Column('destination_status', TEXT),
+        Column('source_status', TEXT),
+        Column('unknown_status', TEXT),
+    ], []
+    
+    subtable_colums = {
+        'details': ([
+            Column('node', TEXT),
+            Column('transfer', FLOAT),
+            Column('destination', FLOAT),
+            Column('source', FLOAT),
+            Column('unknown', FLOAT),
+            Column('trans_message', TEXT),
+            Column('dest_message', TEXT),
+            Column('source_message', TEXT),
+            Column('unknown_message', TEXT)
+        ], [])
+    }
+
+    
     def prepareAcquisition(self):
         try:
             self.link_direction = self.config['link_direction']
@@ -154,40 +185,10 @@ this is necessary to determine destination or source of the file!""", 'from'),
         return data
         
     def fillSubtables(self, parent_id):
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
         
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, details_list)
         return data
-
-module_table = hf.module.generateModuleTable(CMSPhedexErrorLog, "cms_phedex_error_log", [
-        Column('summary', FLOAT),
-        Column('transfer', FLOAT),
-        Column('destination', FLOAT),
-        Column('source', FLOAT),
-        Column('unknown', FLOAT),
-        Column('frac_dest', FLOAT),
-        Column('frac_source', FLOAT),
-        Column('frac_trans', FLOAT),
-        Column('frac_unknown', FLOAT),
-        Column('transfer_status', TEXT),
-        Column('destination_status', TEXT),
-        Column('source_status', TEXT),
-        Column('unknown_status', TEXT),
-])
-
-details_table = hf.module.generateModuleSubtable('details', module_table, [
-        Column('node', TEXT),
-        Column('transfer', FLOAT),
-        Column('destination', FLOAT),
-        Column('source', FLOAT),
-        Column('unknown', FLOAT),
-        Column('trans_message', TEXT),
-        Column('dest_message', TEXT),
-        Column('source_message', TEXT),
-        Column('unknown_message', TEXT),
-])
-
-hf.module.addModuleClass(CMSPhedexErrorLog)

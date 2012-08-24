@@ -15,6 +15,40 @@ class JobsStatistics(hf.module.ModuleBase):
     }
     config_hint = ''
     
+    table_columns = [
+        Column('details_group', TEXT),
+        Column('result_timestamp', INT),
+    ], []
+
+    subtable_columns = {
+        "groups": ([
+            Column('group', TEXT),
+            Column('parentgroup', TEXT),
+            Column('total', INT),
+            Column('running', INT),
+            Column('ncpus', INT),
+            Column('waiting', INT),
+            Column('pending', INT),
+            Column('ratio10', INT),
+            Column('status', FLOAT),
+        ], []),
+
+        "details": ([
+            Column('user', TEXT),
+            Column('total', INT),
+            Column('running', INT),
+            Column('ncpus', INT),
+            Column('pending', INT),
+            Column('waiting', INT),
+            Column('ratio100', INT),
+            Column('ratio80', INT),
+            Column('ratio30', INT),
+            Column('ratio10', INT),
+            Column('status', FLOAT),
+        ], []),
+    }
+    
+    
     def prepareAcquisition(self):
         # read configuration
         try:
@@ -193,14 +227,14 @@ class JobsStatistics(hf.module.ModuleBase):
 
 
     def fillSubtables(self, parent_id):
-        groups_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.groups_db_value_list])
-        details_table.insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['groups'].insert().execute([dict(parent_id=parent_id, **row) for row in self.groups_db_value_list])
+        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
 
-        group_list = groups_table.select().where(groups_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        group_list = self.subtables['groups'].select().where(self.subtables['groups'].c.parent_id==self.dataset['id']).execute().fetchall()
         if group_list is None:
             group_list = []
 
@@ -239,41 +273,9 @@ class JobsStatistics(hf.module.ModuleBase):
         data['group_list'] = group_tree_list
 
         # get the detailed information from database
-        info_list = details_table.select().where(details_table.c.parent_id==self.dataset['id']).execute().fetchall()
+        info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['info_list'] = map(lambda x: dict(x), info_list)
 
         return data
 
 
-module_table = hf.module.generateModuleTable(JobsStatistics, "jobs_statistics", [
-    Column('details_group', TEXT),
-    Column('result_timestamp', INT),
-])
-
-groups_table = hf.module.generateModuleSubtable("groups", module_table, [
-    Column('group', TEXT),
-    Column('parentgroup', TEXT),
-    Column('total', INT),
-    Column('running', INT),
-    Column('ncpus', INT),
-    Column('waiting', INT),
-    Column('pending', INT),
-    Column('ratio10', INT),
-    Column('status', FLOAT),
-])
-
-details_table = hf.module.generateModuleSubtable("details", module_table, [
-    Column('user', TEXT),
-    Column('total', INT),
-    Column('running', INT),
-    Column('ncpus', INT),
-    Column('pending', INT),
-    Column('waiting', INT),
-    Column('ratio100', INT),
-    Column('ratio80', INT),
-    Column('ratio30', INT),
-    Column('ratio10', INT),
-    Column('status', FLOAT),
-])
-
-hf.module.addModuleClass(JobsStatistics)

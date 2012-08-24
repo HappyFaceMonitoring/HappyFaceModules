@@ -19,6 +19,11 @@ class Plot(hf.module.ModuleBase):
     }
     config_hint = ''
     
+    table_columns = [
+        Column("plot_file", TEXT)
+    ], ['plot_file']
+    
+
     def prepareAcquisition(self):
         
         url = self.config["plot_url"]
@@ -67,10 +72,3 @@ class Plot(hf.module.ModuleBase):
             })
         return data
 
-plot_table = hf.module.generateModuleTable(Plot, "plot",
-[
-    Column("plot_file", TEXT)
-])
-
-hf.module.addColumnFileReference(plot_table, "plot_file")
-hf.module.addModuleClass(Plot)
