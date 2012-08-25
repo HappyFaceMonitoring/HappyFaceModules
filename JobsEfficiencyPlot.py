@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import hf, lxml, logging, datetime
 import numpy as np 
-import scipy as sp 
-import matplotlib.pyplot as plt
 from numpy import array
 from sqlalchemy import *
 from lxml import etree
@@ -68,6 +66,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         return False
 
     def extractData(self):
+        import matplotlib.pyplot as plt
 
         data = {}
         data["filename_eff_plot"] = ""
