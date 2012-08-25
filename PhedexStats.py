@@ -71,7 +71,7 @@ class PhedexStats(hf.module.ModuleBase):
         return data
 
     def fillSubtables(self, parent_id):
-        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)

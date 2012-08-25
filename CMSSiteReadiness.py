@@ -172,7 +172,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
             l = len(self.data['01_color'])
             for i in xrange(l):
                 yield dict(((key, val[i]) for key,val in self.data.iteritems()), order=i, parent_id=parent_id)
-        self.subtable['rows'].insert().execute([k for k in generate()])
+        self.subtables['rows'].insert().execute([k for k in generate()])
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
