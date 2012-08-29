@@ -76,7 +76,7 @@ class PhedexStats(hf.module.ModuleBase):
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
 
-        info_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+        info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['info_list'] = map(dict, info_list)
 
         return data

@@ -176,6 +176,6 @@ class CMSSiteReadiness(hf.module.ModuleBase):
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        info_list = self.subtable['rows'].select().where(self.subtable['rows'].c.parent_id==self.dataset['id']).order_by(self.subtable['rows'].c.order.asc()).execute().fetchall()
+        info_list = self.subtables['rows'].select().where(self.subtables['rows'].c.parent_id==self.dataset['id']).order_by(self.subtables['rows'].c.order.asc()).execute().fetchall()
         data['tabledata'] = map(dict, info_list)        
         return data
