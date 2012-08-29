@@ -69,11 +69,11 @@ class Summary(hf.module.ModuleBase):
         return data
             
     def fillSubtables(self, parent_id):
-        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).order_by(self.subtable['details'].c.order.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.order.asc()).execute().fetchall()
         rawhelpdata = map(dict, details_list)
         helpdata = {}
         tempsite = ''

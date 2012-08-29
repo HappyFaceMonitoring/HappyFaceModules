@@ -38,7 +38,7 @@ this is necessary to determine destination or source of the file!""", 'from'),
         Column('unknown_status', TEXT),
     ], []
     
-    subtable_colums = {
+    subtable_columns = {
         'details': ([
             Column('node', TEXT),
             Column('transfer', FLOAT),
@@ -185,10 +185,10 @@ this is necessary to determine destination or source of the file!""", 'from'),
         return data
         
     def fillSubtables(self, parent_id):
-        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
         
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, details_list)
         return data

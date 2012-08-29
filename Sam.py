@@ -7,7 +7,8 @@ import json
 
 class Sam(hf.module.ModuleBase):
     config_keys = {
-        'report_url': ('URL of the SAM report', ''),
+        'source_url': ('Source File', ''),
+        'report_url': ('URL for detailed information in dashboard', 'http://dashb-cms-sum.cern.ch/dashboard/request.py/getMetricResultDetails'),
         'blacklist': ('Colon separated group to exclude from the output', ''),
         'storageelements': ('Colon separated list of storage element to include in the output', ''),
         'computingelements': ('Include all CEs with the given type', 'TYPE:CREAM-CE'),
@@ -223,22 +224,28 @@ class Sam(hf.module.ModuleBase):
         return data
         
     def fillSubtables(self, parent_id):
-        self.subtable['summary'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_summary_db_value_list])
-        self.subtable['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-        self.subtable['individual'].insert().execute([dict(parent_id=parent_id, **row) for row in self.individual_db_value_list])
+        self.subtables['summary'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_summary_db_value_list])
+        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['individual'].insert().execute([dict(parent_id=parent_id, **row) for row in self.individual_db_value_list])
     
     def getTemplateData(self):
         
         data = hf.module.ModuleBase.getTemplateData(self)
         helpdata = {}
         
-        details_list = self.subtable['details'].select().where(self.subtable['details'].c.parent_id==self.dataset['id']).order_by(self.subtable['details'].c.service_name.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select()\
+            .where(self.subtables['details'].c.parent_id==self.dataset['id'])\
+            .order_by(self.subtables['details'].c.service_name.asc()).execute().fetchall()
         helpdata['details'] = map(dict, details_list)
         
-        summary_list = self.subtable['summary'].select().where(self.subtable['summary'].c.parent_id==self.dataset['id']).order_by(self.subtable['summary'].c.name.asc()).execute().fetchall()
+        summary_list = self.subtables['summary'].select()\
+            .where(self.subtables['summary'].c.parent_id==self.dataset['id'])\
+            .order_by(self.subtables['summary'].c.name.asc()).execute().fetchall()
         helpdata['summary'] = map(dict, summary_list)
         
-        individual_list = self.subtable['individual'].select().where(self.subtable['individual'].c.parent_id==self.dataset['id']).order_by(self.subtable['individual'].c.name.asc()).execute().fetchall()
+        individual_list = self.subtables['individual'].select()\
+            .where(self.subtables['individual'].c.parent_id==self.dataset['id'])\
+            .order_by(self.subtables['individual'].c.name.asc()).execute().fetchall()
         data['indsum'] = map(dict, individual_list)
         
         
