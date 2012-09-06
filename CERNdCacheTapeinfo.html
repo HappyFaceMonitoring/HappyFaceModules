@@ -1,0 +1,25 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+<tr>
+<td class="PhedexStatsTableFirstCol">Used tape at ${module.dataset["used_tape_timestamp"]}</td>
+<td>${module.dataset["used_tape_size"]} TB</td>
+</tr>
+<tr>
+<td class="PhedexStatsTableFirstCol">Total tape at ${module.dataset["used_tape_timestamp"]}</td>
+<td>${module.dataset["total_tape_size"]}  TB</td>
+</tr>
+<tr>
+<td class="PhedexStatsTableFirstCol">Used disk  at ${module.dataset["used_tape_timestamp"]}</td>
+<td>${module.dataset["used_disk_size"]}  TB</td>
+</tr>
+<tr>
+<td class="PhedexStatsTableFirstCol">Total disk  at ${module.dataset["used_tape_timestamp"]}</td>
+<td>${module.dataset["total_disk_size"]}  TB</td>
+</tr>
+</table>
+<br />
+
+</%def>
