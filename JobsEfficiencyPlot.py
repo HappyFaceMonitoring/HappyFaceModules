@@ -2,6 +2,8 @@
 import hf, lxml, logging, datetime
 import numpy as np 
 from numpy import array
+import matplotlib
+import matplotlib.pyplot as plt
 from sqlalchemy import *
 from lxml import etree
 
