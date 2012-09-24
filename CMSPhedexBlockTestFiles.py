@@ -64,9 +64,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         data["request_timestamp"] = int(float(root.get('request_timestamp')))
 
         old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).order_by(self.module_table.c.request_timestamp.desc()).execute().fetchone()
-        print(self.instance_name)
         if old_data == None:
-            print('No old data found')
             self.save_data = 'yes'
             data['data_id'] = 'NULL'
 #No old data was found, parse the file and store all values in database:
@@ -80,7 +78,6 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                 if node.tag == 'node':
                     for block in node:
                         if block.tag == 'block':
-                            print('found block')
                             block_name = block.get('name')
                             block_time_reported = 0
                             akt_files_raw = 0
@@ -91,7 +88,6 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                     block_time_reported = int(float(test.get('time_reported')))
                                     for sub_file in test:
                                         if sub_file.tag == 'file':
-                                            print('found file')
                                             akt_files_raw +=1
                                             num_files_raw +=1
                                             file_name = sub_file.get('name')
@@ -137,10 +133,8 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
             elif old_data['data_id'] == 'NULL':
                 pass
             else:
-                self.logger.error('Something went terreblz wrong. The dataset, loaded from db was coruppted, file parsed and stored in db')
-            print('found old data')
+                self.logger.error('Something went terrebly wrong. The dataset, loaded from db was coruppted, file parsed and stored in db')
             if old_data['request_timestamp'] < data['request_timestamp']:
-                print('parse new xml file')
                 #The dataset loaded from db is older than the new one, now there is work to do!
                 self.save_data = 'yes'
                 data['data_id'] = 'NULL'
@@ -203,7 +197,6 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                     data['status'] = 0.0
             
             elif old_data['request_timestamp'] == data['request_timestamp']:
-                print('copy old data')
                 # we have old data, just copy them all over
                 data['data_id'] = old_data['id']
                 data["failed_blocks_raw"] = old_data['failed_blocks_raw']
@@ -215,9 +208,10 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                 data['status'] = old_data['status']
                 
             else:
-                self.logger.error('Something went terrebly wrong. The new sourcefile couldn provide a usable request_timestamp')
-        
-        print(data)
+                self.logger.error('Something went terrebly wrong. the timestamp of the old dataset seems to be greater than the new one...')
+                data['status'] = -2
+                data['data'] = 'NULL'
+                data['request_timestamp'] = 0
         return data
         
     def fillSubtables(self, parent_id):
