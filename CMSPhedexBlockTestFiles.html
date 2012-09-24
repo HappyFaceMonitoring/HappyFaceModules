@@ -1,0 +1,159 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form>
+<table class='TableData'>
+<hr>
+<th>${module.dataset['instance']}</th>
+<th>Request Time</th>
+<th>Num. Failed Blocks</th>
+<th>Num. Failed Files </th>
+</hr>
+<tr>
+<th>filtered</th>
+<td>${module.dataset['request_date']}</td>
+<td>${module.dataset["failed_blocks"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_blocks_filtered').slideToggle()" /></td>
+<td>${module.dataset["failed_total_files"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_files_filtered').slideToggle()" /></td>
+</tr>
+<tr>
+<th>not filtered</th>
+<td>${module.dataset['request_date']}</td>
+<td>${module.dataset["failed_blocks_raw"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_blocks_out').slideToggle()" /></td>
+<td>${module.dataset["failed_total_files_raw"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_files_out').slideToggle()" /></td>
+</tr>
+<tr>
+<th>without filter</th>
+<td>${module.dataset['request_date']}</td>
+<td>${module.dataset["failed_blocks_raw"] + module.dataset["failed_blocks"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_blocks_all').slideToggle()" /></td>
+<td>${module.dataset["failed_total_files_raw"] + module.dataset["failed_total_files"]}<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_files_all').slideToggle()" /></td>
+</tr>
+</table>
+</form>
+<div class="DetailedInfo" id="${module.instance_name}_blocks_filtered" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Block</td>
+<td>Failed Files</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 0 and group['filtered'] == 0:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+<div class="DetailedInfo" id="${module.instance_name}_files_filtered" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Filek</td>
+<td>Blockref</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 1 and group['filtered'] == 0:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+<div class="DetailedInfo" id="${module.instance_name}_blocks_out" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Block</td>
+<td>Failed Files</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 0 and group['filtered'] == 1:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails_raw'] - group['fails']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+<div class="DetailedInfo" id="${module.instance_name}_files_out" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>File</td>
+<td>Blockref</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 1 and group['filtered'] == 1:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails_raw'] - group['fails']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+<div class="DetailedInfo" id="${module.instance_name}_blocks_all" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Block</td>
+<td>Failed Files</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 0:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails_raw']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+<div class="DetailedInfo" id="${module.instance_name}_files_all" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>File</td>
+<td>Blockref</td>
+<td>Time reported</td>
+</tr>
+%for i,group in enumerate(details):
+%if group['isfile'] == 1:
+<tr>
+<td>${group['block']}</td>
+<td>${group['fails_raw']}</td>
+<td>${group['time_reported']}</td>
+</tr>
+%endif
+%endfor
+ </table>
+</div>
+</%def>
