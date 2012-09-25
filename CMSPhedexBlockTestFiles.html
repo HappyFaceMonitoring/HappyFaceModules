@@ -22,6 +22,12 @@ function ${module.instance_name}_row_button(group) {
 </script>
 <form>
 <table class='TableData'>
+%if module.dataset['status'] == 0.5 or module.dataset['status'] == 0.1:
+<b>The xml sourcefile is older than the warninglimit! Beware: shown information might not be correct</b> 
+%endif
+%if module.dataset['status'] == -2:
+<b>An error occured, the old data from the database is the new one recording to the timestamp...</b> 
+%endif
 <hr>
 <th>${module.dataset['instance']}</th>
 <th>Request Time</th>

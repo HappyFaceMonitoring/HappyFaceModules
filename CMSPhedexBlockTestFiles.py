@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hf, lxml, logging
 from datetime import datetime
+import time
 from sqlalchemy import *
 from lxml import etree
 
@@ -53,6 +54,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
     def extractData(self):
         data = {'request_timestamp': 0}
         data['source_url'] = self.blocktest_xml.getSourceUrl()
+        data['status'] = 1.0
         if self.blocktest_xml.errorOccured() or not self.blocktest_xml.isDownloaded():
             data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.blocktest_xml.error
             data['status'] = -1
@@ -62,8 +64,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         root = source_tree.getroot()
         data["request_date"] = root.get('request_date')
         data["request_timestamp"] = int(float(root.get('request_timestamp')))
-
-        old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).order_by(self.module_table.c.request_timestamp.desc()).execute().fetchone()
+        old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).order_by(self.module_table.c.id.desc()).execute().fetchone()
         if old_data == None:
             self.save_data = 'yes'
             data['data_id'] = 'NULL'
@@ -205,13 +206,73 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                 data["failed_total_files"] = old_data['failed_total_files']
                 data["request_timestamp"] = old_data['request_timestamp']
                 data['request_date'] = old_data['request_date']
-                data['status'] = old_data['status']
+                if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
+                    data['status'] = 0.0
                 
             else:
                 self.logger.error('Something went terrebly wrong. the timestamp of the old dataset seems to be greater than the new one...')
-                data['status'] = -2
-                data['data'] = 'NULL'
-                data['request_timestamp'] = 0
+                data['status'] = -2               
+                self.save_data = 'yes'
+                data['data_id'] = 'NULL'
+                num_blocks_raw =0 
+                num_files_raw = 0
+                num_blocks = 0
+                num_files = 0
+
+                for node in root:
+                    if node.tag == 'node':
+                        for block in node:
+                            if block.tag == 'block':
+                                block_name = block.get('name')
+                                block_time_reported = 0
+                                akt_files_raw = 0
+                                akt_files = 0
+                                num_blocks_raw += 1
+                                for test in block:
+                                    if test.tag == 'test':
+                                        block_time_reported = int(float(test.get('time_reported')))
+                                        for sub_file in test:
+                                            if sub_file.tag == 'file':
+                                                akt_files_raw +=1
+                                                num_files_raw +=1
+                                                file_name = sub_file.get('name')
+                                                filtered_out=0
+                                                for check_reject in self.filters:
+                                                    if check_reject is not '' and check_reject in file_name:
+                                                        filtered_out=1
+                                                for check_exception in self.filters_exceptions:
+                                                    if check_exception is not '' and check_exception in file_name: 
+                                                        filtered_out=0
+                                                num_files +=1-filtered_out
+                                                akt_files +=1-filtered_out
+                                                self.details_db_value_list.append({'block': file_name,
+                                                                        'isfile':  int(1),
+                                                                        'time_reported':  block_time_reported,
+                                                                        'fails': num_blocks,
+                                                                        'fails_raw': num_blocks_raw,
+                                                                        'filtered': filtered_out,
+                                                                        })
+                                block_filtered_out=1
+                                if akt_files>0:
+                                    num_blocks += 1
+                                    block_filtered_out=0
+                                self.details_db_value_list.append({'block': block_name,
+                                                            'isfile': int(0),
+                                                            'time_reported': block_time_reported,
+                                                            'fails': akt_files,
+                                                            'fails_raw': akt_files_raw,
+                                                            'filtered':  block_filtered_out,
+                                                        })
+                                
+                data["failed_blocks_raw"] = num_blocks_raw
+                data["failed_blocks"] = num_blocks
+                data["failed_total_files_raw"] = num_files_raw
+                data["failed_total_files"] = num_files
+                
+            if data['status'] == 1.0 and data['request_timestamp'] + 3600 * 24 * self.warning_limit <= time.time():
+                data['status'] = 0.5
+            elif data['status'] == 0.0 and data['request_timestamp'] +3600 * 24 * self.warning_limit <= time.time():
+                data['status'] = 0.1
         return data
         
     def fillSubtables(self, parent_id):
