@@ -2,13 +2,18 @@ import hf, logging
 from sqlalchemy import *
 from lxml.html import parse
 from datetime import datetime
+from datetime import timedelta
 
 class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
     config_keys = {
-        'source': ('URL of the dCache Dataset Restore Monitor (Lazy)', '')
+        'source': ('URL of the dCache Dataset Restore Monitor (Lazy)', ''),
+        'stage_max_retry': ('Retry limit', '2'),
+        'stage_max_time': ('Time limit (in hours)', '48'),
+#       'details_cutoff': ('Max. number of details', '100'),
+        'limit_warning': ('Warning limit', '5'),
+        'limit_critical': ('Critical limit', '10')
     }
     config_hint = ''
-    
     
     table_columns = [
         Column('total', INT),
@@ -18,6 +23,8 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         Column('status_waiting', INT),
         Column('status_suspended', INT),
         Column('status_unknown', INT),
+        Column('time_limit', INT),
+        Column('retry_limit', INT),
         Column('hit_retry', INT),
         Column('hit_time', INT),
     ], []
@@ -35,6 +42,23 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set!')
         self.source = hf.downloadService.addDownload(self.config['source'])
+        
+        if 'stage_max_retry' not in self.config: raise hf.exceptions.ConfigError('stage_max_retry option not set!')
+        self.stage_max_retry = int(self.config['stage_max_retry'])
+        
+        if 'stage_max_time' not in self.config: raise hf.exceptions.ConfigError('stage_max_time option not set!')
+        self.stage_max_time = int(self.config['stage_max_time'])
+        
+        if 'limit_warning' not in self.config: raise hf.exceptions.ConfigError('limit_warning option not set!')
+        self.limit_warning = int(self.config['limit_warning'])
+        
+        if 'limit_critical' not in self.config: raise hf.exceptions.ConfigError('limit_critical option not set!')
+        self.limit_critical = int(self.config['limit_critical'])
+        
+        try:
+            self.details_cutoff = int(self.config['details_cutoff'])
+        except:
+            self.details_cutoff = 0
 
         self.statusTagsOK = ['Pool2Pool','Staging']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
@@ -43,15 +67,17 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         self.total_problem = 0
         self.hit_retry = 0
         self.hit_time = 0
+
+        self.status = 1.0
        
         self.details_db_value_list = []
 
     def extractData(self):
         
         data = {'source_url': self.source.getSourceUrl(),
-                'total': 0,
-                'total_problem': 0,
-                'status': 1.0}
+                'time_limit': self.stage_max_time,
+                'retry_limit': self.stage_max_retry,
+                'status': self.status}
 
         if self.source.errorOccured() or not self.source.isDownloaded():
             data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source.error
@@ -63,6 +89,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
         stage_requests = []
         info = {}
+        # parse html
         for td in root.findall('.//td'):
             tag = td.get('class')
             info[tag] = td.text
@@ -73,12 +100,11 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         self.total = len(stage_requests)
         data['total'] = self.total
 
-
         states = {}
         for tag in (self.statusTagsOK + self.statusTagsFail):
             states[tag] = 0
-
         
+        count = 0
         for i in stage_requests:
             fail = False
             status = i['status'].split(' ')[0]
@@ -86,13 +112,24 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
                 self.total_problem += 1
             states[status] += 1
 
+            # Check if retry limit hit
             retries = int(i['retries'])
-            # FIXME hardcoded retry limit
-            if retries >= 2:
+            if retries >= self.stage_max_retry:
                 self.hit_retry += 1
                 fail = True
-            # FIXME implement time limit
+            
+            # Check if time limit hit
+            time_limit = timedelta(hours=self.stage_max_time)
+            now = datetime.now()
             started = datetime.strptime(i['started'],'%m.%d %H:%M:%S')
+            # No year information available, assume current year
+            started = started.replace(year=now.year)
+            # When timedelta is negative, assume last year
+            if (now - started) < timedelta(0):
+                started.replace(year=now.year-1)
+            if (now - started) > time_limit:
+                self.hit_time += 1
+                fail = True
 
             details_db_values = {}
             details_db_values['pnfs'] = i['pnfs']
@@ -101,7 +138,9 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
             details_db_values['status_short'] = status
             details_db_values['started_full'] = i['started']
             if fail:
-                self.details_db_value_list.append(details_db_values)
+                count += 1
+                if self.details_cutoff == 0 or count <= self.details_cutoff:
+                    self.details_db_value_list.append(details_db_values)
 
 
         data['total_problem'] = self.total_problem
@@ -110,6 +149,12 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         
         for tag in (self.statusTagsOK + self.statusTagsFail):
             data['status_'+tag.lower()] = states[tag]
+
+        if count >= self.limit_warning:
+            self.status = 0.5
+        if count >= self.limit_critical:
+            self.status = 0.0
+        data['status'] = self.status
 
         return data
 
@@ -123,4 +168,3 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         data['info_list'] = map(dict, info_list)
 
         return data
-
