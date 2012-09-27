@@ -65,7 +65,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         data["request_date"] = root.get('request_date')
         data["request_timestamp"] = int(float(root.get('request_timestamp')))
         old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).order_by(self.module_table.c.id.desc()).execute().fetchone()
-        if old_data == None:
+        if old_data == None or old_data['data_id'] == None:
             self.save_data = 'yes'
             data['data_id'] = 'NULL'
 #No old data was found, parse the file and store all values in database:

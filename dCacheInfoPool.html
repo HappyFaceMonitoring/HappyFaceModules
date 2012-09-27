@@ -1,0 +1,32 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form>
+<table class=TableData>
+%for i,col in enumerate(overview):
+<tr>
+<td>${col[0]}</td>
+<td>${col[1]}</td>
+</tr>
+%endfor
+</table>
+</form>
+
+<input type="button" value="error/warning results" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class='TableData'>
+%for i,group in enumerate(details):
+<tr class= ${group[0]}>
+%for j,tds in enumerate(group):
+%if tds is not 'critical' and tds is not 'warning' and tds is not 'ok' and tds is not 'none':
+<td>${tds}</td>
+%endif
+%endfor
+
+</tr>
+%endfor
+</table>
+</div>
+
+</%def>

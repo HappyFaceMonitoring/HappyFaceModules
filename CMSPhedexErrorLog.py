@@ -3,7 +3,6 @@ import hf, lxml, logging, datetime
 from sqlalchemy import *
 from lxml import etree
 
-#Alles in Class umschreiben! wichtig: bewertung des moduls + der globalerrors in acquire auslesen und darauf achten, dass eingestellt werden kann ob es das to oder from  modul ist! Datetimeabfrage fuer die einzelnen errors in den files mit grundtimestamp von request der page inklusive einstellbar wie weit die fehler zeitlich davon abweichen duerfen
 class CMSPhedexErrorLog(hf.module.ModuleBase):
     
     config_keys = {
