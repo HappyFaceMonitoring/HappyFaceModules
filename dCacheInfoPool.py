@@ -125,7 +125,6 @@ class dCacheInfoPool(hf.module.ModuleBase):
                                             elif metric.get('name') == 'removable':
                                                 appending['removable'] = float(metric.text) / self.unit
                                         self.details_db_value_list.append(appending)
-        print(self.details_db_value_list)
         data['num_pools'] = 0
         data['crit_pools'] = 0
         data['warn_pools'] = 0
@@ -154,7 +153,6 @@ class dCacheInfoPool(hf.module.ModuleBase):
         elif data['free'] / data['total'] <= self.global_warning_ratio or data['crit_pools'] > self.global_warning_poolcriticals or data['warn_pools'] > self.global_warning_poolwarnings:
             data['status'] = 0.5
 
-        print(data)
         return data
     
     def fillSubtables(self, parent_id):
