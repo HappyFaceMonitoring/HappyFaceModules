@@ -1,0 +1,100 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+function ${module.instance_name}_row_button_summary(name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="job,'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value="${module.instance_name}_'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_1" value="${module.instance_name},summary,active,active" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_2" value="${module.instance_name},summary,max,max" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_3" value="${module.instance_name},summary,queued,queued" />');
+    $('#${module.instance_name}_plot_form').submit();
+}
+
+function ${module.instance_name}_row_button_info(pool,name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="pool,'+pool+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value="${module.instance_name}_'+pool+'_'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_1" value="${module.instance_name},info,active,active" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter_1" value="job,'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_2" value="${module.instance_name},info,max,max" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter_2" value="job,'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_3" value="${module.instance_name},info,queued,queued" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter_3" value="job,'+name+'" />');
+    $('#${module.instance_name}_plot_form').submit();
+}
+function ${module.instance_name}_toggle(gnarfz) {
+    $('input[id*="${module.instance_name}_group_"]').prop("checked", !$('input[id*="${module.instance_name}_group_"]').is(":checked"));
+    $('input[id*="${module.instance_name}_variable"]').prop("checked", !$('input[id*="${module.instance_name}_variable"]').is(":checked"));
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="'+gnarfz+'" value="asdf" />');
+}
+</script>
+<form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getTimeseriesUrl()}" target="_blank">
+ <table style="font: bold 0.7em sans-serif; width:800px; background-color: #ddd; border: 1px #999 solid;">
+  <tr>
+   <td>Start:</td>
+   <td>
+    <%
+    import datetime
+    backintime = run['time']-datetime.timedelta(days=2)
+    %>
+    <input name="start_date" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+    <input name="start_time" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
+   </td>
+   <td>End:</td>
+   <td>
+    <input name="end_date" type="text" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+    <input name="end_time" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
+   </td>
+  </tr>
+ </table>
+<table class="TableData">
+<tr class="TableHeader">
+<th>Job</th>
+<th>Active</th>
+<th>Max</th>
+<th>Queued</th>
+</tr>
+%for i,group in enumerate(summary_list):
+<tr class="ok">
+<td>${group['job']}</td>
+<td>${group['active']}</td>
+<td>${group['max']}</td>
+<td>${group['queued']}</td>
+<td><input type="button" value="Plot Job" id="${group['job']}" onclick="${module.instance_name}_row_button_summary(this.id)" /></td>
+</tr>
+%endfor
+</table>
+</form>
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class="TableDetails">
+%for key,value in details_list.iteritems():
+%for i,group in enumerate(value):
+%if i == 0:
+<tr class="ok">
+<td rowspan="5">${group['pool']}</td>
+<td>${group['job']}</td>
+<td>${group['active']}</td>
+<td>${group['max']}</td>
+<td>${group['queued']}</td>
+<td><input type="button" value="Plot Job" id="${group['job']}" onclick="${module.instance_name}_row_button_info('${group['pool']}',this.id)" /></td> 
+</tr>
+%else:
+<tr class="ok">
+<td>${group['job']}</td>
+<td>${group['active']}</td>
+<td>${group['max']}</td>
+<td>${group['queued']}</td> 
+<td><input type="button" value="Plot Job" id="${group['job']}" onclick="${module.instance_name}_row_button_info('${group['pool']}',this.id)" /></td>
+</tr>
+%endif
+%endfor
+%endfor
+</table>
+</div>
+</%def>
