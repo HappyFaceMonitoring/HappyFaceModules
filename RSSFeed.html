@@ -1,0 +1,20 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+<%def name="content()">
+% for feed in feed_list:
+<div class="RSSFeedEntry"><p>
+<span class="RSSFeedEntryTitle">
+<a class="RSSFeedEntryTitle" href="${feed['link']}">
+${feed['title']}</a></span><br />
+<%
+# Convert published time to local time
+from time import ctime
+published = ctime(feed['published'])
+%>
+<span class="RSSFeedEntryDate">Posted on <strong>${published}</strong></span></p>
+<p>
+${feed['content']}
+</p>
+</div>
+% endfor
+</%def>
