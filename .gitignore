@@ -1,6 +1,7 @@
 *~
 *.pyc
 *.db
+.*.swp
 tmp/*
 static/archive/*
 .svn/*
