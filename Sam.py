@@ -251,6 +251,7 @@ class Sam(hf.module.ModuleBase):
         details_list = self.subtables['details'].select()\
             .where(self.subtables['details'].c.parent_id==self.dataset['id'])\
             .order_by(self.subtables['details'].c.service_name.asc()).execute().fetchall()
+        print(details_list)
         helpdata['details'] = map(dict, details_list)
         
         summary_list = self.subtables['summary'].select()\

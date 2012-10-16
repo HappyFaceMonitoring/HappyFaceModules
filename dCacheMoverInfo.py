@@ -127,7 +127,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
                     
                 pools[name] = (domain, values)
             return pools
-        print('CHeck1')
+        print('Check1')
         # now actually import the data
         tableRowExtractor = TableRowExtractor()
         for line in open(self.source.getTmpPath(), 'r'):
@@ -181,6 +181,21 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         info_list = map(dict, info_list)
         summary_list = self.subtables['summary'].select().where(self.subtables['summary'].c.parent_id==self.dataset['id']).execute().fetchall()
         summary_list = map(dict, summary_list)
+        for i,group in enumerate(summary_list):
+            if group['queued'] >= self.dataset['critical_queue_threshold']:
+                group['status'] = 'critical'
+            elif group['queued'] > 0:
+                group['status'] = 'warning'
+            else:
+                group['status'] = 'ok'
+        for i,group in enumerate(info_list):
+            if group['queued'] >= self.dataset['critical_queue_threshold']:
+                group['status'] = 'critical'
+            elif group['queued'] > 0:
+                group['status'] = 'warning'
+            else:
+                group['status'] = 'ok'
+            
         data['summary_list'] = summary_list
         poollist = []
         for i,group in enumerate(info_list):

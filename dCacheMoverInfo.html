@@ -60,7 +60,7 @@ function ${module.instance_name}_toggle(gnarfz) {
 <th>Queued</th>
 </tr>
 %for i,group in enumerate(summary_list):
-<tr class="ok">
+<tr class="${group['status']}">
 <td>${group['job']}</td>
 <td>${group['active']}</td>
 <td>${group['max']}</td>
@@ -76,7 +76,7 @@ function ${module.instance_name}_toggle(gnarfz) {
 %for key,value in details_list.iteritems():
 %for i,group in enumerate(value):
 %if i == 0:
-<tr class="ok">
+<tr class="${group['status']}">
 <td rowspan="5">${group['pool']}</td>
 <td>${group['job']}</td>
 <td>${group['active']}</td>
@@ -85,7 +85,7 @@ function ${module.instance_name}_toggle(gnarfz) {
 <td><input type="button" value="Plot Job" id="${group['job']}" onclick="${module.instance_name}_row_button_info('${group['pool']}',this.id)" /></td> 
 </tr>
 %else:
-<tr class="ok">
+<tr class="${group['status']}">
 <td>${group['job']}</td>
 <td>${group['active']}</td>
 <td>${group['max']}</td>
