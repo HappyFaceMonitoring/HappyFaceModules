@@ -1,0 +1,62 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+<tr class="TableHeader">
+<td class="TestTableFirstCol"> </td>
+<td class="TestTableSecondCol"> Number of Files </td>
+<td class="TestTableThirdCol"> 	Size in GiB </td>
+<td class="TestTableThirdCol"> Size in TiB </td>
+<td class="TestTableThirdCol"> Size in TB </td>
+</tr>
+<tr>
+<td class="TestTableFirstCol">Bare total</td>
+<td>${module.dataset["bare_total_files"]}</td>
+<td>${module.dataset["bare_total_size_gib"]}</td>
+<td>${module.dataset["bare_total_size_tib"]}</td>
+<td>${module.dataset["bare_total_size_tb"]}</td>
+</tr>
+<tr>
+<td class="TestTableFirstCol">Bare on disk</td>
+<td>${module.dataset["bare_on_disk_files"]} (${module.dataset["bare_on_disk_files_rel"]}%)  </td>
+<td>${module.dataset["bare_on_disk_size_gib"]} (${module.dataset["bare_on_disk_size_rel"]}%)  </td>
+<td>${module.dataset["bare_on_disk_size_tib"]} (${module.dataset["bare_on_disk_size_rel"]}%)  </td>
+<td>${module.dataset["bare_on_disk_size_tb"]}  (${module.dataset["bare_on_disk_size_rel"]}%)  </td>
+</tr>
+<tr>
+<td class="TestTableFirstCol">Total on disk</td>
+<td>${module.dataset["total_on_disk_files"]}</td>
+<td>${module.dataset["total_on_disk_size_gib"]}</td>
+<td>${module.dataset["total_on_disk_size_tib"]}</td>
+<td>${module.dataset["total_on_disk_size_tb"]}</td>
+</tr>
+
+</table>
+<br />
+
+
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class="TableDetails">
+<tr class="TableHeader">
+<td>Dataset Name</td>
+<td>Bare total</td>
+<td>Bare on Disk</td>
+<td>Total on Disk</td>
+</tr>
+% for info in info_list:
+<tr class="report">
+<tr bgcolor=${info['bg_color']} >
+<td>${info['name'] | h}</td>
+<td> ${info['bare_total_files'] | h} files <br>   ${info['bare_total_size'] | h} GiB </td>
+<td> ${info['bare_on_disk_files'] | h} files (${info['bare_on_disk_files_rel'] | h}%) <br> ${info['bare_on_disk_size'] | h} GiB (${info['bare_on_disk_size_rel'] | h}%) </td>
+<td> ${info['total_on_disk_files'] | h} files <br>   ${info['total_on_disk_size'] | h}  GiB</td>
+</tr>
+% endfor
+</table>
+</div>
+<br />
+
+</%def>
