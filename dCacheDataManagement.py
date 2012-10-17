@@ -20,9 +20,11 @@ class dCacheDataManagement(hf.module.ModuleBase):
         'xml_source': ('URL of the XML file', '')
     }
     config_hint = ''
-    last_chimera_timestamp=0
-    last_details_id=0
-    
+    #last_chimera_timestamp=0
+    #last_details_id=0
+    #details_db_value_list = []
+
+
     table_columns = [
         Column('chimera_timestamp', INT),   
         Column('latest_data_id', INT),
@@ -49,15 +51,8 @@ class dCacheDataManagement(hf.module.ModuleBase):
 
         if 'xml_source' not in self.config: raise hf.exceptions.ConfigError('xml_source option not set')
         self.xml_source = hf.downloadService.addDownload(self.config['xml_source'])
-        last_run= self.run['id']-1
-        # needed inforamtion from last run
-        if last_run>0:
-            self.last_chimera_timestamp =  self.module_table.select(self.module_table.c.id== last_run).execute().fetchone().chimera_timestamp
-            self.last_details_id = self.module_table.select(self.module_table.c.id== last_run).execute().fetchone().latest_data_id
-
-
-
         self.details_db_value_list = []
+ 
 
     def extractData(self):
         data = {'source_url': self.xml_source.getSourceUrl(),
@@ -79,15 +74,20 @@ class dCacheDataManagement(hf.module.ModuleBase):
         source_tree = etree.parse(open(self.xml_source.getTmpPath()))
         root = source_tree.getroot()
 
-
-        cur_timestamp = int(root.find('time').text)
+        cur_timestamp = 0
+        try:
+            cur_timestamp = int(root.find('time').text)
+        except:
+            cur_timestamp = -1
         data['chimera_timestamp'] = cur_timestamp
-        is_new=0
-        if cur_timestamp>self.last_chimera_timestamp:
-            is_new=1
-            data['latest_data_id']=self.run['id']
-        else:
-            data['latest_data_id']=self.last_details_id
+
+        is_new=1
+        data['latest_data_id']= -1
+        timestamp_is_in_database = self.module_table.select(and_(self.module_table.c.chimera_timestamp >= cur_timestamp, self.module_table.c.latest_data_id == -1 )).execute().fetchall()
+        if len(timestamp_is_in_database) > 0:
+            data['latest_data_id'] = timestamp_is_in_database[-1].id
+            is_new=0
+
 	for element in root:
 	    if element.tag == 'time':
                 pass
@@ -125,6 +125,9 @@ class dCacheDataManagement(hf.module.ModuleBase):
         self.dataset['bare_on_disk_size_tib']=rare_to_TiB(bare_on_disk_size_rare)
         self.dataset['bare_on_disk_size_tb']=rare_to_TB(bare_on_disk_size_rare)
 
+        self.dataset['akt_id_helpf']=  self.run['id']
+        self.dataset['subtables_id_helpf']=  self.dataset['id']
+
         if bare_total_size_rare>0:
             self.dataset['bare_on_disk_size_rel']=int(bare_on_disk_size_rare/bare_total_size_rare*100)
         else:
@@ -139,7 +142,13 @@ class dCacheDataManagement(hf.module.ModuleBase):
         self.dataset['total_on_disk_size_tib']=rare_to_TiB(total_on_disk_size_rare )
         self.dataset['total_on_disk_size_tb']=rare_to_TB(total_on_disk_size_rare )
 
-        info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['latest_data_id']).execute().fetchall() 
+
+        info_list = []
+        if self.dataset['latest_data_id']>-1:
+            info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['latest_data_id']).execute().fetchall()
+        else:
+            info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+
         info_list_expand =[]
         for info in info_list:
             name_rare = info.name
