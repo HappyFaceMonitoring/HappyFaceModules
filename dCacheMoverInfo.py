@@ -127,7 +127,6 @@ class dCacheMoverInfo(hf.module.ModuleBase):
                     
                 pools[name] = (domain, values)
             return pools
-        print('Check1')
         # now actually import the data
         tableRowExtractor = TableRowExtractor()
         for line in open(self.source.getTmpPath(), 'r'):
