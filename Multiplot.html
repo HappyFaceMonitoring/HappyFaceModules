@@ -1,0 +1,10 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form>
+%for i,group in enumerate(files):
+<img src="/${group['plot_file']}" alt="" />
+%endfor
+</form>
+</%def>

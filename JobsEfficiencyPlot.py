@@ -17,8 +17,6 @@
 import hf, lxml, logging, datetime
 import numpy as np 
 from numpy import array
-import matplotlib
-import matplotlib.pyplot as plt
 from sqlalchemy import *
 from lxml import etree
 
@@ -39,7 +37,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         try:
             
             group = self.config["group"].strip()
-            self.plt = plt
+            
             self.groups = []
             if group != '': self.groups = group.split(',')
         except KeyError, ex:
@@ -83,8 +81,9 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         return False
 
     def extractData(self):
+        import matplotlib
         import matplotlib.pyplot as plt
-
+        self.plt = plt
         data = {}
         data["filename_eff_plot"] = ""
         data["filename_rel_eff_plot"] = ""

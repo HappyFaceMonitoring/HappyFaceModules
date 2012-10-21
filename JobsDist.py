@@ -17,8 +17,6 @@
 import hf, lxml, logging, datetime
 import numpy as np 
 from numpy import array
-import matplotlib
-import matplotlib.pyplot as plt
 from sqlalchemy import *
 from lxml import etree
 
@@ -43,7 +41,7 @@ class JobsDist(hf.module.ModuleBase):
             if group != '': self.groups = group.split(',')
             else: self.groups = group
             self.splitnum = 1
-            self.plt = plt
+            
             if self.variable == 'cputime' or self.variable == 'walltime':
                 self.splitnum = 3
         except KeyError, e:
@@ -57,6 +55,9 @@ class JobsDist(hf.module.ModuleBase):
         
 
     def extractData(self):
+        import matplotlib
+        import matplotlib.pyplot as plt
+        self.plt = plt
         data = {}
         data["filename_eff_plot"] = ""
         data["result_timestamp"] = 0
