@@ -62,15 +62,19 @@ class dCacheTransfers(hf.module.ModuleBase):
             self.time_warning_limit = int(self.config['time_warning_limit'])
             self.time_critical_limit = int(self.config['time_critical_limit'])
             self.rating_ratio = float(self.config['rating_ratio'])
-            self.rating_threshold = int(self.config['rating_threshold'])
-            self.source = hf.downloadService.addDownload(self.config['source_url']) 
-            self.details_db_value_list = []
+            self.rating_threshold = int(self.config['rating_threshold']) 
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
-        
+	if 'source_url' not in self.config: raise hf.exceptions.ConfigError('No source file')
+	self.source = hf.downloadService.addDownload(self.config['source_url'])
+        self.details_db_value_list = []
     def extractData(self):
         data = {}
-        data['source_url'] = self.source.getSourceUrl()
+	data['source_url'] = self.source.getSourceUrl()
+	if self.source.errorOccured() or not self.source.isDownloaded():
+	  data['error_string'] = 'Source file was  not downloaded. Reason: %s' % self.source.error
+	  data['status'] = -1
+	  return data
         data['below_speed_warning_limit'] = 0
         data['below_speed_critical_limit'] = 0
         data['exceed_time_warning_limit'] = 0
