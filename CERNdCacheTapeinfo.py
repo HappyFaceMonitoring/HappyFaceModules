@@ -89,7 +89,7 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         start_str = all_lines.find("Data on Grid SEs as of")
 
         date_string=all_lines[start_str:end_str].splitlines()[2]
-        used_tape_time=datetime.strptime(date_string,'%a %b %d %H:%M:%S %Z %Y')
+      #  used_tape_time=datetime.strptime(date_string,'%a %b %d %H:%M:%S %Z %Y')
 
 
         data['total_tape_size'] = total_tape_f
