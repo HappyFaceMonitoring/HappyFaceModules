@@ -66,7 +66,7 @@ class RSSFeed(hf.module.ModuleBase):
             try:
                 details_db_values['published'] = int(mktime(entry.published_parsed))
             except:
-                details_deb_values['published'] = 0
+                details_db_values['published'] = 0
             details_db_values['content'] = entry.summary
 
             self.details_db_value_list.append(details_db_values)
