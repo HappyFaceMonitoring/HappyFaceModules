@@ -178,15 +178,12 @@ class dCacheInfoPool(hf.module.ModuleBase):
 
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         details_list = map(lambda x: dict(x), details_list)
-        self.logger.error(self.dataset)
         
         
         special_details = self.dataset['special_details']
         special_overview = self.dataset['special_overview']
         special_overview = self.dataset['special_overview'].split(',')
         special_details = self.dataset['special_details'].split(',')
-        self.logger.error(special_overview)
-        self.logger.error(special_details)
         
         for i,special in enumerate(special_overview):
             if '=' in special:
@@ -198,12 +195,10 @@ class dCacheInfoPool(hf.module.ModuleBase):
         for i,special in enumerate(special_details):
             if '=' in special:
                 special_details[i] = special.split('=')
-                special_details[i][1] = parser.expr(special_details[i][1]).compile()
+                special_details[i].append(parser.expr(special_details[i][1]).compile())
             else:
                 pass
             
-        self.logger.error(special_overview)
-        self.logger.error(special_details)
         overview_list = []
         t = self.dataset['total']
         p = self.dataset['precious']
@@ -229,15 +224,37 @@ class dCacheInfoPool(hf.module.ModuleBase):
         help_appending = []
         help_appending.append('none')
         help_appending.append('Poolname')
-        help_appending.append('Total Space [' + self.dataset['unit'] + ']')
-        help_appending.append('Free Space [' + self.dataset['unit'] + ']')
-        help_appending.append('Used Space [' + self.dataset['unit'] + ']')
-        help_appending.append('Precious Space [' + self.dataset['unit'] + ']')
-        help_appending.append('Removable Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_0' value='total' checked='checked' />" + 'Total Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_1' value='free' checked='checked' />" + 'Free Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_2' value='total-free' checked='checked' />" + 'Used Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_3' value='precious' checked='checked' />" + 'Precious Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_4' value='removable' checked='checked' />" + 'Removable Space [' + self.dataset['unit'] + ']')
+        
         for i,special in enumerate(special_details):
-            help_appending.append(special[0])
+          helpstring = str(special[1])
+          helpstring = helpstring.replace('r', 'removable')
+          helpstring = helpstring.replace('t', 'total')
+          helpstring = helpstring.replace('f', 'free')
+          helpstring = helpstring.replace('p', 'precious')
+          help_appending.append(str("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_%i' value="%int(i + 5)) + str(helpstring) + " checked='checked' />" + str(special[0]))
         details_finished_list.append(help_appending)
         
+        help_appending = []
+        help_appending.append('none')
+        help_appending.append(str("<input id='" +self.dataset['instance'] + "_toggle_button' type='button' value='Toggle Selection' onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_toggle('a')/>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('total')>Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('free')>Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('total-free')>Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('precious')>Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('removable')>Plot Col</button>"))
+        for i,special in enumerate(special_details):
+          helpstring = special[1]
+          helpstring = helpstring.replace('r', 'removable')
+          helpstring = helpstring.replace('t', 'total')
+          helpstring = helpstring.replace('f', 'free')
+          helpstring = helpstring.replace('p', 'precious')
+          help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('" + helpstring + "')>Plot Col</button>"))
+        details_finished_list.append(help_appending)
         for i,pool in enumerate(details_list):
             help_appending= []
             if pool['status'] == 1.0:
@@ -261,7 +278,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             
             for i,special in enumerate(special_details):
                 try:
-                    help_appending.append(eval(special[1]))
+                    help_appending.append(eval(special[2]))
                 except:
                     help_appending.append('matherror')
                 
