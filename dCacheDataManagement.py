@@ -142,7 +142,9 @@ class dCacheDataManagement(hf.module.ModuleBase):
         self.dataset['total_on_disk_size_tib']=rare_to_TiB(total_on_disk_size_rare )
         self.dataset['total_on_disk_size_tb']=rare_to_TB(total_on_disk_size_rare )
 
-
+        return data
+    
+    def ajax(self, **kwargs):
         info_list = []
         if self.dataset['latest_data_id']>-1:
             info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['latest_data_id']).execute().fetchall()
@@ -186,5 +188,4 @@ class dCacheDataManagement(hf.module.ModuleBase):
 
             info_list_expand.append(info_expand)
 
-        data['info_list'] = map(dict,info_list_expand)
-        return data
+        return map(dict,info_list_expand)

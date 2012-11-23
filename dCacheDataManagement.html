@@ -35,9 +35,54 @@
 <br />
 
 
-
-<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<script type="text/javascript">
+$(function() {
+	function handle_ajax_response(data) {
+		$('#${module.instance_name}_spinner').remove();
+		if(data["status"] == "success") {
+			var table = $('#${module.instance_name}_details table');
+			console.log(table);
+			console.log(data["data"].length);
+			console.log(data["data"][0]);
+			for(var i = 0; i < data["data"].length; i++) {
+				var row = data["data"][i];
+				var name = row["name"]
+				table.append("<tr class=\"report\" style=\"background-color: "+row["bg_color"]+"\" ><td>"+row["name"]+"</td>"
+				+ "<td>"+row["bare_total_files"]+" files<br />"+row["bare_total_size"]+" GiB</td>"
+				+ "<td>"+row["bare_on_disk_files"]+" files"+row["bare_on_disk_files_rel"]+"%<br />"
+				+row["bare_on_disk_size"]+" GiB "+row["bare_on_disk_size_rel"]+"%</td>"
+				+ "<td>"+row["total_on_disk_files"]+"<br />"+row["total_on_disk_size"]+" GiB</td></tr>");
+			}
+			
+		}
+		else {
+			// Todo: Give user some feedback
+		}
+	}
+	downloaded_additional_data = false;
+	$('#${module.instance_name}_toggle').click(function() {
+		$('#${module.instance_name}_details').toggle();
+		if(!downloaded_additional_data) {
+			downloaded_additional_data = true;
+			$.ajax("${module.ajaxUrl()}", {
+				error: function(jqXHR, textStatus, errorThrown) {
+					handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
+				},
+				
+				success: function(data, textStatus, jqXHR) {
+					handle_ajax_response(data);
+				},
+				dataType: "json"
+			});
+		}
+	});
+});
+</script>
+<input type="button" value="show/hide details" onfocus="this.blur()" id="${module.instance_name}_toggle" />
 <div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<p id="${module.instance_name}_spinner">Loading contents of details table, this might take a few seconds...</br>
+<img src="${hf.config.get("paths", "static_url")}/images/sqlite_logo_mini.png" />
+</p>
 <table class="TableDetails">
 <tr class="TableHeader">
 <td>Dataset Name</td>
@@ -45,15 +90,6 @@
 <td>Bare on Disk</td>
 <td>Total on Disk</td>
 </tr>
-% for info in info_list:
-<tr class="report">
-<tr bgcolor=${info['bg_color']} >
-<td>${info['name'] | h}</td>
-<td> ${info['bare_total_files'] | h} files <br>   ${info['bare_total_size'] | h} GiB </td>
-<td> ${info['bare_on_disk_files'] | h} files (${info['bare_on_disk_files_rel'] | h}%) <br> ${info['bare_on_disk_size'] | h} GiB (${info['bare_on_disk_size_rel'] | h}%) </td>
-<td> ${info['total_on_disk_files'] | h} files <br>   ${info['total_on_disk_size'] | h}  GiB</td>
-</tr>
-% endfor
 </table>
 </div>
 <br />
