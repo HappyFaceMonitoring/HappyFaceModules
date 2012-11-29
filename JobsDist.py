@@ -122,69 +122,70 @@ class JobsDist(hf.module.ModuleBase):
 
         ### break image creation if there are no jobs
         if len(values) == 0:
-            data['error_string'] = 'found no data to plot'
+            data['error_string'] = "There are no '%s' jobs running" % self.config["groups"]
+            data["filename_eff_plot"] = ""
+        else:
+            min_var = min(values)
+            max_var = max(values)
+            diff_var = max_var - min_var
 
-        min_var = min(values)
-        max_var = max(values)
-        diff_var = max_var - min_var
+            # Show only one bin in case there is only one value or all values are
+            # equivalent
+            if diff_var == 0:
+                nbins = 1
 
-        # Show only one bin in case there is only one value or all values are
-        # equivalent
-        if diff_var == 0:
-            nbins = 1
-
-        content = [0]*nbins
-        for value in values:
-            if diff_var > 0:
-                bin = int(round((value - min_var) * nbins / diff_var))
-            else:
-                bin = nbins;
-
-            if bin == nbins:
-                bin = nbins - 1
-            content[bin] += 1
-
-        xlabels = [0]*nbins
-        for x in range(0,nbins):
-            num = min_var + (x + 0.5)/nbins * diff_var
-            int_num = int(num + 0.5)
-
-            xlabelvalues = []
-            for y in range(0, self.splitnum):
-                c = int_num / (60**y)
-                cstr = ''
-                if y < self.splitnum-1:
-                    cstr = "%02d" % (c % 60)
+            content = [0]*nbins
+            for value in values:
+                if diff_var > 0:
+                    bin = int(round((value - min_var) * nbins / diff_var))
                 else:
-                    cstr = str(c)
-                xlabelvalues.append(cstr)
+                    bin = nbins;
 
-            xlabelvalues.reverse()
-            xlabels[x] = ':'.join(xlabelvalues)
+                if bin == nbins:
+                    bin = nbins - 1
+                content[bin] += 1
 
-        max_bin_height = max(content);
-        scale_value = max_bin_height // 10
-        if scale_value == 0: scale_value = 5
+            xlabels = [0]*nbins
+            for x in range(0,nbins):
+                num = min_var + (x + 0.5)/nbins * diff_var
+                int_num = int(num + 0.5)
 
-        ind = np.arange(nbins)    # the x locations for the groups
-        width = 1.00       # the width of the bars: can also be len(x) sequence
+                xlabelvalues = []
+                for y in range(0, self.splitnum):
+                    c = int_num / (60**y)
+                    cstr = ''
+                    if y < self.splitnum-1:
+                        cstr = "%02d" % (c % 60)
+                    else:
+                        cstr = str(c)
+                    xlabelvalues.append(cstr)
 
-        fig = self.plt.figure()
+                xlabelvalues.reverse()
+                xlabels[x] = ':'.join(xlabelvalues)
 
-        axis = fig.add_subplot(111)
+            max_bin_height = max(content);
+            scale_value = max_bin_height // 10
+            if scale_value == 0: scale_value = 5
 
-        p0 = axis.bar(ind, content, width, color='orange')
+            ind = np.arange(nbins)    # the x locations for the groups
+            width = 1.00       # the width of the bars: can also be len(x) sequence
 
-        axis.set_position([0.10,0.2,0.85,0.75])
-        axis.set_xlabel(variable);
-        axis.set_ylabel('Number of Jobs')
-        axis.set_title(variable + ' distribution')
-        axis.set_xticks(ind + width / 2.0)
-        axis.set_xticklabels(xlabels, rotation='vertical')
-        axis.set_yticks(np.arange(0,max_bin_height + 5,scale_value))
+            fig = self.plt.figure()
 
-        fig.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_dist.png"), dpi=60)
-        data["filename_eff_plot"] = self.instance_name + "_jobs_dist.png"
+            axis = fig.add_subplot(111)
+
+            p0 = axis.bar(ind, content, width, color='orange')
+
+            axis.set_position([0.10,0.2,0.85,0.75])
+            axis.set_xlabel(variable);
+            axis.set_ylabel('Number of Jobs')
+            axis.set_title(variable + ' distribution')
+            axis.set_xticks(ind + width / 2.0)
+            axis.set_xticklabels(xlabels, rotation='vertical')
+            axis.set_yticks(np.arange(0,max_bin_height + 5,scale_value))
+
+            fig.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_dist.png"), dpi=60)
+            data["filename_eff_plot"] = self.instance_name + "_jobs_dist.png"
         return data
         
     def getGroupHierarchy(self, root):
