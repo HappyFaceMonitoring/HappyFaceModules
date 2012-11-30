@@ -26,7 +26,7 @@ to check if downloaded file is actuallly an image.")
 
 class Multiplot(hf.module.ModuleBase):
     config_keys = {
-        'plot_url': ('URL of the image to display', ''),
+        'plot_url01': ('URL of the image to display, for more images use plot_url02 and so on', ''),
         'use_start_end_time': ('Enable the mechanism to include two timestamps in the GET part of the URL', 'False'),
         'starttime_parameter_name': ('Name of the GET argument for the starting timestamp', 'starttime'),
         'endtime_parameter_name': ('Name of the GET argument for the end timestamp, which is now', 'endtime'),
@@ -44,10 +44,12 @@ class Multiplot(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         
-        url = self.config["plot_url"]
+        url = []
         self.plot = []
-        if ',' in url:
-            url = url.split(',')
+        for i,group in self.config.iteritems():
+	  if 'plot_url' in i:
+	    url.append(group)
+
         use_start_end_time = False
         try:
             use_start_end_time = self.config["use_start_end_time"] == "True"
@@ -56,27 +58,26 @@ class Multiplot(hf.module.ModuleBase):
         if use_start_end_time:
             for i, group in enumerate(url):
                 try:
-                    group = 'both||' + group + "&"+self.config["starttime_parameter_name"]+"="+str(int(time.time())-int(self.config["timerange_seconds"]))
+                    group = group + "&"+self.config["starttime_parameter_name"]+"="+str(int(time.time())-int(self.config["timerange_seconds"]))
                 except KeyError, e:
                     pass
                 try:
-                    group = 'both||' + group + "&"+self.config["endtime_parameter_name"]+"="+str(int(time.time()))
+                    group = group + "&"+self.config["endtime_parameter_name"]+"="+str(int(time.time()))
                 except KeyError, e:
                     pass
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
                 self.plot.append(appender)
         else:
             for i, group in enumerate(url):
-                try:
-                    group = 'both||' + group
-                except KeyError, e:
-                    pass
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
                 self.plot.append(appender)
                 
     def extractData(self):
         data = {}
         data['description'] = ''
+        for i,group in enumerate(self.plot):
+          data['description'] += 'plot%20i: '%i + group['plot_file'].getSourceUrl()
+           
         for i,group in enumerate(self.plot):
             if group['plot_file'].isDownloaded():
                 if imghdr:
