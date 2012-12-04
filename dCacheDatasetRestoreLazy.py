@@ -73,7 +73,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         
         try:
             self.details_cutoff = int(self.config['details_cutoff'])
-        except:
+        except IndexError:
             self.details_cutoff = 0
 
         self.statusTagsOK = ['Pool2Pool','Staging']
