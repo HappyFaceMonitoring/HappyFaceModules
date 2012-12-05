@@ -2,11 +2,5 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-<form>
-<table class=TableData>
-<tr>
-<td> <img src=${'/'+module.dataset["filename_eff_plot"].getArchivePath()}></td>
-</tr>
-</table>
-</form>
+<img src=${module.dataset["filename_eff_plot"].getArchiveUrl()} />
 </%def>
