@@ -2,9 +2,10 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-<form>
 %for i,group in enumerate(files):
+% if i > 0:
+<br />
+% endif
 <img src="/${group['plot_file']}" alt="" />
 %endfor
-</form>
 </%def>
