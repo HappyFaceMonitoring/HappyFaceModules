@@ -58,11 +58,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         data = {'critical_queue_threshold':self.critical_queue_threshold}
         data['source_url'] = self.source.getSourceUrl()
 
-        if self.source.errorOccured() or not self.source.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source.error
-            data['status'] = -1
-            return data    
-        
+
         class TableRowExtractor(HTMLParser.HTMLParser):
             '''
             Parse the HTML and extract all rows from the table.

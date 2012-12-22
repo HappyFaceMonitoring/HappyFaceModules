@@ -66,11 +66,6 @@ class dCacheDataManagement(hf.module.ModuleBase):
                 'total_on_disk_size':0.0,
                 'status': 1.0}
 
-        if self.xml_source.errorOccured() or not self.xml_source.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.xml_source.error
-            data['status'] = -1
-            return data
-
         source_tree = etree.parse(open(self.xml_source.getTmpPath()))
         root = source_tree.getroot()
 

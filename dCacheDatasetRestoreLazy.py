@@ -95,11 +95,6 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
                 'retry_limit': self.stage_max_retry,
                 'status': self.status}
 
-        if self.source.errorOccured() or not self.source.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source.error
-            data['status'] = -1
-            return data
-
         source_tree = parse(open(self.source.getTmpPath()))
         root = source_tree.getroot()
 

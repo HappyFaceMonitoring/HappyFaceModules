@@ -95,11 +95,6 @@ this is necessary to determine destination or source of the file!""", 'from'),
         data['summary'] = 0
         sourcedata = {}
         data['source_url'] = self.source.getSourceUrl()
-        if self.source.errorOccured() or not self.source.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source.error
-            data['status'] = -1
-            return data
-            
         source_tree = etree.parse(open(self.source.getTmpPath()))
 
         

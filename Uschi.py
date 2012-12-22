@@ -57,11 +57,6 @@ class Uschi(hf.module.ModuleBase):
                 'log': '',
                 'about': ''}
 
-        if self.uschi_xml.errorOccured() or not self.uschi_xml.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.uschi_xml.error
-            data['status'] = -1
-            return data
-
         source_tree = etree.parse(open(self.uschi_xml.getTmpPath()))
         root = source_tree.getroot()
 

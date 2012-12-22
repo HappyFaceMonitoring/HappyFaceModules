@@ -65,7 +65,6 @@ class CMSSiteReadiness(hf.module.ModuleBase):
         return str(giveback).strip(' ')
         
     def extractData(self):
-    
         tree = ltml.parse(open(self.site_html.getTmpPath()))
         ntable = ltml.fromstring('H')
         

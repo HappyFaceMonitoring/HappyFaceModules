@@ -72,10 +72,6 @@ class dCacheTransfers(hf.module.ModuleBase):
     def extractData(self):
         data = {}
         data['source_url'] = self.source.getSourceUrl()
-        if self.source.errorOccured() or not self.source.isDownloaded():
-          data['error_string'] = 'Source file was  not downloaded. Reason: %s' % self.source.error
-          data['status'] = -1
-          return data
         data['below_speed_warning_limit'] = 0
         data['below_speed_critical_limit'] = 0
         data['exceed_time_warning_limit'] = 0

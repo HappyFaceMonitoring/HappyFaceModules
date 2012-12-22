@@ -54,11 +54,6 @@ class PhedexStats(hf.module.ModuleBase):
                 'failed_transfers': '',
                 'status': 1.0}
 
-        if self.phedex_xml.errorOccured() or not self.phedex_xml.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.phedex_xml.error
-            data['status'] = -1
-            return data
-
         source_tree = etree.parse(open(self.phedex_xml.getTmpPath()))
         root = source_tree.getroot()
 

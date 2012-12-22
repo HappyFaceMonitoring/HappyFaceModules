@@ -41,7 +41,6 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
     ], []
 
     subtable_columns = {
-        
         "details": ([
             Column('block', TEXT),
             Column('isfile', INT),
@@ -70,10 +69,6 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         data = {'request_timestamp': 0}
         data['source_url'] = self.blocktest_xml.getSourceUrl()
         data['status'] = 1.0
-        if self.blocktest_xml.errorOccured() or not self.blocktest_xml.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.blocktest_xml.error
-            data['status'] = -1
-            return data
         
         source_tree = etree.parse(open(self.blocktest_xml.getTmpPath()))
         root = source_tree.getroot()

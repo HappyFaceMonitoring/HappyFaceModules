@@ -102,11 +102,6 @@ class dCacheInfoPool(hf.module.ModuleBase):
         data['special_overview'] = self.special_overview
         data['special_details'] = self.special_details
 
-        #if self.source_xml.errorOccured() or not self.source_xml.isDownloaded():
-            #data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source_xml.error
-            #data['status'] = -1
-            #return data
-
         source_tree = etree.parse(open('/usr/users/mschmitt/HappyFace3/modules/Test.xml'))
         root = source_tree.getroot()
         

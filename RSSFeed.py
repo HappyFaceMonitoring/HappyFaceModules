@@ -40,11 +40,6 @@ class RSSFeed(hf.module.ModuleBase):
         data = {'source_url': self.source.getSourceUrl(),
                 'status': self.status}
         
-        if self.source.errorOccured() or not self.source.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.source.error
-            data['status'] = -1
-            return data
-
         feed = modules.feedparser.parse(self.source.getTmpPath())
 
         data['title'] = feed.feed.title

@@ -48,26 +48,6 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
                 'total_disk_size': 0.0,
                 'status': 1.0}
 
-        if self.used_tape.errorOccured() or not self.used_tape.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.used_tape.error
-            data['status'] = -1
-            return data
-        
-        if self.total_tape.errorOccured() or not self.total_tape.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.total_tape.error
-            data['status'] = -1
-            return data
-
-        if self.used_disk.errorOccured() or not self.used_disk.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.used_disk.error
-            data['status'] = -1
-            return data
-
-        if self.total_disk.errorOccured() or not self.total_disk.isDownloaded():
-            data['error_string'] = 'Source file was not downloaded. Reason: %s' % self.total_disk.error
-            data['status'] = -1
-            return data
-
         used_tape_f=-99.0
         for line in open(self.used_tape.getTmpPath()).readlines():
             if "T1_DE_KIT" not in line:
