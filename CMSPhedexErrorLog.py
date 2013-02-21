@@ -21,10 +21,8 @@ from lxml import etree
 class CMSPhedexErrorLog(hf.module.ModuleBase):
     
     config_keys = {
-        'link_direction': ("""represents the way of the links, 'from' means the file comes from somewhere and goes to KIT
-'to' means the file comes from KIT and goes to somewhere else
-this is necessary to determine destination or source of the file!""", 'from'),
-        'timerange_seconds': ('Ignore errors that are older than the specified time', '3600'),
+        'link_direction': ("errors from or to you", 'from'),
+        'timerange_seconds': ('Ignore errors that are older than the specified time', '7200'),
         'source_url': ('', ''),
         'min_error': ('minimal number of errors needed to determine status', '50'),
         'warning_dest': ('25% = 25', '25'),
@@ -70,6 +68,10 @@ this is necessary to determine destination or source of the file!""", 'from'),
     def prepareAcquisition(self):
         try:
             self.link_direction = self.config['link_direction']
+            if self.link_direction == 'from':
+                self.link_direction = 'to'
+            elif self.link_direction == 'to':
+                self.link_direction = 'from'
             self.timerange_seconds = int(self.config['timerange_seconds'])
             self.source = hf.downloadService.addDownload(self.config['source_url'])
             self.min_error = float(self.config['min_error'])

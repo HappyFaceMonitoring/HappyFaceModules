@@ -22,6 +22,10 @@ function ${module.instance_name}_row_button(group) {
 </script>
 <form>
 <table class="TableData">
+%if module.dataset["summary"] == 0:
+<tr class = 'ok'> <td> No errors detected </td> </tr>
+</table></form>
+%else:
 <tr class='report' >
 <td> failed transfers </td>
 <td> ${module.dataset["summary"]}</td>
@@ -99,4 +103,5 @@ function ${module.instance_name}_row_button(group) {
 %endfor
 </table>
 </div>
+%endif
 </%def>
