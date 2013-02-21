@@ -21,9 +21,9 @@ from lxml import etree
 class CMSPhedexErrorLog(hf.module.ModuleBase):
     
     config_keys = {
-        'link_direction': ("errors from or to you", 'from'),
+        'link_direction': ("transfers 'from' or 'to' you", 'from'),
         'timerange_seconds': ('Ignore errors that are older than the specified time', '7200'),
-        'source_url': ('', ''),
+        'source_url': ('use --no-check-certificate', ''),
         'min_error': ('minimal number of errors needed to determine status', '50'),
         'warning_dest': ('25% = 25', '25'),
         'critical_dest': ('25% = 25', '50'),
@@ -73,7 +73,6 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
             elif self.link_direction == 'to':
                 self.link_direction = 'from'
             self.timerange_seconds = int(self.config['timerange_seconds'])
-            self.source = hf.downloadService.addDownload(self.config['source_url'])
             self.min_error = float(self.config['min_error'])
             self.warning_dest = float(self.config['warning_dest'])
             self.critical_dest = float(self.config['critical_dest'])
@@ -84,7 +83,9 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
-            
+        
+        if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source option not set')
+        self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.details_db_value_list = []
     
     def extractData(self):
@@ -96,12 +97,17 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         data['unknown'] = 0
         data['summary'] = 0
         sourcedata = {}
-        data['source_url'] = self.source.getSourceUrl()
-        source_tree = etree.parse(open(self.source.getTmpPath()))
-
+        
+        if self.source.isDownloaded():
+            data['source_url'] = self.source.getSourceUrl()
+            source_tree = etree.parse(open(self.source.getTmpPath()))
+        else:
+            self.source.error += '\t \t try option "--no-check-certificate" for parameter source_url'
+            data['status'] = -1
+            raise hf.exceptions.DownloadError(self.source)
         
         root = source_tree.getroot()
-        request_time = root.get('request_timestamp')
+        request_time = float(root.get('request_timestamp'))
         for link in root:
             if link.tag == 'link':
                 sourcedata[link.get(self.link_direction)] = []
@@ -127,7 +133,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 adestination = 0
                 aunknown = 0
                 for errors in file:
-                    if abs(float(request_time) - float(errors.get('time_done'))) <= self.timerange_seconds:
+                    if abs(request_time - float(errors.get('time_done'))) <= self.timerange_seconds:
                         for details in errors:
                             if details.tag == 'detail_log':
                                 tempstring = details.text.split(' ')
