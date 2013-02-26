@@ -35,17 +35,14 @@ class JobsDist(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         # read configuration
-        try:
-            self.variable = self.config['variable']
-            group = self.config["groups"].strip()
-            if group != '': self.groups = group.split(',')
-            else: self.groups = group
-            self.splitnum = 1
-            
-            if self.variable == 'cputime' or self.variable == 'walltime':
-                self.splitnum = 3
-        except KeyError, e:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+        self.variable = self.config['variable']
+        group = self.config["groups"].strip()
+        if group != '': self.groups = group.split(',')
+        else: self.groups = group
+        self.splitnum = 1
+        
+        if self.variable == 'cputime' or self.variable == 'walltime':
+            self.splitnum = 3
 
         if len(self.groups) == 0 or self.groups[0] == '':
             self.groups = []

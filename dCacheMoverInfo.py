@@ -6,14 +6,10 @@ from lxml import etree
 
 class dCacheMoverInfo(hf.module.ModuleBase):
     config_keys = {
-        'min_jobs': ('Minimum number of jobs required for determining the module status', '100'),
-        'warning_limit': ('Module turns yellow when a fraction q of the modules are ratio10', '0.3'),
-        'critical_limit': ('Module turns red when a fraction q of the modules are ratio10', '0.5'),
-        'old_result_warning_limit': ('Module turns yellow when input file is older then n hours', '1'),
-        'old_result_critical_limit': ('Module turns red when input file is older then n hours', '4'),
-        'groups': ('Colon separated user groups to include in the output, leave empty for all', ''),
-        'rating_groups': ('Colon separated groups which will determine the output status', ''),
-        'qstat_xml': ('URL of the input qstat xml file', ''),
+        'watch_jobs': ('Colon separated list of the jobs to watch on the pools', ''),
+        'pool_match_regex': ('Watch only pools that match the given regular expression', 'rT_cms$'),
+        'critical_queue_threshold': ('Job is bad if the number of queued tasks exceeds the threshold', '6'),
+        'source': ('Download command for the qstat XML file', ''),
     }
     config_hint = ''
     
@@ -40,13 +36,9 @@ class dCacheMoverInfo(hf.module.ModuleBase):
     }
 
     def prepareAcquisition(self):
-        try:
-            self.watch_jobs = self.config['watch_jobs'].split(',')
-            self.pool_match_regex = self.config['pool_match_regex'] 
-            self.critical_queue_threshold = self.config['critical_queue_threshold']
-        
-        except KeyError, e:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+        self.watch_jobs = self.config['watch_jobs'].split(',')
+        self.pool_match_regex = self.config['pool_match_regex'] 
+        self.critical_queue_threshold = self.config['critical_queue_threshold']
         
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source'])

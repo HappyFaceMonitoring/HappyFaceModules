@@ -53,17 +53,17 @@ class Multiplot(hf.module.ModuleBase):
         use_start_end_time = False
         try:
             use_start_end_time = self.config["use_start_end_time"] == "True"
-        except KeyError, e:
+        except hf.ConfigError:
             pass
         if use_start_end_time:
             for i, group in enumerate(url):
                 try:
                     group = group + "&"+self.config["starttime_parameter_name"]+"="+str(int(time.time())-int(self.config["timerange_seconds"]))
-                except KeyError, e:
+                except hf.ConfigError:
                     pass
                 try:
                     group = group + "&"+self.config["endtime_parameter_name"]+"="+str(int(time.time()))
-                except KeyError, e:
+                except hf.ConfigError:
                     pass
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
                 self.plot.append(appender)

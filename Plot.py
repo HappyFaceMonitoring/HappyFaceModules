@@ -45,7 +45,7 @@ class Plot(hf.module.ModuleBase):
         use_start_end_time = False
         try:
             use_start_end_time = self.config["use_start_end_time"] == "True"
-        except KeyError, e:
+        except hf.ConfigError:
             pass
         if use_start_end_time:
             try:

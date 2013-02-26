@@ -66,23 +66,19 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
 
     
     def prepareAcquisition(self):
-        try:
-            self.link_direction = self.config['link_direction']
-            if self.link_direction == 'from':
-                self.link_direction = 'to'
-            elif self.link_direction == 'to':
-                self.link_direction = 'from'
-            self.timerange_seconds = int(self.config['timerange_seconds'])
-            self.min_error = float(self.config['min_error'])
-            self.warning_dest = float(self.config['warning_dest'])
-            self.critical_dest = float(self.config['critical_dest'])
-            self.warning_source = float(self.config['warning_source'])
-            self.critical_source = float(self.config['critical_source'])
-            self.warning_trans = float(self.config['warning_trans'])
-            self.critical_trans = float(self.config['critical_trans'])
-        
-        except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
+        self.link_direction = self.config['link_direction']
+        if self.link_direction == 'from':
+            self.link_direction = 'to'
+        elif self.link_direction == 'to':
+            self.link_direction = 'from'
+        self.timerange_seconds = int(self.config['timerange_seconds'])
+        self.min_error = float(self.config['min_error'])
+        self.warning_dest = float(self.config['warning_dest'])
+        self.critical_dest = float(self.config['critical_dest'])
+        self.warning_source = float(self.config['warning_source'])
+        self.critical_source = float(self.config['critical_source'])
+        self.warning_trans = float(self.config['warning_trans'])
+        self.critical_trans = float(self.config['critical_trans'])
         
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source_url'])

@@ -53,13 +53,10 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
     }
     
     def prepareAcquisition(self):
-        try:
-            self.save_data = 'no'
-            self.warning_limit = float(self.config["input_xml_age_limit"])
-            self.filters = self.config["filter"].strip().split(',')
-            self.filters_exceptions = self.config['forced_pass'].strip().split(',')
-        except KeyError, e:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+        self.save_data = 'no'
+        self.warning_limit = float(self.config["input_xml_age_limit"])
+        self.filters = self.config["filter"].strip().split(',')
+        self.filters_exceptions = self.config['forced_pass'].strip().split(',')
 
         if 'blocktest_xml' not in self.config: raise hf.exceptions.ConfigError('blocktest_xml option not set')
         self.blocktest_xml = hf.downloadService.addDownload(self.config['blocktest_xml'])

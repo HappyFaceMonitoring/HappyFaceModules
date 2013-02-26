@@ -38,7 +38,7 @@ class JobsStatistics(hf.module.ModuleBase):
 
     subtable_columns = {
         "groups": ([
-            Column('group', TEXT),
+            Column('group', TEXT, index = True),
             Column('parentgroup', TEXT),
             Column('total', INT),
             Column('running', INT),

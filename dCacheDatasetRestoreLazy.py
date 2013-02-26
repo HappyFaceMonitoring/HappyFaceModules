@@ -56,24 +56,15 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         
-        if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set!')
         self.source = hf.downloadService.addDownload(self.config['source'])
-        
-        if 'stage_max_retry' not in self.config: raise hf.exceptions.ConfigError('stage_max_retry option not set!')
         self.stage_max_retry = int(self.config['stage_max_retry'])
-        
-        if 'stage_max_time' not in self.config: raise hf.exceptions.ConfigError('stage_max_time option not set!')
         self.stage_max_time = int(self.config['stage_max_time'])
-        
-        if 'limit_warning' not in self.config: raise hf.exceptions.ConfigError('limit_warning option not set!')
         self.limit_warning = int(self.config['limit_warning'])
-        
-        if 'limit_critical' not in self.config: raise hf.exceptions.ConfigError('limit_critical option not set!')
         self.limit_critical = int(self.config['limit_critical'])
         
         try:
             self.details_cutoff = int(self.config['details_cutoff'])
-        except KeyError:
+        except hf.ConfigError:
             self.details_cutoff = 0
 
         self.statusTagsOK = ['Pool2Pool','Staging']

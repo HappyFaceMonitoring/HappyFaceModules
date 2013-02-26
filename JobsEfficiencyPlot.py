@@ -34,14 +34,10 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
     
 
     def prepareAcquisition(self):
-        try:
-            
-            group = self.config["group"].strip()
-            
-            self.groups = []
-            if group != '': self.groups = group.split(',')
-        except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
+        group = self.config["group"].strip()
+        
+        self.groups = []
+        if group != '': self.groups = group.split(',')
         
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
