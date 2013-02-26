@@ -32,7 +32,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         'warning_trans': ('25% = 25', '100'),
         'critical_trans': ('25% = 25', '100'),
     }
-    config_hint = ''
+    config_hint = 'If you have problems downloading your source file use: "source_url = both|--no-check-certificate|url"'
     
     table_columns = [
         Column('summary', FLOAT),

@@ -102,7 +102,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
         data['special_overview'] = self.special_overview
         data['special_details'] = self.special_details
 
-        source_tree = etree.parse(open('/usr/users/mschmitt/HappyFace3/modules/Test.xml'))
+        source_tree = etree.parse(open(self.source_xml.getTmpPath()))
         root = source_tree.getroot()
         
         for pools in root:
