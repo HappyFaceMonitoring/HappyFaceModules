@@ -28,42 +28,42 @@ function ${module.instance_name}_row_button(group) {
 %else:
 <tr class='report' >
 <td> failed transfers </td>
-<td> ${module.dataset["summary"]}</td>
+<td> ${int(module.dataset["summary"])}</td>
 </tr>
 <tr>
 <td colspan=2 class=center> failed transfers details </td>
 </tr>
 <tr class=${module.dataset["destination_status"]}>
 <td>failed transfers due to destination</td>
-<td> ${module.dataset["destination"]}</td>
+<td> ${int(module.dataset["destination"])}</td>
 </tr>
 <tr class=${module.dataset["source_status"]}>
 <td>failed transfers due to source</td>
-<td> ${module.dataset["source"]}</td>
+<td> ${int(module.dataset["source"])}</td>
 </tr>
 <tr class=${module.dataset["transfer_status"]}>
 <td>failed transfers due to transfer</td>
-<td> ${module.dataset["transfer"]}</td>
+<td> ${int(module.dataset["transfer"])}</td>
 </tr>
 <tr class=${module.dataset["unknown_status"]}>
 <td>failed transfers due to unknown</td>
-<td> ${module.dataset["unknown"]}</td>
+<td> ${int(module.dataset["unknown"])}</td>
 </tr>
 <tr class=${module.dataset["destination_status"]}>
 <td>failed transfers due to destination</td>
-<td> ${module.dataset["frac_dest"]}%</td>
+<td> ${'%.1f' %module.dataset["frac_dest"]}%</td>
 </tr>
 <tr class=${module.dataset["source_status"]}>
 <td>failed transfers due to source</td>
-<td> ${module.dataset["frac_source"]}%</td>
+<td> ${'%.1f' %module.dataset["frac_source"]}%</td>
 </tr>
 <tr class=${module.dataset["transfer_status"]}>
 <td>failed transfers due to transfer</td>
-<td> ${module.dataset["frac_trans"]}%</td>
+<td> ${'%.1f' %module.dataset["frac_trans"]}%</td>
 </tr>
 <tr class=${module.dataset["unknown_status"]}>
 <td>failed transfers due to unknown</td>
-<td> ${module.dataset["frac_unknown"]}%</td>
+<td> ${'%.1f' %module.dataset["frac_unknown"]}%</td>
 </tr>
 </table>
 </form>

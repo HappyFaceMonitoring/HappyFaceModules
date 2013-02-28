@@ -84,7 +84,7 @@ class dCacheTransfers(hf.module.ModuleBase):
         for line in fobj:
             line_split = line.split(' ')
             appender = {}
-            if len(line_split) <= 11:
+            if len(line_split) <= 12:
                 continue
             if line_split[3] == 'GFtp-2':
                 if 'f01-' in line_split[7]:
@@ -121,6 +121,7 @@ class dCacheTransfers(hf.module.ModuleBase):
                     data['status'] = 0.5
                     data['exceed_time_warning_limit'] += 1
                 self.details_db_value_list.append(appender)
+                
         data['warning_transfers'] = data['below_speed_warning_limit'] + data['exceed_time_warning_limit']
         data['critical_transfers'] = data['below_speed_critical_limit'] + data['exceed_time_critical_limit']
         

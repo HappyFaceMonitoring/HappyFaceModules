@@ -167,8 +167,19 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         data['unknown_status'] = 'ok'
         data['summary'] = data['source'] + data['unknown'] + data['transfer'] + data['destination']
         
-        if float(data['summary']) > 0:
-            data['frac_dest'] = float(data['destination'] * 100 / data['summary']) 
+        try:
+            data['frac_dest'] = float(data['destination'] * 100 / data['summary'])
+            data['frac_source'] = float(data['source'] * 100 / data['summary'])
+            data['frac_trans'] = float(data['transfer'] * 100 / data['summary'])
+            data['frac_unknown'] = float(data['unknown'] * 100 / data['summary'])
+        except ZeroDivisionError:
+            data['frac_dest'] = 0
+            data['frac_source'] = 0
+            data['frac_trans'] = 0
+            data['frac_unknown'] = 0
+            
+        if float(data['summary']) > self.min_error:
+             
             if data['frac_dest'] >= self.warning_dest:
                 data['destination_status'] = 'warning'
                 data['status'] = 0.5
@@ -176,7 +187,6 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 data['destination_status'] = 'critical'
                 data['status'] = 0.0
             
-            data['frac_source'] = float(data['source'] * 100 / data['summary'])
             if data['frac_source'] >= self.warning_source:
                 data['source_status'] = 'warning'
                 data['status'] = 0.5
@@ -184,7 +194,6 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 data['source_status'] = 'critical'
                 data['status'] = 0.0
                 
-            data['frac_trans'] = float(data['transfer'] * 100 / data['summary'])   
             if data['frac_trans'] >= self.warning_trans:
                 data['transfer_status'] = 'warning'
                 data['status'] = 0.5
@@ -192,8 +201,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 data['transfer_status'] = 'critical'
                 data['status'] = 0.0
             
-            data['frac_unknown'] = float(data['unknown'] * 100 / data['summary'])
-        
+            
         
         return data
         
