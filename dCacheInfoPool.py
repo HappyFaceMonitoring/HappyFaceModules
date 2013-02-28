@@ -150,10 +150,10 @@ class dCacheInfoPool(hf.module.ModuleBase):
             data['precious'] += pool['precious']
             data['removable'] += pool['removable']
             
-            if pool['free'] / pool['total'] <= self.local_critical_ratio:
+            if (pool['free'] + pool['removable']) / pool['total'] <= self.local_critical_ratio:
                 pool['status'] = 0.0
                 data['crit_pools'] += 1
-            elif pool['free'] / pool['total'] <= self.local_warning_ratio:
+            elif (pool['free'] + pool['removable']) / pool['total'] <= self.local_warning_ratio:
                 pool['status'] = 0.5
                 data['warn_pools'] += 1
             else:
