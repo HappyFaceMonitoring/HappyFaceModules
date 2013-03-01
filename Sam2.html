@@ -1,0 +1,82 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<h3>Individual service status:</h3>
+        <table class='TableData'>
+%for i,host in enumerate(hosts):
+    <tr class=${host['status']}>
+        <td>${host["type"]}</td>
+        <td>${host["name"]}</td>
+    </tr>
+%endfor
+</table>
+
+<input type="button" value="ok results" onfocus="this.blur()" onclick="$('#${module.instance_name}_ok_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_ok_details" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Element Type</td>
+<td>Element Name</td>
+<td>Status</td>
+<td>Test Name</td>
+<td>Test Time</td>
+</tr>
+%for i,group in enumerate(ok_test):
+<tr class=${group['status']}>
+<td>${group['type']}</td>
+<td>${group['hostName']}</td>
+<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td>${group['metric']}</td>
+<td>${group['timeStamp']}</td>
+</tr>
+%endfor
+ </table>
+</div>
+
+<input type="button" value="error/warning results" onfocus="this.blur()" onclick="$('#${module.instance_name}_critical_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_critical_details" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Element Type</td>
+<td>Element Name</td>
+<td>Status</td>
+<td>Test Name</td>
+<td>Test Time</td>
+</tr>
+%for i,group in enumerate(warning_test):
+<tr class=${group['status']}>
+<td>${group['type']}</td>
+<td>${group['hostName']}</td>
+<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td>${group['metric']}</td>
+<td>${group['timeStamp']}</td>
+</tr>
+%endfor
+ </table>
+</div>
+
+<input type="button" value="blacklist results" onfocus="this.blur()" onclick="$('#${module.instance_name}_blacklist_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_blacklist_details" style="display:none;">
+<table class='TableData' >
+<tr class="TableHeader">
+<td>Element Type</td>
+<td>Element Name</td>
+<td>Status</td>
+<td>Test Name</td>
+<td>Test Time</td>
+</tr>
+%for i,group in enumerate(black_test):
+<tr class=${group['status']}>
+<td>${group['type']}</td>
+<td>${group['hostName']}</td>
+<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td>${group['metric']}</td>
+<td>${group['timeStamp']}</td>
+</tr>
+%endfor
+ </table>
+</div>
+
+</%def>
