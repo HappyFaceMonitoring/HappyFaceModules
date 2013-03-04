@@ -47,8 +47,8 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         }
     
     def prepareAcquisition(self):
-        self.time_warning = self.config['time_warning']
-        self.time_critical = self.config['time_critical']
+        self.time_warning = float(self.config['time_warning'])
+        self.time_critical = float(self.config['time_critical'])
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.details_db_value_list = []
         
@@ -168,24 +168,17 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         details_list = [dict(time_str=self.formatTime(row['time_diff']), **row) for row in details_list]
         
-        #for i,agent in enumerate(details_list):
-            #details_list[i]['time_diff'] = 'abcd'
-            
         data['details'] = details_list
         return data
     
     def formatTime(self,time_diff):
-
+        #TODO rewrite this function and use time package or something like that
         time_string = ""
 
-        #if not agent_status == 1.:
         d = int(time_diff/24/3600)
         h = int((time_diff-d*24*3600)/3600)
         m = int((time_diff-d*24*3600-h*3600)/60)
         
         time_string = "%02id:%02ih:%02im" % (d, h, m)
-
-        #else:
-            #time_string = "up"
 
         return time_string
