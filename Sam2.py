@@ -103,14 +103,12 @@ class Sam2(hf.module.ModuleBase):
                 else:
                     help_stati.append('ok')           
         ##parsing the file is done, now evaluate everything
-        print(help_stati)
         if 'critical' in help_stati:
             data['status'] = 0
         elif 'warning' in help_stati:
             data['status'] = 0.5
         else:
             data['status'] = 1
-        print(data)
         return data
         
     def fillSubtables(self, parent_id):

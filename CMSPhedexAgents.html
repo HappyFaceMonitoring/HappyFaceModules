@@ -1,0 +1,37 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<form>
+<table class="TableData">
+<tr>
+<th>agent</th><th>label</th><th>last report</th>
+</tr>
+%for i,agent in enumerate(details):
+<tr class='${agent['status']}'>
+<td>${agent['name']}</td>
+<td>${agent['label']}</td>
+<td>${agent['time_str']}</td>
+</tr>
+%endfor
+</table>
+</form>
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class="TableData">
+<tr>
+<th>agent</th><th>label</th><th>host</th><th>directory</th><th>version</th><th>pid</th>
+</tr>
+%for i,agent in enumerate(details):
+<tr class='${agent['status']}'>
+<td>${agent['name']}</td>
+<td>${agent['label']}</td>
+<td>${agent['host']}</td>
+<td>${agent['state_dir']}</td>
+<td>${agent['version']}</td>
+<td>${agent['pid']}</td>
+</tr>
+%endfor
+</table>
+</div>
+</%def>
