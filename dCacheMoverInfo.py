@@ -169,14 +169,14 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         summary_list = self.subtables['summary'].select().where(self.subtables['summary'].c.parent_id==self.dataset['id']).execute().fetchall()
         summary_list = map(dict, summary_list)
         for i,group in enumerate(summary_list):
-            if group['queued'] >= self.dataset['critical_queue_threshold']:
+            if group['queued'] >= int(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
             elif group['queued'] > 0:
                 group['status'] = 'warning'
             else:
                 group['status'] = 'ok'
         for i,group in enumerate(info_list):
-            if group['queued'] >= self.dataset['critical_queue_threshold']:
+            if group['queued'] >= int(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
             elif group['queued'] > 0:
                 group['status'] = 'warning'
