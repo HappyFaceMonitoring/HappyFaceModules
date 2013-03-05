@@ -17,7 +17,7 @@
 import hf, lxml, logging, datetime
 from sqlalchemy import *
 from lxml import etree
-
+from string import strip
 
 class Summary(hf.module.ModuleBase):
     config_keys = {
@@ -43,7 +43,7 @@ class Summary(hf.module.ModuleBase):
 
         # definition of the database table keys and pre-defined values
         try:
-            self.site_keys = self.config['site_keys'].split(',')
+            self.site_keys = map(strip, self.config['site_keys'].split(','))
             self.sites = []
             self.source = ''
             self.details_db_value_list = []

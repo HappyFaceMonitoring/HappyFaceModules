@@ -127,9 +127,9 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                     'filtered':  block_filtered_out,
                                                     })
                                         
-            data["failed_blocks_raw"] = num_blocks_raw
+            data["failed_blocks_raw"] = num_blocks_raw - num_blocks 
             data["failed_blocks"] = num_blocks
-            data["failed_total_files_raw"] = num_files_raw
+            data["failed_total_files_raw"] = num_files_raw - num_files
             data["failed_total_files"] = num_files
             
             if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
@@ -196,9 +196,9 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                             'filtered':  block_filtered_out,
                                                         })
                                 
-                data["failed_blocks_raw"] = num_blocks_raw
+                data["failed_blocks_raw"] = num_blocks_raw - num_blocks
                 data["failed_blocks"] = num_blocks
-                data["failed_total_files_raw"] = num_files_raw
+                data["failed_total_files_raw"] = num_files_raw - num_files
                 data["failed_total_files"] = num_files
                 
                 if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
@@ -271,9 +271,9 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                             'filtered':  block_filtered_out,
                                                         })
                                 
-                data["failed_blocks_raw"] = num_blocks_raw
+                data["failed_blocks_raw"] = num_blocks_raw - num_blocks
                 data["failed_blocks"] = num_blocks
-                data["failed_total_files_raw"] = num_files_raw
+                data["failed_total_files_raw"] = num_files_raw - num_files
                 data["failed_total_files"] = num_files
                 
             if data['status'] == 1.0 and data['request_timestamp'] + 3600 * 24 * self.warning_limit <= time.time():
