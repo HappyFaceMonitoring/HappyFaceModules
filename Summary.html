@@ -4,22 +4,18 @@
 <%def name="content()">
 <table class=TableData>
 <tr class=TableHeader>
-<td width=100px align=center><small><small>Site</small></small> </td>
-% for i,group in enumerate(_00):
-<td  align=center width=100px><small><small>${group['cattitle']}</small></small></td>
+<td>Site</td>
+%for i,header in enumerate(cat_header):
+  <td>${header}</td>
 %endfor
 </tr>
-<tr class=undefined>
-<td align=center> <strong>KIT</strong> </td>
-%for i,group in enumerate(_00):
-<td class=SummaryCatCell align=center><a href=${group['catlink']}><img class=SummaryCatIcon src=${group['status']}></a></td>
+%for i,lines in enumerate(details):
+  <tr>
+  <td>${main_names[i]}</td>
+  %for j,items in enumerate(lines):
+    <td class=SummaryCatCell align=center><a href=${items['catlink']}><img class=SummaryCatIcon src=${items['status']}></a></td>    
+  %endfor
+  </tr>
 %endfor
-</tr>
-<tr class=undefined>
-<td align=center> <strong>DESY</strong> </td>
-%for i,group in enumerate(_01):
-<td class=SummaryCatCell align=center><a href=${group['catlink']}><img class=SummaryCatIcon src=${group['status']}></a></td>
-%endfor
-</tr>
 </table>
 </%def>
