@@ -132,23 +132,28 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                     if abs(request_time - float(errors.get('time_done'))) <= self.timerange_seconds:
                         for details in errors:
                             if details.tag == 'detail_log':
-                                tempstring = details.text.split(' ')
-                                if tempstring[0] == 'TRANSFER' and atransfer == 0:
-                                    transfer += 1
-                                    atransfer = 1
-                                    stash['trans_message'] = str(details.text)
-                                elif tempstring[0] == 'DESTINATION' and adestination == 0:
-                                    destination += 1
-                                    adestination = 1
-                                    stash['dest_message'] = str(details.text)
-                                elif tempstring[0] == 'SOURCE' and asource == 0:
-                                    source += 1
-                                    asource = 1
-                                    stash['source_message'] = str(details.text)
-                                elif aunknown == 0:
+                                try:
+                                    tempstring = details.text.split(' ')
+                                    if tempstring[0] == 'TRANSFER' and atransfer == 0:
+                                        transfer += 1
+                                        atransfer = 1
+                                        stash['trans_message'] = str(details.text)
+                                    elif tempstring[0] == 'DESTINATION' and adestination == 0:
+                                        destination += 1
+                                        adestination = 1
+                                        stash['dest_message'] = str(details.text)
+                                    elif tempstring[0] == 'SOURCE' and asource == 0:
+                                        source += 1
+                                        asource = 1
+                                        stash['source_message'] = str(details.text)
+                                    elif aunknown == 0:
+                                        unknown += 1
+                                        aunknown = 1
+                                        stash['unknown_message'] = str(details.text)
+                                except AttributeError:
                                     unknown += 1
                                     aunknown = 1
-                                    stash['unknown_message'] = str(details.text)
+                                    stash['unknown_message'] = 'Happyface was unable to parse this error, the logfile might be damaged'
             if transfer != 0 or source != 0 or destination !=0 or unknown != 0:
                 stash['transfer'] = transfer
                 stash['destination'] = destination

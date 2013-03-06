@@ -43,10 +43,10 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
     subtable_columns = {
         "details": ([
             Column('block', TEXT),
-            Column('isfile', INT),
+            Column('isfile', INT), #file = 1, block=0
             Column('fails', INT),
             Column('fails_raw', INT),
-            Column('filtered', INT),
+            Column('filtered', INT), # filtered = 1, passed = 0
             Column('time_reported', INT),
             Column('request_timestamp', TEXT),
         ], []),
