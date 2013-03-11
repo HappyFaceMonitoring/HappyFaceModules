@@ -43,9 +43,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             self.parse_direction = 'from'
         self.time_range = int(self.config['time_range'])
         try: 
-            self.blacklist = []
+            self.blacklist = self.config['blacklist']
         except AttributeError:
-            self.blacklist = None
+            self.blacklist = []
         self.time = int(time.time())
         self.url += str(self.time-self.time_range*3600)
         self.source = hf.downloadService.addDownload(self.url)
@@ -143,7 +143,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                         data['status'] = 0.0
         else:
             data['status'] = -1
-            data['error_string'] = 'No data to parse!'
+            data['error_string'] = 'No data returned by DB query!'
         return data
     
     #def plot_func(self, H, xbin, ybin, y_key, x_pos, x_key):
