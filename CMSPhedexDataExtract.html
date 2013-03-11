@@ -2,5 +2,14 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-<img src="${module.dataset["archive_pic_path"]}" alt="" />
+<table>
+%for i,row in enumerate(histogram):
+  <tr>
+  <th>${names[i]}</th>
+  %for j,cols in enumerate(row):
+    <td bgcolor=${cols['c']} align='center'><span title="time: ${cols['time']}      rate: ${cols['rates']}MB     done: ${cols['done']}      fail: ${cols['fails']}      quality: ${cols['w']}"><a href=${cols['link']}>--</a></span></td>
+  %endfor
+  </tr>
+%endfor
+</table>
 </%def>
