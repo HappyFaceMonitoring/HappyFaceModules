@@ -29,7 +29,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             Column('fail_files', INT),
             Column('timebin', INT),
             Column('rate', INT),
-            Column('name', TEXT)
+            Column('name', TEXT),
+            Column('color', TEXT),
+            Column('quality', FLOAT)
         ], [])
     }
     
@@ -52,15 +54,18 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.details_db_value_list = []
         
     def extractData(self):
+        import matplotlib.colors as mcol
+        import matplotlib.pyplot as plt
+        my_cmap = plt.get_cmap('RdYlGn')
+        my_cmap.set_over('w')
         data = {'direction' : self.link_direction, 'source_url' : self.source.getSourceUrl(), 'time_range' : self.time_range, 'request_timestamp' : self.time}
         #prepare everything
         y = []
         x = []
-        wei = []
+        weight = []
         ykey = []
         x0 = self.time/3600*3600-72*3600
         height = 0
-        i = 0
         xpos = []
         for i in range(self.time_range / 6):
             xpos.append(i * 6)
@@ -88,13 +93,17 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                     help_append['fail_files'] = fail = int(transfer['fail_files'])
                     help_append['rate'] = int(transfer['rate'])
                     help_append['name'] = link_name
-                    self.details_db_value_list.append(help_append)
                     if done != 0:
-                        wei.append(float(done)/float(done + fail))
-                    elif done == 0 and fail != 0:
-                        wei.append(0.0)
-                    elif done == 0 and fail == 0:
-                        wei.append(1.5)
+                        weight.append(float(done)/float(done + fail))
+                        help_append['quality'] = float(done)/float(done + fail)
+                    elif fail != 0:
+                        weight.append(0.0)
+                        help_append['quality'] = 0.0
+                    else:
+                        weight.append(1.5)
+                        help_append['quality'] = 1.5
+                    help_append['color'] = mcol.rgb2hex(my_cmap(help_append['quality']))
+                    self.details_db_value_list.append(help_append)
                 height += 1
         if len(y) > 0: 
             H = []
@@ -103,7 +112,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 for j in range(0,self.time_range + 1):
                     H[i].append(1.5)
             for i,group in enumerate(x):
-                H[y[i]][group] = wei[i]
+                H[y[i]][group] = weight[i]
             T1_data = []
             T2_data = []
             for i,name  in enumerate(ykey):
@@ -188,12 +197,6 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             their_direction = 'fromfilter'
             your_direction = 'tofilter'
             
-        import matplotlib.colors as mcol
-        import matplotlib.pyplot as plt
-        import numpy as np
-        #define colormap
-        my_cmap = plt.get_cmap('RdYlGn')
-        my_cmap.set_over('w')
         #get data from database
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
@@ -206,6 +209,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         done = []
         rates = []
         times = []
+        color = []
         x0 = self.dataset['request_timestamp'] / 3600 * 3600 - 259200
         y_value_map = {}
         for i,values in enumerate(details_list):
@@ -217,26 +221,22 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             fails.append(int(values['fail_files']))
             done.append(int(values['done_files']))
             rates.append(float(values['rate'])/1024/1024)
-            if values['done_files'] != 0:
-                w.append(float(values['done_files'])/float(values['done_files'] + values['fail_files']))
-            elif values['done_files'] == 0 and values['fail_files'] != 0:
-                w.append(0.0)
-            elif values['done_files'] == 0 and values['fail_files'] == 0:
-                w.append(1.5)
+            w.append(values['quality'])
+            color.append(values['color'])
         H = []
         name_mapper = []
         for i in range(len(y_value_map)):
             H.append([])
             name_mapper.append('-')
             for j in range(self.dataset['time_range'] + 1):
-                    H[i].append({'w':'---', 'c':'#FFFFFF', 'fails': '---', 'done':'---', 'rates':'---', 'time':'---', 'link': '---'})
+                    H[i].append({'w':'', 'c':'#FFFFFF', 'fails': '', 'done':'', 'rates':'', 'time':'', 'link': ''})
         for key in y_value_map.iterkeys():
             name_mapper[y_value_map[key]] = key
         for i,group in enumerate(x):
             if w[i] != 1.5:
-                H[y[i]][group] = {'w':str('%.2f' %w[i]), 'fails':fails[i], 'done':done[i], 'rates':str('%.3f' %rates[i]), 'c':mcol.rgb2hex(my_cmap(w[i])), 'time':times[i], 'link':report_base + their_direction + name_mapper[y[i]]}
+                H[y[i]][group] = {'w':str('%.2f' %w[i]), 'fails':fails[i], 'done':done[i], 'rates':str('%.3f' %rates[i]), 'c':color[i], 'time':times[i], 'link':report_base + their_direction + name_mapper[y[i]]}
             else:
-                H[y[i]][group] = {'w':'---', 'c':'#FFFFFF', 'fails': '---', 'done':'---', 'rates':'---', 'time':'---', 'link': '---'}
+                H[y[i]][group] = {'w':'', 'c':'#FFFFFF', 'fails': '', 'done':'', 'rates':'', 'time':'', 'link': ''}
         #iterate over histogram H and fill each bin with an dictionary
         data['histogram'] = H
         data['names'] = name_mapper
