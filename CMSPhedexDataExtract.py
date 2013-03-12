@@ -64,7 +64,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         x = []
         weight = []
         ykey = []
-        x0 = self.time/3600*3600-72*3600
+        x0 = self.time/3600*3600-self.time_range*3600
         height = 0
         xpos = []
         for i in range(self.time_range / 6):
@@ -199,7 +199,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             
         #get data from database
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
         #build a 2d histogram and fill it with transfer quality
         H = []
         x = []
@@ -210,7 +210,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         rates = []
         times = []
         color = []
-        x0 = self.dataset['request_timestamp'] / 3600 * 3600 - 259200
+        x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600
         y_value_map = {}
         for i,values in enumerate(details_list):
             if values['name'] not in y_value_map:
