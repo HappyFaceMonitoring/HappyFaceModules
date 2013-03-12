@@ -2,14 +2,12 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-<table>
-%for i,row in enumerate(histogram):
-  <tr>
-  <th>${names[i]}</th>
-  %for j,cols in enumerate(row):
-    <td bgcolor=${cols['c']} align='center'><span title="time: ${cols['time']}      rate: ${cols['rates']}MB     done: ${cols['done']}      fail: ${cols['fails']}      quality: ${cols['w']}"><a href=${cols['link']}>--</a></span></td>
-  %endfor
-  </tr>
+<div style = 'position:relative;   height:${height}px;  width:${width}px; z-index:0'>
+%for cols in link_list:
+    <a align='center' style = "height:15px;  width:15px;   position:absolute;   top:${15*cols['y']+50}px;   left:${15*cols['x']+200}px;   background:${cols['color']};  z-index:10"  title="time: ${cols['time']}      rate: ${cols['rate']}MB     done: ${cols['done']}      fail: ${cols['fails']}      quality: ${cols['w']}" href=${cols['link']}></a>
 %endfor
-</table>
+%for i,name in enumerate(names):
+  <div style='height:15px;  width:200px;  position:absolute; top:${15*i+50}px; z-index:5; font-size:small'>${name}</div>
+%endfor
+</div>
 </%def>
