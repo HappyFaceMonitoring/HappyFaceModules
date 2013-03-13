@@ -107,16 +107,37 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                                 T2_link_list.append(help_append['quality'])
                             elif 'T3' in link_name:
                                 T3_link_list.append(help_append['quality'])
+       
+       
        # code for status evaluation TODO
-       #for i,eval_list in enumerate([T0_link_list, T1_link_list, T2_link_list, T3_link_list]):
-            #good_link = 0
-            #bad_link = 0
-            #for quality in eval_list:
-                #if quality < 0.5:
-                    #bad_link += 1
-                #else:
-                    #good_link += 1
-            #if 
+        data['status'] = 1.0
+        for i,eval_list in enumerate([T0_link_list, T1_link_list, T2_link_list, T3_link_list]):
+            good_link = 0
+            bad_link = 0
+            for quality in eval_list:
+                if quality < 0.3:   #here you could use a config parameter
+                    bad_link += 1
+                else:
+                    good_link += 1
+            if i == 0 and bad_link > 0: #here you could use a config parameter
+                data['status'] = 0.0
+                break
+            elif i == 1 and bad_link > 0:
+                if bad_link > 1:
+                    data['status'] = 0.5
+                elif bad_link > 2:
+                    data['status'] = 0.0
+                    break
+            elif i == 2 and bad_link > 0:
+                if float(good_link) / (bad_link + good_link) < 0.7:
+                    data['status'] = 0.0
+                    break
+                elif float(good_link) / (bad_link + good_link) < 0.8:
+                    data['status'] = 0.5
+            elif i == 3 and bad_link > 0:
+                if float(good_link) / (bad_link + good_link) < 0.7:
+                    data['status'] = 0.5
+                
         return data
 
     def fillSubtables(self, parent_id):
@@ -155,9 +176,12 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         
         for key in y_value_map.iterkeys():
             name_mapper[y_value_map[key]] = key
-        
+            
+        for i,name in enumerate(name_mapper):
+            name_mapper[i] = {'name':name, 'link':report_base + their_direction + name}
+            
         data['link_list'] = raw_data_list
-        data['names'] = name_mapper
+        data['titles'] = name_mapper
         data['height'] = len(y_value_map) * 15 + 100
-        data['width'] = self.dataset['time_range'] * 15 + 250
+        data['width'] = int(730/(self.dataset['time_range']+1))
         return data

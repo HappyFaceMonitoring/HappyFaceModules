@@ -6,34 +6,40 @@
 #${module.instance_name}_histogram {
 	position: relative;
 	height: ${height}px;
-	width: ${width}px;
+	width: *;
 	z-index: 0;
 }
 
-#${module.instance_name}_histogram a {
+#${module.instance_name}_histogram span {
 	position: absolute;
-	height: 13px;
-	width: 6px;
-	border: 1px solid #000;
+	height: 14px;
+	width: ${width-1}px;
+	z-index: 6;
+	border-left: 1px solid #000;
+	border-right: 1px solid #000;
+	border-top: 1px solid #000;
+	border-bottom: 1px solid #000;
 }
 
-#${module.instance_name}_histogram span {
-	height:15px;
-	width:200px;
-	position:absolute;
-	z-index:5;
-	font-size:small
+#${module.instance_name}_histogram a {
+	height: 14px;
+	width: 89.5%;
+	position: absolute;
+	z-index: 5;
+	font-size: small;
+	border-bottom: 1px solid #000;
+	display: block;
+	padding-bottom: 1px;
 }
 
 </style>
 <div id="${module.instance_name}_histogram">
 %for cols in link_list:
-    <a style = "top:${15*cols['y']+50}px; left:${8*cols['x']+200}px; background:${cols['color']}; z-index:10"
-	title="time: ${cols['time']}      rate: ${cols['rate']}MB     done: ${cols['done']}      fail: ${cols['fails']}      quality: ${cols['w']}"
-	href=${cols['link']}></a>
+    <span style = "top:${15*cols['y']+50.5}px; left:${width*cols['x']+171}px; background:${cols['color']};"
+    title="time: ${cols['time']} &#xA;rate: ${cols['rate']}MB/s &#xA;files done: ${cols['done']} &#xA;files failed: ${cols['fails']} &#xA;quality: ${cols['w']}"></span>
 %endfor
-%for i,name in enumerate(names):
-  <span style='top:${15*i+50}px'>${name}</span>
+%for i,title in enumerate(titles):
+  <a style='top:${15*i+50.5}px;' href = '${title['link']}'>${title['name']}</a>
 %endfor
 </div>
 </%def>
