@@ -23,8 +23,8 @@ class JobsStatistics(hf.module.ModuleBase):
         'min_jobs': ('Minimum number of jobs required for determining the module status', '100'),
         'warning_limit': ('Module turns yellow when a fraction q of the modules are ratio10', '0.3'),
         'critical_limit': ('Module turns red when a fraction q of the modules are ratio10', '0.5'),
-        'old_result_warning_limit': ('Module turns yellow when input file is older then n hours', '1'),
-        'old_result_critical_limit': ('Module turns red when input file is older then n hours', '4'),
+        'old_result_warning_limit': ('Module turns yellow when input file is older than n hours', '1'),
+        'old_result_critical_limit': ('Module turns red when input file is older than n hours', '4'),
         'groups': ('Colon separated user groups to include in the output, leave empty for all', ''),
         'rating_groups': ('Colon separated groups which will determine the output status', ''),
         'qstat_xml': ('URL of the input qstat xml file', ''),
@@ -107,7 +107,7 @@ class JobsStatistics(hf.module.ModuleBase):
                     if child.tag == "date" and child.text is not None:
                         date = int(float(child.text.strip()))
         self.logger.debug('Date in header %i' % date)
-        data['date'] = data
+        data['result_timestamp'] = date
         data['status'] = 1.0
         if self.run['time'] > datetime.datetime.fromtimestamp(date + self.old_result_critical_limit*3600):
             data['status'] = 0.0
@@ -244,6 +244,11 @@ class JobsStatistics(hf.module.ModuleBase):
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
+        
+        if data['run']['time'] > datetime.datetime.fromtimestamp(self.dataset['result_timestamp'] + float(self.config['old_result_critical_limit'])*3600):
+            data['eval_time'] = True
+        elif data['run']['time']  >  datetime.datetime.fromtimestamp(self.dataset['result_timestamp'] + float(self.config['old_result_warning_limit'])*3600):
+            data['eval_time'] = True
 
         group_list = self.subtables['groups'].select().where(self.subtables['groups'].c.parent_id==self.dataset['id']).execute().fetchall()
         if group_list is None:

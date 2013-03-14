@@ -30,14 +30,14 @@ class Sam2(hf.module.ModuleBase):
         'blacklist': ('Colon separated group to exclude from the output, recommended list is for KIT', 'org.cms.glexec.WN-gLExec,org.cms.WN-swinst,org.cms.WN-xrootd-fallback,org.cms.WN-xrootd-access'),
         'service_flavour': ('colon seperated list of flavours to be extracted', 'CREAM-CE,SRMv2'),
         'service_type': ('colon seperated list of types to be extracted', 'CREAM-CE,SRMv2'),
-        'service_warning_min_jobs': ('less tests will result in status warning for this service and the module', '3'),
-        'service_error_min_jobs': ('less tests will result in status critical for this service and the module', '1'),
-        'service_warning_warnings': ('this amount, or more warnings will result in status warning for module and service', '2'),
-        'service_error_warnings': ('this amount, or more warnings will result in status critical for module and service', '4'),
-        'service_warning_errors': ('this amount, or more errors will result in status warning for module and service', '1'),
-        'service_error_errors': ('this amount, or more errors will result in status warning for module and service', '2')
+        'SERVICE_warning_min_jobs': ('less tests will result in status warning for this service and the module', '3'),
+        'SERVICE_error_min_jobs': ('less tests will result in status critical for this service and the module', '1'),
+        'SERVICE_warning_warnings': ('this amount, or more warnings will result in status warning for module and service', '2'),
+        'SERVICE_error_warnings': ('this amount, or more warnings will result in status critical for module and service', '4'),
+        'SERVICE_warning_errors': ('this amount, or more errors will result in status warning for module and service', '1'),
+        'SERVICE_error_errors': ('this amount, or more errors will result in status warning for module and service', '2')
     }
-    config_hint = "Be sure to adjust your min_warning and critical to your size of the blacklist, huge blacklists result in a small amount of tests"
+    config_hint = "Due to flexibility reasons you can configure crit and warn thresholds for each service, therefor replace SERVICE with service_type, use _ instead of - and all letters in lowercase"
     
     table_columns = [], []
 
@@ -56,12 +56,23 @@ class Sam2(hf.module.ModuleBase):
         ## get config information
         self.service_flavour = map(strip, str(self.config['service_flavour']).split(','))
         self.service_type = map(strip, str(self.config['service_type']).split(','))
-        self.service_warning_min_jobs = int(self.config['service_warning_min_jobs'])
-        self.service_error_min_jobs = int(self.config['service_error_min_jobs'])
-        self.service_warning_warnings = int(self.config['service_warning_warnings'])
-        self.service_error_warnings = int(self.config['service_error_warnings'])
-        self.service_warning_errors = int(self.config['service_warning_errors'])
-        self.service_error_errors = int(self.config['service_error_errors'])
+
+        self.service_warning_min_jobs = {}
+        self.service_error_min_jobs = {}
+        self.service_warning_warnings = {}
+        self.service_error_warnings = {}
+        self.service_warning_errors = {}
+        self.service_error_errors = {}
+        
+        for stype in self.service_type:
+            service = stype.replace('-','_').lower()
+            self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_warning_min_jobs'])
+            self.service_error_min_jobs[stype] = int(self.config[str(service) + '_error_min_jobs'])
+            self.service_warning_warnings[stype] = int(self.config[str(service) + '_warning_warnings'])
+            self.service_error_warnings[stype] = int(self.config[str(service) + '_error_warnings'])
+            self.service_warning_errors[stype] = int(self.config[str(service) + '_warning_errors'])
+            self.service_error_errors[stype] = int(self.config[str(service) + '_error_errors'])
+        
         self.blacklist = map(strip, self.config['blacklist'].split(','))
         ## add download tyo queue
         self.source = hf.downloadService.addDownload(self.config['source_url'])
@@ -96,9 +107,9 @@ class Sam2(hf.module.ModuleBase):
                             errors += 1
                         tests += 1
                     self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
-                if tests < self.service_error_min_jobs or errors >= self.service_error_errors or warnings >= self.service_error_warnings:
+                if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
                     help_stati.append('critical')
-                elif tests < self.service_warning_min_jobs or errors >= self.service_warning_errors or warnings >= self.service_warning_warnings:
+                elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
                     help_stati.append('warning')
                 else:
                     help_stati.append('ok')           
@@ -119,13 +130,22 @@ class Sam2(hf.module.ModuleBase):
         self.base_url = self.config['report_url']
         self.service_flavour = map(strip, str(self.config['service_flavour']).split(','))
         self.service_type = map(strip, str(self.config['service_type']).split(','))
-        self.service_warning_min_jobs = int(self.config['service_warning_min_jobs'])
-        self.service_error_min_jobs = int(self.config['service_error_min_jobs'])
-        self.service_warning_warnings = int(self.config['service_warning_warnings'])
-        self.service_error_warnings = int(self.config['service_error_warnings'])
-        self.service_warning_errors = int(self.config['service_warning_errors'])
-        self.service_error_errors = int(self.config['service_error_errors'])
         self.blacklist = map(strip, self.config['blacklist'].split(','))
+        self.service_warning_min_jobs = {}
+        self.service_error_min_jobs = {}
+        self.service_warning_warnings = {}
+        self.service_error_warnings = {}
+        self.service_warning_errors = {}
+        self.service_error_errors = {}
+        
+        for stype in self.service_type:
+            service = stype.replace('-','_').lower()
+            self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_warning_min_jobs'])
+            self.service_error_min_jobs[stype] = int(self.config[str(service) + '_error_min_jobs'])
+            self.service_warning_warnings[stype] = int(self.config[str(service) + '_warning_warnings'])
+            self.service_error_warnings[stype] = int(self.config[str(service) + '_error_warnings'])
+            self.service_warning_errors[stype] = int(self.config[str(service) + '_warning_errors'])
+            self.service_error_errors[stype] = int(self.config[str(service) + '_error_errors'])
         
         data = hf.module.ModuleBase.getTemplateData(self)
         ok_test = []
@@ -157,10 +177,11 @@ class Sam2(hf.module.ModuleBase):
                 hosts[test['hostName']]['ok'] += 1
                 hosts[test['hostName']]['sum'] += 1
                 
-        for i,host in hosts.iteritems():
-            if host['sum'] < self.service_error_min_jobs or host['crit'] >= self.service_error_errors or host['warn'] >= self.service_error_warnings:
+        for key,host in hosts.iteritems():
+            service_type = host['type']
+            if host['sum'] < self.service_error_min_jobs[service_type] or host['crit'] >= self.service_error_errors or host['warn'] >= self.service_error_warnings[service_type]:
                 host['status'] = 'critical'
-            elif host['sum'] < self.service_warning_min_jobs or host['crit'] >= self.service_warning_errors or host['warn'] >= self.service_warning_warnings:
+            elif host['sum'] < self.service_warning_min_jobs[service_type] or host['crit'] >= self.service_warning_errors[service_type] or host['warn'] >= self.service_warning_warnings[service_type]:
                 host['status'] = 'warning'
             else:
                 host['status'] = 'ok'

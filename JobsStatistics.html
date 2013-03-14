@@ -55,6 +55,9 @@ function ${module.instance_name}_toggle(gnarfz) {
    </td>
   </tr>
  </table>
+%if eval_time:
+<span style = 'font-size : 120%; font-color : red;'>Timestamp is too old! </span>
+%endif 
  <table class="TableData">
   <tr class="TableHeader">
    <td>Group</td>
