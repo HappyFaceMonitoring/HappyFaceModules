@@ -118,6 +118,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
             retries = int(i['retries'])
             if retries >= self.stage_max_retry:
                 self.hit_retry += 1
+                self.total_problem += 1
                 fail = True
             
             # Check if time limit hit
@@ -131,6 +132,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
                 started.replace(year=now.year-1)
             if (now - started) > time_limit:
                 self.hit_time += 1
+                self.total_problem += 1
                 fail = True
 
             details_db_values = {}
