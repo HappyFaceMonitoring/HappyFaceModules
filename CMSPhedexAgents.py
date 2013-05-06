@@ -165,7 +165,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
     
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
         details_list = [dict(time_str=self.formatTime(row['time_diff']), **row) for row in details_list]
         
         data['details'] = details_list
