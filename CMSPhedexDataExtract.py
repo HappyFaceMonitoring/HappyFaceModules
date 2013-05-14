@@ -15,7 +15,8 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         'blacklist': ('ignore links from or to those sites, csv', ''),
         'your_name': ('Name of your site', 'T1_DE_KIT_Buffer'),
         'category': ('use prod or debug, its used to build links to the cern info sites','prod'),
-        'button_pic_path': ('path to your button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/nav_avail_plot.png'),
+        'button_pic_path_in': ('path to your in-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_in.png'),
+        'button_pic_path_out': ('path to your out-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_out.png'),
         'qualitiy_broken_value': ('a timebin with a qualitiy equal or less than this will be considered as broken', '0.4'),
         
         't0_critical_failures': ('failure threshold for status critical', '10'),
@@ -86,7 +87,8 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.details_db_value_list = []
         
         self.category = self.config['category']
-        self.button_pic = self.config['button_pic_path']
+        self.button_pic_in = self.config['button_pic_path_in']
+        self.button_pic_out = self.config['button_pic_path_out']
         self.qualitiy_broken_value = float(self.config['qualitiy_broken_value'])
 
         self.critical_failures = {}
@@ -218,7 +220,8 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         data['titles'] = name_mapper
         data['height'] = len(y_value_map) * 15 + 100
         data['width'] = int(660/(self.dataset['time_range']+1))
-        data['button_pic'] = self.config['button_pic_path']
+        data['button_pic_in'] = self.config['button_pic_path_in']
+        data['button_pic_out'] = self.config['button_pic_path_out']
         data['info_link_1'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
         data['info_link_2'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
         return data
