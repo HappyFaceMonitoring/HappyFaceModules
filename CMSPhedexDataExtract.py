@@ -182,7 +182,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
     
     def getTemplateData(self):
         
-        report_base = strip(self.config['report_base'])
+        report_base = strip(self.config['report_base']) + '&'
         your_direction = strip(self.config['link_direction'])
         
         if your_direction == 'from':
