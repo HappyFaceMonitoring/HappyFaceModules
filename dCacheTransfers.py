@@ -126,7 +126,10 @@ class dCacheTransfers(hf.module.ModuleBase):
         data['warning_transfers'] = data['below_speed_warning_limit'] + data['exceed_time_warning_limit']
         data['critical_transfers'] = data['below_speed_critical_limit'] + data['exceed_time_critical_limit']
         
-        data['speed_average'] = int(speed_sum / data['total_transfers'])
+        if data['total_transfers']<>0:
+	  data['speed_average'] = int(speed_sum / data['total_transfers'])
+	else:
+	  data['speed_average'] = 0
         speed_avg = data['speed_average']
         speed_delta = 0
         total_jobs = data['total_transfers']
