@@ -1,0 +1,94 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+  <tr class="TableHeader"><td colspan="2">Incidents and Problems</td></tr>
+  <tr><td>high severity</td><td>${module.dataset["nIncidentsHigh"]}</td></tr>
+  <tr><td>medium severity</td><td>${module.dataset["nIncidentsMedium"]}</td></tr>
+  <tr><td>low severity</td><td>${module.dataset["nIncidentsLow"]}</td></tr>
+  <tr><td>info</td><td>${module.dataset["nIncidentsInfo"]}</td></tr>
+  <tr class="TableHeader"><td colspan="2">Scheduled Interventions</td></tr>
+  <tr><td>outage</td><td>${module.dataset["nInterventionsOutage"]}</td></tr>
+  <tr><td>at risk / info</td><td>${module.dataset["nInterventionsAtRisk"]}</td></tr>
+</table>
+
+<br/>
+
+<script type="text/javascript">
+$(function() {
+	function handle_ajax_response(data) {
+		$('#${module.instance_name}_spinner').remove();
+		if(data["status"] == "success") {
+			var table = $('#${module.instance_name}_details table');
+			console.log(table);
+			console.log(data["data"].length);
+			console.log(data["data"][0]);
+		}
+		else {
+			// Todo: Give user some feedback
+		}
+	}
+	downloaded_additional_data = false;
+	$('#${module.instance_name}_toggle').click(function() {
+		$('#${module.instance_name}_details').toggle();
+		if(!downloaded_additional_data) {
+			downloaded_additional_data = true;
+			$.ajax("${module.ajaxUrl()}", {
+				error: function(jqXHR, textStatus, errorThrown) {
+					handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
+				},
+				
+				success: function(data, textStatus, jqXHR) {
+					handle_ajax_response(data);
+				},
+				dataType: "json"
+			});
+		}
+	});
+});
+</script>
+<input type="button" value="show/hide details" onfocus="this.blur()" id="${module.instance_name}_toggle" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<p id="${module.instance_name}_spinner">Loading contents of details table, this might take a few seconds...</br>
+<img src="${hf.config.get("paths", "static_url")}/images/spinner.gif" />
+</p>
+<h3>Incidents and Problems</h3>
+<table class="TableData">
+  <tr class="TableHeader">
+    <td>Severity</td>
+    <td>Submit Time<br/>Last Updated</td>
+    <td>Description</td>
+    <td>Affecting / Explanation</td>
+  </tr>
+  %for incident in incident_list:
+  <tr class=${incident['row_type']}>
+    <td>${incident['severity']}</td>
+    <td>${incident['submit_time']}<br/>${incident['update_time']}</td>
+    <td>${incident['description']}</td>
+    <td>${incident['affecting_explanation']}</td>
+  </tr>
+  %endfor
+</table>
+<h3>Scheduled Interventions</h3>
+<table class="TableData">
+  <tr class="TableHeader">
+    <td style="width:105px;">Severity</td>
+    <td style="width:135px;">Submit Time<br/>Last Updated</td>
+    <td style="width:135px;">Start<br/>End</td>
+    <td>Description</td>
+    <td>Affecting / Explanation</td>
+  </tr>
+  %for intervention in intervention_list:
+  <tr class=${intervention['row_type']}>
+    <td>${intervention['severity']}</td>
+    <td>${intervention['submit_time']}<br/>${intervention['update_time']}</td>
+    <td>${intervention['intervention_start']}<br/>${intervention['intervention_end']}</td>
+    <td>${intervention['description']}</td>
+    <td>${intervention['affecting_explanation']}</td>
+  </tr>
+  %endfor
+</table>
+</div>
+<br />
+</%def>
