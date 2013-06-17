@@ -152,7 +152,7 @@ class GridKaAnnouncement(hf.module.ModuleBase):
     elif nIncidentsLow >= self.nWarnIncidentsLow or nIncidentsInfo >= self.nWarnIncidentsInfo or nInterventionsAtRisk >= self.nWarnIncidentsInfo:
       data['status'] = 0.5
     else:
-      data['status'] = 0.0
+      data['status'] = 1.0
     
     return data
 
