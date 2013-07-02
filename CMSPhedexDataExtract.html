@@ -37,7 +37,7 @@
 %for cols in link_list:
     <span style = "top:${15*cols['y']+50}px; left:${width*cols['x']+201}px; background:${cols['color']};"
     title="time: ${cols['time']} &#xA;rate: ${cols['rate']}MB/s &#xA;files done: ${cols['done']} &#xA;files failed: ${cols['fails']} &#xA;quality: ${cols['w']}">
-    <font color=${cols['marking']} size="tiny">~~~</font>
+    <font color=${cols['marking']} size="tiny">~^~</font>
     </span>
 %endfor
 %for i,title in enumerate(titles):
