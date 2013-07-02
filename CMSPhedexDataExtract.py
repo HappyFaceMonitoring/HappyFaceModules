@@ -202,7 +202,13 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         for values in details_list:
             if values['name'] not in y_value_map: #add a new entry if the link name is not in the value_map 
                 y_value_map[values['name']] = len(y_value_map)
-            help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name']}
+            t_number = values['name'].split('_')[0].lower()
+            marking_color = values['color']
+            if int(self.config['%s_critical_failures'%t_number]) <= int(values['fail_files']):
+                marking_color = '#feffbe'
+            elif int(self.config['%s_warning_failures'%t_number]) <= int(values['fail_files']):
+                marking_color = '#a50026'
+            help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name'], 'marking':marking_color}
             raw_data_list.append(help_dict)
         
         name_mapper = []
