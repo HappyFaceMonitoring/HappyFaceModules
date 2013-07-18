@@ -1,0 +1,136 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript" src="sorttable.js"></script>
+<!-- http://www.kryogenix.org/code/browser/sorttable/ -->
+<table class="TableData">
+  <tr><td>number of incoming channels</td><td>${module.dataset["total_in_channels"]}</td></tr>
+  <tr><td>... number of incoming channels at or above ${module.dataset["failed_transfers_threshold"]}%-failed transfers threshold</td><td class="${module.dataset["in_channels_above_failed_threshold_color"]}">${module.dataset["in_channels_above_failed_threshold"]}</td></tr>
+  <tr><td>number of outgoing channels</td><td>${module.dataset["total_out_channels"]}</td></tr>
+  <tr><td>... number of outgoing channels at or above ${module.dataset["failed_transfers_threshold"]}%-failed transfers threshold</td><td class="${module.dataset["out_channels_above_failed_threshold_color"]}">${module.dataset["out_channels_above_failed_threshold"]}</td></tr>
+</table>
+
+<br/>
+
+<script type="text/javascript">
+$(function() {
+	function handle_ajax_response(data) {
+		$('#${module.instance_name}_spinner').remove();
+		if(data["status"] == "success") {
+			var table = $('#${module.instance_name}_details table');
+			console.log(table);
+			console.log(data["data"].length);
+			console.log(data["data"][0]);
+			for(var i = 0; i < data["data"].length; i++) {
+				var row = data["data"][i];
+				var name = row["name"]
+				/*table.append("<tr class=\"report\" style=\"background-color: "+row["bg_color"]+"\" ><td>"+row["name"]+"</td>"
+				+ "<td>"+row["bare_total_files"]+" files<br />"+row["bare_total_size"]+" GiB</td>"
+				+ "<td>"+row["bare_on_disk_files"]+" files"+row["bare_on_disk_files_rel"]+"%<br />"
+				+row["bare_on_disk_size"]+" GiB "+row["bare_on_disk_size_rel"]+"%</td>"
+				+ "<td>"+row["total_on_disk_files"]+"<br />"+row["total_on_disk_size"]+" GiB</td></tr>");*/
+			}
+			
+		}
+		else {
+			// Todo: Give user some feedback
+		}
+	}
+	downloaded_additional_data = false;
+	$('#${module.instance_name}_toggle').click(function() {
+		$('#${module.instance_name}_details').toggle();
+		if(!downloaded_additional_data) {
+			downloaded_additional_data = true;
+			$.ajax("${module.ajaxUrl()}", {
+				error: function(jqXHR, textStatus, errorThrown) {
+					handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
+				},
+				
+				success: function(data, textStatus, jqXHR) {
+					handle_ajax_response(data);
+				2},
+				dataType: "json"
+			});
+		}
+	});
+});
+</script>
+<input type="button" value="show/hide details" onfocus="this.blur()" id="${module.instance_name}_toggle" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<p id="${module.instance_name}_spinner">Loading contents of details table, this might take a few seconds...</br>
+<img src="${hf.config.get("paths", "static_url")}/images/spinner.gif" />
+</p>
+<h3>Incoming channels</h3>
+<table class="TableData">
+  <tr>
+    <th>Channel</th>
+    <th>From</th>
+    <th>To</th>
+    <th>Ready</th>
+    <th>Active</th>
+    <th>Finished</th>
+    <th>Finished dirty</th>
+    <th>Failed</th>
+    <th>Canceled</th>
+  </tr>
+  %for channel_stat in in_channel_stats:
+  <tr>
+    %if channel_stat['Channel']=='TOTAL':
+      <td>${channel_stat['Channel']}</td>
+    %else:
+      <td><a href="http://ftm-kit.gridka.de/ftsmonitor/ftschannel.php?channel=${channel_stat['Channel']}&vo=all">${channel_stat['Channel']}</a></td>
+    %endif
+    <td>${channel_stat['MembersFrom']}</td>
+    <td>${channel_stat['MembersTo']}</td>
+    <td>${channel_stat['Ready']}%</td>
+    <td>${channel_stat['Active']}%</td>
+    <td>${channel_stat['Finished']}%</td>
+    <td>${channel_stat['FinishedDirty']}%</td>
+    %if channel_stat['Failed'] >= module.dataset['failed_transfers_threshold']:
+      <td class="critical">${channel_stat['Failed']}%</td>
+    %else:
+      <td>${channel_stat['Failed']}%</td>
+    %endif
+    <td>${channel_stat['Canceled']}%</td>
+  </tr>
+  %endfor
+</table>
+<br/>
+<h3>Outgoing channels</h3>
+<table class="TableData">
+  <tr>
+    <th>Channel</th>
+    <th>From</th>
+    <th>To</th>
+    <th>Ready</th>
+    <th>Active</th>
+    <th>Finished</th>
+    <th>Finished dirty</th>
+    <th>Failed</th>
+    <th>Canceled</th>
+  </tr>
+  %for channel_stat in out_channel_stats:
+  <tr>
+    %if channel_stat['Channel']=='TOTAL':
+      <td>${channel_stat['Channel']}</td>
+    %else:
+      <td><a href="http://ftm-kit.gridka.de/ftsmonitor/ftschannel.php?channel=${channel_stat['Channel']}&vo=all">${channel_stat['Channel']}</a></td>
+    %endif
+    <td>${channel_stat['MembersFrom']}</td>
+    <td>${channel_stat['MembersTo']}</td>
+    <td>${channel_stat['Ready']}%</td>
+    <td>${channel_stat['Active']}%</td>
+    <td>${channel_stat['Finished']}%</td>
+    <td>${channel_stat['FinishedDirty']}%</td>
+    %if channel_stat['Failed'] >= module.dataset['failed_transfers_threshold']:
+      <td class="critical">${channel_stat['Failed']}%</td>
+    %else:
+      <td>${channel_stat['Failed']}%</td>
+    %endif
+    <td>${channel_stat['Canceled']}%</td>
+  </tr>
+  %endfor
+</table>
+</div>
+</%def>
