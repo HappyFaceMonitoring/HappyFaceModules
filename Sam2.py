@@ -66,12 +66,12 @@ class Sam2(hf.module.ModuleBase):
         
         for stype in self.service_type:
             service = stype.replace('-','_').lower()
-            self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_warning_min_jobs'])
-            self.service_error_min_jobs[stype] = int(self.config[str(service) + '_error_min_jobs'])
-            self.service_warning_warnings[stype] = int(self.config[str(service) + '_warning_warnings'])
-            self.service_error_warnings[stype] = int(self.config[str(service) + '_error_warnings'])
-            self.service_warning_errors[stype] = int(self.config[str(service) + '_warning_errors'])
-            self.service_error_errors[stype] = int(self.config[str(service) + '_error_errors'])
+            self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_hf_warning_sam_min_jobs'])
+            self.service_error_min_jobs[stype] = int(self.config[str(service) + '_hf_critical_sam_min_jobs'])
+            self.service_warning_warnings[stype] = int(self.config[str(service) + '_hf_warning_sam_warnings'])
+            self.service_error_warnings[stype] = int(self.config[str(service) + '_hf_critical_sam_warnings'])
+            self.service_warning_errors[stype] = int(self.config[str(service) + '_hf_warning_sam_errors'])
+            self.service_error_errors[stype] = int(self.config[str(service) + '_hf_critical_sam_errors'])
         
         self.blacklist = map(strip, self.config['blacklist'].split(','))
         ## add download tyo queue
