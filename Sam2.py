@@ -32,10 +32,10 @@ class Sam2(hf.module.ModuleBase):
         'service_type': ('colon seperated list of types to be extracted', 'CREAM-CE,SRMv2'),
         'SERVICE_hf_warning_sam_min_jobs': ('less tests will result in status warning for this service and the module', '3'),
         'SERVICE_hf_critical_sam_min_jobs': ('less tests will result in status critical for this service and the module', '1'),
-        'SERVICE_hf_warning_sam_warnings': ('this amount, or more warnings will result in status warning for module and service', '2'),
-        'SERVICE_hf_critical_sam_warnings': ('this amount, or more warnings will result in status critical for module and service', '4'),
-        'SERVICE_hf_warning_sam_errors': ('this amount, or more errors will result in status warning for module and service', '1'),
-        'SERVICE_hf_critical_sam_errors': ('this amount, or more errors will result in status warning for module and service', '2')
+        'SERVICE_hf_warning_sam_warnings': ('if amount of warnings is euqal or greater than this threshold, service and happyface status will change to warning', '2'),
+        'SERVICE_hf_critical_sam_warnings': ('if amount of warnings is equal or greater than this threshold, service and happyface status will change to critical', '4'),
+        'SERVICE_hf_warning_sam_errors': ('if amount of errors is equal or grater than this threshold, service and happyface status will change to warning', '1'),
+        'SERVICE_hf_critical_sam_errors': ('if amount of errors is equal or greater than this threshold, service and happyface will change to status critical', '2')
     }
     config_hint = "Due to flexibility reasons you can configure crit and warn thresholds for each service, therefor replace SERVICE with service_type, use _ instead of - and all letters in lowercase"
     
