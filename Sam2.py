@@ -179,7 +179,7 @@ class Sam2(hf.module.ModuleBase):
                 
         for key,host in hosts.iteritems():
             service_type = host['type']
-            if host['sum'] < self.service_error_min_jobs[service_type] or host['crit'] >= self.service_error_errors or host['warn'] >= self.service_error_warnings[service_type]:
+            if host['sum'] < self.service_error_min_jobs[service_type] or host['crit'] >= self.service_error_errors[service_type] or host['warn'] >= self.service_error_warnings[service_type]:
                 host['status'] = 'critical'
             elif host['sum'] < self.service_warning_min_jobs[service_type] or host['crit'] >= self.service_warning_errors[service_type] or host['warn'] >= self.service_warning_warnings[service_type]:
                 host['status'] = 'warning'

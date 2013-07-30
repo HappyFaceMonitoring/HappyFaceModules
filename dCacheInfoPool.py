@@ -15,10 +15,10 @@
 #   limitations under the License.
 
 import hf, lxml, logging, datetime
-import parser
 from sqlalchemy import *
-from lxml import etree
+from lxml.html import parse
 from string import strip
+from string import replace
 
 class dCacheInfoPool(hf.module.ModuleBase):
     config_keys = {
@@ -30,13 +30,13 @@ class dCacheInfoPool(hf.module.ModuleBase):
         'global_critical_poolwarnings': ('module status is critical if more than this amount of pools are  warning pools', '4'),
         'global_warning_poolcriticals': ('module status is warning if more than this amount of pools are  critical pools', '0'),
         'global_warning_poolwarnings': ('module status is warning if more than this amount of pools are  warning pools', '0'),
-        'poolgroups': ('name of the pools, a list is possible', ' cms-disk-only-pools'),
-        'categories': ('name of the categories to be extracted, poolname and status will always be generated', 'total,free,precious,removable'),
+        'poolgroups': ('name of the pools, a list is possible', 'rT_ops, rT_cms'),
         'unit': ('This should be GiB or TiB', 'TiB'),
         'source_xml': ('link to the source file', 'both||http://adm-dcache.gridka.de:2286/info/pools'),
         'special_overview': ('this parameter allows you to add several new lines to the overview, you have 4 variables(total, free, precious, removable) you can use to define the new line. this adds the line example with the value calculated the way described after =', 'example[%]=(r+t)/(f-p)*100'),
         'special_details': ('it is equal to special_overview but adds a new column for details', 'example=(r+t)/(f-p)'),
     }
+    #'categories': ('name of the categories to be extracted, poolname and status will always be generated', 'total,free,precious,removable'),
     config_hint = ''
     
     table_columns = [
@@ -90,52 +90,36 @@ class dCacheInfoPool(hf.module.ModuleBase):
         data = {}
         if self.unit != 'GiB' and self.unit != 'TiB':
             self.logger.error(self.unit + ' is not an accepted unit, using TiB instead!')
-            self.unit = 1024 * 1024 * 1024 * 1024.0
+            self.unit = 1024 * 1024.0
             data['unit'] = 'TiB'
         elif self.unit == 'GiB':
-            self.unit = 1024 * 1024 * 1024.0
+            self.unit = 1024.0
             data['unit'] = 'GiB'
         else:
-            self.unit = 1024 * 1024 * 1024 * 1024.0
+            self.unit = 1024 * 1024.0
             data['unit'] = 'TiB'
         data['source_url'] = self.source_xml.getSourceUrl()
         data['status'] = 1
         data['special_overview'] = self.special_overview
         data['special_details'] = self.special_details
 
-        source_tree = etree.parse(open(self.source_xml.getTmpPath()))
+        source_tree = parse(open(self.source_xml.getTmpPath()))
         root = source_tree.getroot()
-        
-        for pools in root:
-            if pools.tag == '{http://www.dcache.org/2008/01/Info}pools':
-                for pool in pools:
-                    for poolgroups in pool:
-                        if poolgroups.tag == '{http://www.dcache.org/2008/01/Info}poolgroups':
-                            accept = 'false'
-                            for poolgroupref in poolgroups:
-                                if poolgroupref.get('name') in self.poolgroups:
-                                    accept = 'true'
-                                    break
-                            if accept == 'true':
-                                for space in pool:
-                                    if space.tag == '{http://www.dcache.org/2008/01/Info}space':
-                                        appending = {}
-                                        appending['poolname'] = pool.get('name')
-                                        appending['status'] = 1.0
-                                        appending['total'] = 0
-                                        appending['free'] = 0
-                                        appending['precious'] = 0
-                                        appending['removable'] = 0
-                                        for metric in space:
-                                            if metric.get('name') == 'total':
-                                                appending['total'] = float(metric.text) / self.unit
-                                            elif metric.get('name') == 'free':
-                                                appending['free'] = float(metric.text) / self.unit
-                                            elif metric.get('name') == 'precious':
-                                                appending['precious'] = float(metric.text) / self.unit
-                                            elif metric.get('name') == 'removable':
-                                                appending['removable'] = float(metric.text) / self.unit
-                                        self.details_db_value_list.append(appending)
+        #take first tbody as table body with the information
+        root = root.findall('.//tbody')[0]
+        for tr in root.findall('.//tr'):
+	  spans = tr.findall('.//span')
+	  bools = [group in spans[0].text for group in self.poolgroups]
+	  if True in bools:
+	    append = {'poolname': spans[0].text, 'total': float(spans[3].text)/self.unit, 'free': float(spans[4].text)/self.unit, 'precious': float(spans[5].text)/self.unit}
+	    for div in spans[-1].findall('.//div'):
+	      if div.get('class') == 'removable':
+		removable = div.get('style') # style = 'width: X.X%'
+		removable = replace(removable, 'width:', ' ')
+		removable = replace(removable, '%', ' ')
+		removable = float(removable) / 100.0 * append['total']
+		append['removable'] = removable
+	    self.details_db_value_list.append(append)
         data['num_pools'] = 0
         data['crit_pools'] = 0
         data['warn_pools'] = 0
@@ -143,7 +127,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
         data['free'] = 0
         data['precious'] = 0
         data['removable'] = 0        
-        for i,pool in enumerate(self.details_db_value_list):
+        for pool in self.details_db_value_list:
             data['num_pools'] += 1
             data['total'] += pool['total']
             data['free'] += pool['free']
@@ -205,11 +189,11 @@ class dCacheInfoPool(hf.module.ModuleBase):
         overview_list.append(['Pools with status critical', self.dataset['crit_pools']])
         overview_list.append(['Pools with status warning [%]', float(self.dataset['warn_pools']) / self.dataset['num_pools']*100])
         overview_list.append(['Pools with status critical [%]', float(self.dataset['crit_pools']) / self.dataset['num_pools']*100])
-        overview_list.append(['Total Space [' + self.dataset['unit'] + ']', t])
-        overview_list.append(['Free Space [' + self.dataset['unit'] + ']', f])
-        overview_list.append(['Used Space [' + self.dataset['unit'] + ']', t - f])
-        overview_list.append(['Precious Space [' + self.dataset['unit'] + ']', p])
-        overview_list.append(['Removable Space [' + self.dataset['unit'] + ']', r])
+        overview_list.append(['Total Space [' + self.dataset['unit'] + ']', '%.2f' %t])
+        overview_list.append(['Free Space [' + self.dataset['unit'] + ']', '%.2f' %f])
+        overview_list.append(['Used Space [' + self.dataset['unit'] + ']', '%.2f' %(t - f)])
+        overview_list.append(['Precious Space [' + self.dataset['unit'] + ']', '%.2f' %p])
+        overview_list.append(['Removable Space [' + self.dataset['unit'] + ']', '%.2f' %r])
         
         if special_overview is not None:
             for i,special in enumerate(special_overview):
