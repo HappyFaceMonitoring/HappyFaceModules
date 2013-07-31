@@ -91,13 +91,10 @@ class dCacheMoverInfo(hf.module.ModuleBase):
 	      summary_dict[job_list[i]]['active'] += int(job[0].findall('.//span')[0].text)
 	      summary_dict[job_list[i]]['max'] += int(job[1].findall('.//span')[0].text)
 	      summary_dict[job_list[i]]['queued'] += int(job[2].findall('.//span')[0].text)
-	      print(job_list[i])
-	      print(summary_dict[job_list[i]])
         # calculate happiness as ratio of queued pools to total pools,
         # be sad if there is a critical queue
         data['status'] = 1.0
         self.job_summary_db_value_list = [{'job':job, 'active':v['active'], 'max':v['max'], 'queued':v['queued']} for job,v in summary_dict.iteritems()]
-        print(summary_dict)
         return data
         
     def fillSubtables(self, parent_id):

@@ -17,8 +17,9 @@
 import hf, logging
 from sqlalchemy import *
 from lxml.html import parse
-from datetime import datetime
-from datetime import timedelta
+from string import strip
+import datetime
+import re
 
 class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
     config_keys = {
@@ -85,81 +86,61 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
                 'time_limit': self.stage_max_time,
                 'retry_limit': self.stage_max_retry,
                 'status': self.status}
-
+	self.stage_max_time = datetime.timedelta(hours = self.stage_max_time)
+	count = {}
+	critical = 0
+	expired = 0
+	retried = 0
+	for tag in (self.statusTagsOK + self.statusTagsFail):
+	  count[tag] = 0
+	  
         source_tree = parse(open(self.source.getTmpPath()))
         root = source_tree.getroot()
-
+	root = root.findall('.//tbody')[0].findall('.//tr')
         stage_requests = []
-        info = {}
+        current_time = datetime.datetime.today()
+        
         # parse html
-        for td in root.findall('.//td'):
-            tag = td.get('class')
-            info[tag] = td.text
-            if tag == 'path':
-                stage_requests.append(info)
-                info = {}
-
-        self.total = len(stage_requests)
-        data['total'] = self.total
-
-        states = {}
+        for tr in root:
+	  tds = tr.findall('.//td')
+          pnfs = tds[0].findall('.//span')[0].text
+          started = tds[3].findall('.//span')[0].text
+          retries = int(tds[5].findall('.//span')[0].text)
+          status = tds[6].findall('.//span')[0].text
+          stat_name = [ x for x in (self.statusTagsOK + self.statusTagsFail) if x in status]
+          stat_name = stat_name[0]
+          count[stat_name] += 1
+          started = map(strip, started.split())
+          month_day = map(int, map(strip, started[0].split('.')))
+          hour_min_sec = map(int, map(strip, started[1].split(':')))
+          job_time = datetime.datetime(current_time.year, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
+          if (current_time - job_time) < datetime.timedelta(microseconds = 0):
+	    job_time = datetime.datetime(current_time.year - 1, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
+	  if (current_time - job_time) > self.stage_max_time:
+	    expired += 1
+	    stat_name += '  Expired'
+	  if retries > self.stage_max_retry:
+	    retried += 1
+	    stat_name += '  Tried'
+	  
+	  bools = [x in stat_name for x in (self.statusTagsFail + ['Expired', 'Tried'])]
+	  if True in bools:
+	    critical += 1
+	  info = {'pnfs': pnfs, 'started_full': job_time.isoformat(' '), 'status_short': stat_name, 'retries':retries, 'path': 'empty'}
+	  self.details_db_value_list.append(info)
+	
+	
         for tag in (self.statusTagsOK + self.statusTagsFail):
-            states[tag] = 0
-        
-        count = 0
-        for i in stage_requests:
-            fail = False
-            status = i['status'].split(' ')[0]
-            if status in self.statusTagsFail:
-                self.total_problem += 1
-            states[status] += 1
-
-            # Check if retry limit hit
-            retries = int(i['retries'])
-            if retries >= self.stage_max_retry:
-                self.hit_retry += 1
-                self.total_problem += 1
-                fail = True
-            
-            # Check if time limit hit
-            time_limit = timedelta(hours=self.stage_max_time)
-            now = datetime.now()
-            started = datetime.strptime(i['started'],'%m.%d %H:%M:%S')
-            # No year information available, assume current year
-            started = started.replace(year=now.year)
-            # When timedelta is negative, assume last year
-            if (now - started) < timedelta(0):
-                started.replace(year=now.year-1)
-            if (now - started) > time_limit:
-                self.hit_time += 1
-                self.total_problem += 1
-                fail = True
-
-            details_db_values = {}
-            details_db_values['pnfs'] = i['pnfs']
-            details_db_values['path'] = i['path']
-            details_db_values['retries'] = i['retries']
-            details_db_values['status_short'] = status
-            details_db_values['started_full'] = i['started']
-            if fail:
-                count += 1
-                if self.details_cutoff == 0 or count <= self.details_cutoff:
-                    self.details_db_value_list.append(details_db_values)
-
-
-        data['total_problem'] = self.total_problem
-        data['hit_retry'] = self.hit_retry
-        data['hit_time'] = self.hit_time
-        
-        for tag in (self.statusTagsOK + self.statusTagsFail):
-            data['status_'+tag.lower()] = states[tag]
-
-        if count >= self.limit_warning:
+          data['status_'+tag.lower()] = count[tag]
+	data['hit_retry'] = retried
+	data['hit_time'] = expired
+	data['total_problem'] = critical
+        if critical >= self.limit_warning:
             self.status = 0.5
-        if count >= self.limit_critical:
+        if critical >= self.limit_critical:
             self.status = 0.0
         data['status'] = self.status
-
+	data['total'] = len(self.details_db_value_list)
         return data
 
     def fillSubtables(self, parent_id):
@@ -169,6 +150,14 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         data = hf.module.ModuleBase.getTemplateData(self)
 
         info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-        data['info_list'] = map(dict, info_list)
-
+        all_requests_list = map(dict, info_list)
+	self.statusTagsOK = ['Pool2Pool','Staging']
+        self.statusTagsFail = ['Waiting','Suspended','Unknown']
+        for x in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
+	  data[x] = []
+	  
+	for request in all_requests_list:
+	  for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
+	    if tag in request['status_short']:
+	      data[tag].append(request)
         return data
