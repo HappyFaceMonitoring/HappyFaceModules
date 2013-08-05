@@ -15,6 +15,7 @@
 #   limitations under the License.
 
 import hf
+from lxml import etree
 import lxml.html
 import StringIO
 from sqlalchemy import *
@@ -110,22 +111,28 @@ class GridKaAnnouncement(hf.module.ModuleBase):
 					Incident = {}
 					Incident['row_type'] = incident_type
 					Incident['severity'] = severitylevel
-					try:
-						Incident['submit_time'] = row[1][0].text if row[1][0].text!='' else 'n/a'
-					except:
-						Incident['submit_time'] = 'n/a'
-					try:
-						Incident['update_time'] = row[1][1].text if row[1][1].text!='' else 'n/a'
-					except:
+
+					time = row[1].text_content()
+					if '\n' in time:
+						submit_time = time.split('\n')[0]
+						update_time = time.split('\n')[1]
+						Incident['submit_time'] = submit_time if (submit_time!='' and not submit_time is None) else 'n/a'
+						Incident['update_time'] = update_time if (update_time!='' and not submit_time is None) else 'n/a'
+					elif time <> '':
+						Incident['submit_time'] = time
 						Incident['update_time'] = 'n/a'
+					else:
+						Incident['submit_time'] = 'n/a'
+						Incident['update_time'] = 'n/a'
+
 					if row[2].text == None:
 						Incident['description'] = 'n/a'
 					else:
-						Incident['description'] = row[2].text.replace("\n","<br/>")
+						Incident['description'] = row[2].text_content().replace("\n","<br/>")
 					if row[3].text == None:
 						Incident['affecting_explanation'] = 'n/a'
 					else:
-						Incident['affecting_explanation'] = row[3].text.replace("\n","<br/>")
+						Incident['affecting_explanation'] = row[3].text_content().replace("\n","<br/>")
 					self.incidents_db_value_list.append(Incident)
 				data['nIncidentsHigh'] = nIncidentsHigh
 				data['nIncidentsMedium'] = nIncidentsMedium
@@ -146,28 +153,41 @@ class GridKaAnnouncement(hf.module.ModuleBase):
 					Intervention = {}
 					Intervention['row_type'] = intervention_type
 					Intervention['severity'] = severitylevel
-					try:
-						Intervention['submit_time'] = row[1][0].text if row[1][0].text!='' else 'n/a'
-					except:
-						Intervention['submit_time'] = 'n/a'
-					try:
-						Intervention['update_time'] = row[1][1].text if row[1][1].text!='' else 'n/a'
-					except:
+
+					SubmitUpdateTime = row[1].text_content()
+					if '\n' in SubmitUpdateTime:
+						submit_time = SubmitUpdateTime.split('\n')[0]
+						update_time = SubmitUpdateTime.split('\n')[1]
+						Intervention['submit_time'] = submit_time if (submit_time!='' and not submit_time is None) else 'n/a'
+						Intervention['update_time'] = update_time if (update_time!='' and not submit_time is None) else 'n/a'
+					elif SubmitUpdateTime <> '':
+						Intervention['submit_time'] = SubmitUpdateTime
 						Intervention['update_time'] = 'n/a'
-					if '\n' in row[2].text:
-						Intervention['intervention_start'] = row[2].text.split('\n')[0] if row[2].text.split('\n')[0]!='' else 'n/a'
-						Intervention['intervention_end'] = row[2].text.split('\n')[1] if row[2].text.split('\n')[1]!='' else 'n/a'
+					else:
+						Intervention['submit_time'] = 'n/a'
+						Intervention['update_time'] = 'n/a'
+
+					StartEnd = row[2].text_content()
+					if '\n' in StartEnd:
+						intervention_start = StartEnd.split('\n')[0]
+						intervention_end = StartEnd.split('\n')[1]
+						Intervention['intervention_start'] = intervention_start if (intervention_start!='' and not intervention_start is None) else 'n/a'
+						Intervention['intervention_end'] = intervention_end if (intervention_end!='' and not intervention_end is None) else 'n/a'
+					elif StartEnd <> '':
+						Intervention['intervention_start'] = StartEnd
+						Intervention['intervention_end'] = 'n/a'
 					else:
 						Intervention['intervention_start'] = 'n/a'
 						Intervention['intervention_end'] = 'n/a'
+
 					if row[3].text == None:
 						Intervention['description'] = 'n/a'
 					else:
-						Intervention['description'] = row[3].text.replace("\n","<br/>")
+						Intervention['description'] = row[3].text_content().replace("\n","<br/>")
 					if row[4].text == None:
 						Intervention['affecting_explanation'] = 'n/a'
 					else:
-						Intervention['affecting_explanation'] = row[4].text.replace("\n","<br/>")
+						Intervention['affecting_explanation'] = row[4].text_content().replace("\n","<br/>")
 					self.interventions_db_value_list.append(Intervention)
 				data['nInterventionsOutage'] = nInterventionsOutage
 				data['nInterventionsAtRisk'] = nInterventionsAtRisk
