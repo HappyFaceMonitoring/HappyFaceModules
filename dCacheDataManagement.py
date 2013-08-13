@@ -93,7 +93,7 @@ class dCacheDataManagement(hf.module.ModuleBase):
                     for subelement in element:
                         details_db_values[subelement.tag] =  int(subelement.text)
                     self.details_db_value_list.append(details_db_values)
-            else:
+            elif element.tag != "duration":
                 data[element.tag] = int(element.text)
         return data
 
