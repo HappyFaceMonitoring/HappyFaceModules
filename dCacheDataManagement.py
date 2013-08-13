@@ -83,18 +83,18 @@ class dCacheDataManagement(hf.module.ModuleBase):
             data['latest_data_id'] = timestamp_is_in_database[-1].id
             is_new=0
 
-	for element in root:
-	    if element.tag == 'time':
+        for element in root:
+            if element.tag == 'time':
                 pass
-	    elif element.tag == 'dataset':
+            elif element.tag == 'dataset':
                 if is_new:
                     details_db_values = {}
                     details_db_values['name'] = element.attrib['name']
                     for subelement in element:
                         details_db_values[subelement.tag] =  int(subelement.text)
                     self.details_db_value_list.append(details_db_values)
-	    else:
-	        data[element.tag] = int(element.text)
+            else:
+                data[element.tag] = int(element.text)
         return data
 
     def fillSubtables(self, parent_id):
