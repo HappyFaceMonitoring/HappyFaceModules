@@ -30,7 +30,7 @@ class dCacheTransfers(hf.module.ModuleBase):
         'source_url': ('', ''),
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('speed_average', INT),
         Column('speed_stdev', INT),
@@ -57,7 +57,7 @@ class dCacheTransfers(hf.module.ModuleBase):
 
 
     def prepareAcquisition(self):
-        
+
         try:
             self.speed_warning_limit = int(self.config['speed_warning_limit'])
             self.speed_critical_limit = int(self.config['speed_critical_limit'])
@@ -70,7 +70,7 @@ class dCacheTransfers(hf.module.ModuleBase):
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('No source file')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.details_db_value_list = []
-        
+
     def extractData(self):
         data = {}
         data['source_url'] = self.source.getSourceUrl()
@@ -117,10 +117,10 @@ class dCacheTransfers(hf.module.ModuleBase):
 	      self.details_db_value_list.append(appender)
             except IndexError:
                 continue
-                
+
         data['warning_transfers'] = data['below_speed_warning_limit'] + data['exceed_time_warning_limit']
         data['critical_transfers'] = data['below_speed_critical_limit'] + data['exceed_time_critical_limit']
-        
+
         if data['total_transfers']<>0:
 	  data['speed_average'] = int(speed_sum / data['total_transfers'])
 	else:
@@ -131,7 +131,7 @@ class dCacheTransfers(hf.module.ModuleBase):
         for i, item in enumerate(self.details_db_value_list):
             speed_delta += 1.0 /((float(total_jobs) - 1.0) * float(total_jobs)) * (float(item['speed']) - float(speed_avg)) ** 2
         data['speed_stdev'] = int(math.sqrt(speed_delta))
-        
+
         if float(data['warning_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.5
         elif float(data['warning_transfers'] + data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
@@ -141,15 +141,15 @@ class dCacheTransfers(hf.module.ModuleBase):
         else:
             data['status'] = 1.0
         return data
-    
+
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, details_list)
-        
+
         for i,item in enumerate(data['details']):
             if item['status'] == 1.0:
                 data['details'][i]['status'] = 'ok'
@@ -159,5 +159,5 @@ class dCacheTransfers(hf.module.ModuleBase):
                 data['details'][i]['status'] = 'critical'
             store = item['since']
             data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600))) + ':' + str('%02i' %int((store % (24 * 3600)) / (3600))) + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600) / (60)))) + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600)) % (60)))
-                
+
         return data

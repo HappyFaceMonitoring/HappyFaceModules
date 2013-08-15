@@ -200,7 +200,7 @@ class GridKaAnnouncement(hf.module.ModuleBase):
 			data['status'] = 0.5
 		else:
 			data['status'] = 1.0
-    
+
 		return data
 
 	def fillSubtables(self, parent_id):

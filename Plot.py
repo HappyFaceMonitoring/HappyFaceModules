@@ -33,14 +33,14 @@ class Plot(hf.module.ModuleBase):
         'timerange_seconds': ('How far in the past is the start timestamp (in seconds)', '259200'),
     }
     config_hint = ''
-    
+
     table_columns = [
         Column("plot_file", TEXT)
     ], ['plot_file']
-    
+
 
     def prepareAcquisition(self):
-        
+
         url = self.config["plot_url"]
         use_start_end_time = False
         try:
@@ -56,9 +56,9 @@ class Plot(hf.module.ModuleBase):
                 url += "&"+self.config["endtime_parameter_name"]+"="+str(int(time.time()))
             except KeyError, e:
                 pass
-            
+
         self.plot = hf.downloadService.addDownload(url)
-        
+
     def extractData(self):
         data = {
             "source_url": self.plot.getSourceUrl()

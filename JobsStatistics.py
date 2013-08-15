@@ -30,7 +30,7 @@ class JobsStatistics(hf.module.ModuleBase):
         'qstat_xml': ('URL of the input qstat xml file', ''),
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('details_group', TEXT),
         Column('result_timestamp', INT),
@@ -63,8 +63,8 @@ class JobsStatistics(hf.module.ModuleBase):
             Column('status', FLOAT),
         ], []),
     }
-    
-    
+
+
     def prepareAcquisition(self):
         # read configuration
         try:
@@ -95,7 +95,7 @@ class JobsStatistics(hf.module.ModuleBase):
     def extractData(self):
         data = {'result_timestamp': 0, 'details_group': ''}
         data['source_url'] = self.qstat_xml.getSourceUrl()
-        
+
         source_tree = etree.parse(open(self.qstat_xml.getTmpPath()))
         root = source_tree.getroot()
 
@@ -244,7 +244,7 @@ class JobsStatistics(hf.module.ModuleBase):
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        
+
         if data['run']['time'] > datetime.datetime.fromtimestamp(self.dataset['result_timestamp'] + float(self.config['old_result_critical_limit'])*3600):
             data['eval_time'] = True
         elif data['run']['time']  >  datetime.datetime.fromtimestamp(self.dataset['result_timestamp'] + float(self.config['old_result_warning_limit'])*3600):

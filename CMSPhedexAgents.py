@@ -19,7 +19,7 @@ from lxml import etree
 from string import strip
 
 class CMSPhedexAgents(hf.module.ModuleBase):
-    
+
     config_keys = {
         'blacklist': ('list all agents to be neglected', ''),
         'eval_blacklist': ('list all agents, which should be shown but neglected in status evaluation', ''),
@@ -28,11 +28,11 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         'source_url': ('set url of source', 'both||url')
         }
     config_hint = ''
-    
+
     table_columns = [
         Column('requestTime', FLOAT)
         ],[]
-    
+
     subtable_columns = {
         'details': ([
             Column('name', TEXT),
@@ -45,13 +45,13 @@ class CMSPhedexAgents(hf.module.ModuleBase):
             Column('status', TEXT)
             ],[])
         }
-    
+
     def prepareAcquisition(self):
         self.time_warning = float(self.config['time_warning'])
         self.time_critical = float(self.config['time_critical'])
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.details_db_value_list = []
-        
+
         try:
             self.blacklist = map(strip, self.config['blacklist'].split(','))
         except AttributeError:
@@ -60,9 +60,9 @@ class CMSPhedexAgents(hf.module.ModuleBase):
             self.eval_blacklist = map(strip, self.config['eval_blacklist'].split(','))
         except AttributeError:
             self.eval_blacklist = None
-            
+
     def extractData(self):
-        
+
         data = {}
         help_list = []
         data['source_url'] = self.source.getSourceUrl()
@@ -80,7 +80,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
             data['status'] = -1
             data['error_string'] = 'Request_Timestamp could not be converted to float, something is wrong with the file'
             return data
-            
+
         for node in root:
             agent_dict = {}
             node_name = node.get('name')
@@ -117,9 +117,9 @@ class CMSPhedexAgents(hf.module.ModuleBase):
                     else:
                         agent_dict['status'] = 'ok'
                     help_list.append(agent_dict)
-            
+
             #there might be several entries for the same process, so you need to find the newest
-        
+
         for i,agent in enumerate(help_list):
             pid = agent['pid']
             min_list = [agent]
@@ -127,7 +127,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
             for j in range(i,len(help_list)):
                 if pid == help_list[j]['pid']:
                     min_list.append(help_list[j])
-            
+
             while True:
                 if len(min_list)> 1:
                     if min_list[0]['time_diff'] < min_list[1]['time_diff']:
@@ -142,7 +142,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
                     checked = False
             if checked:
                 self.details_db_value_list.append(min_list)
-        
+
         if self.eval_blacklist is not None:
             for i,agent in enumerate(self.details_db_value_list):
                 if agent['label'] not in self.eval_blacklist:
@@ -150,27 +150,27 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         else:
             for i,agent in enumerate(self.details_db_value_list):
                 status_list.append(agent['status'])
-                
+
         if 'critical' in status_list:
             data['status'] = 0.0
         elif 'warning' in status_list:
             data['status'] = 0.5
         else:
             data['status'] = 1.0
-        
+
         return data
 
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
         details_list = [dict(time_str=self.formatTime(row['time_diff']), **row) for row in details_list]
-        
+
         data['details'] = details_list
         return data
-    
+
     def formatTime(self,time_diff):
         #TODO rewrite this function and use time package or something like that
         time_string = ""
@@ -178,7 +178,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         d = int(time_diff/24/3600)
         h = int((time_diff-d*24*3600)/3600)
         m = int((time_diff-d*24*3600-h*3600)/60)
-        
+
         time_string = "%02id:%02ih:%02im" % (d, h, m)
 
         return time_string

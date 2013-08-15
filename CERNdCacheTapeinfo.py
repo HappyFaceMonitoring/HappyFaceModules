@@ -11,7 +11,7 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         'total_disk': ('URL of the total disk input txt file', ''),
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('used_tape_size', FLOAT),
         Column('used_tape_timestamp', INT),
@@ -36,10 +36,10 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         self.total_disk = hf.downloadService.addDownload(self.config['total_disk'])
 
 
-    
+
     def extractData(self):
 
-        
+
         data = {'source_url': self.total_tape.getSourceUrl(),
                 'used_tape_size': 0.0,
                 'used_tape_timestamp': 0,
@@ -55,7 +55,7 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
             used_tape_f=float(line.split()[3])
         data['used_tape_size'] = used_tape_f
 
-     
+
         total_tape_f=-99.0
         used_tape_time=0
         all_lines=open(self.total_tape.getTmpPath()).read()
@@ -64,7 +64,7 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
                 continue
             total_tape_f=round(float(line.split()[2]),3)
             #used_tape_time=datetime.strptime(line.split()[0]+" "+line.split()[1],'%Y-%m-%d %H:%M:%S')
-       
+
         end_str= all_lines.find("Update  once per day at midnight")
         start_str = all_lines.find("Data on Grid SEs as of")
 
@@ -76,7 +76,7 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         data['used_tape_timestamp'] = used_tape_time
 
 
-            
+
         used_disk_f=-99.0
         for line in open(self.used_disk.getTmpPath()).readlines():
             if "T1_DE_KIT" not in line:

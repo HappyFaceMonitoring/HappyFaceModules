@@ -26,12 +26,12 @@ class JobsDist(hf.module.ModuleBase):
         'variable': ('Select the variable to plot', ''),
         'qstat_xml': ('URL of the input qstat xml file', ''),
     }
-            
+
     table_columns = [
         Column("filename_eff_plot", TEXT),
         Column("result_timestamp", INT),
     ], ['filename_eff_plot']
-    
+
 
     def prepareAcquisition(self):
         # read configuration
@@ -40,16 +40,16 @@ class JobsDist(hf.module.ModuleBase):
         if group != '': self.groups = group.split(',')
         else: self.groups = group
         self.splitnum = 1
-        
+
         if self.variable == 'cputime' or self.variable == 'walltime':
             self.splitnum = 3
 
         if len(self.groups) == 0 or self.groups[0] == '':
             self.groups = []
-        
+
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
-        
+
 
     def extractData(self):
         import matplotlib
@@ -179,7 +179,7 @@ class JobsDist(hf.module.ModuleBase):
             fig.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_dist.png"), dpi=60)
             data["filename_eff_plot"] = self.instance_name + "_jobs_dist.png"
         return data
-        
+
     def getGroupHierarchy(self, root):
         hierarchy = {}
         for element in root:

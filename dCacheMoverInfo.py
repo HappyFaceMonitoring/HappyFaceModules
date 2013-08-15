@@ -13,7 +13,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         'source': ('Download command for the qstat XML file', ''),
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('critical_queue_threshold', TEXT),
     ], []
@@ -40,13 +40,13 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         self.watch_jobs = map(strip, self.config['watch_jobs'].split(','))
         self.pool_match_string = map(strip, self.config['pool_match_string'].split(',')) 
         self.critical_queue_threshold = self.config['critical_queue_threshold']
-        
+
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source'])
-        
+
         self.job_info_db_value_list = []
         self.job_summary_db_value_list = []
-    
+
     def extractData(self):
         data = {'critical_queue_threshold':self.critical_queue_threshold}
         data['source_url'] = self.source.getSourceUrl()
@@ -55,7 +55,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         root = source_tree.getroot()
         #take first tbody as table body with the information
         job_list = [] #list of jobs: gridftpq etc.
-        
+
         for th in root.findall('.//th'):
 	  try:
 	    if th.get('colspan') == '3':
@@ -64,7 +64,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
 	  except ValueError:
 	    pass
         root = root.findall('.//tbody')[0]
-        
+
         #find all pools to be watched
         pool_list = []
         for tr in root.findall('.//tr'):
@@ -96,11 +96,11 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         data['status'] = 1.0
         self.job_summary_db_value_list = [{'job':job, 'active':v['active'], 'max':v['max'], 'queued':v['queued']} for job,v in summary_dict.iteritems()]
         return data
-        
+
     def fillSubtables(self, parent_id):
         self.subtables['info'].insert().execute([dict(parent_id=parent_id, **row) for row in self.job_info_db_value_list])
         self.subtables['summary'].insert().execute([dict(parent_id=parent_id, **row) for row in self.job_summary_db_value_list])
-    
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         info_list = self.subtables['info'].select().where(self.subtables['info'].c.parent_id==self.dataset['id']).execute().fetchall()
@@ -121,22 +121,21 @@ class dCacheMoverInfo(hf.module.ModuleBase):
                 group['status'] = 'warning'
             else:
                 group['status'] = 'ok'
-            
+
         data['summary_list'] = summary_list
         poollist = []
         for i,group in enumerate(info_list):
             if not(group['pool'] in poollist):
                 poollist.append(group['pool'])
-                
+
         details_list = {}
         for i,group in enumerate(poollist):
             appending = {group:[]}
             details_list.update(appending)
-        
+
         for i,group in enumerate(info_list):
             details_list[group['pool']].append(group)
-        
+
         data['details_list'] = details_list
-        
+
         return data
-        

@@ -6,7 +6,7 @@ from string import strip
 import time
 
 class CMSPhedexDataExtract(hf.module.ModuleBase):
-    
+
     config_keys = {
         'link_direction': ("transfers 'from' or 'to' you", 'to'),
         'time_range': ('set timerange in hours', '24'),
@@ -18,7 +18,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         'button_pic_path_in': ('path to your in-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_in.png'),
         'button_pic_path_out': ('path to your out-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_out.png'),
         'qualitiy_broken_value': ('a timebin with a qualitiy equal or less than this will be considered as broken', '0.4'),
-        
+
         't0_critical_failures': ('failure threshold for status critical', '10'),
         't0_warning_failures': ('failure threshold for status warning', '10'),
         't1_critical_failures': ('failure threshold for status critical', '15'),
@@ -48,13 +48,13 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         't3_eval_amount': ('minimum amount of links to eval status for this link group', 5)
     }
     config_hint = 'If you have problems downloading your source file, use: "source_url = both|--no-check-certificate|url"'
-    
+
     table_columns = [
         Column('direction', TEXT),
         Column('request_timestamp', INT),
         Column('time_range', INT),
     ], []
-    
+
     subtable_columns = {
         'details': ([
             Column('done_files', INT),
@@ -66,7 +66,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             Column('quality', FLOAT)
         ], [])
     }
-    
+
     def prepareAcquisition(self):
         self.url = self.config['base_url']
         self.link_direction = self.config['link_direction']
@@ -85,7 +85,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.url += str(self.time-self.time_range*3600)
         self.source = hf.downloadService.addDownload(self.url)
         self.details_db_value_list = []
-        
+
         self.category = self.config['category']
         self.button_pic_in = self.config['button_pic_path_in']
         self.button_pic_out = self.config['button_pic_path_out']
@@ -107,19 +107,19 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             if tier != 't0':
                 self.critical_ratio[tier] =  float(self.config[tier + '_critical_ratio'])
                 self.warning_ratio[tier] = float(self.config[tier + '_warning_ratio'])
-                
+
     def extractData(self):
         #due to portability reasons this colormap is hardcoded produce a new colormap with: color_map = map(lambda i: matplotlib.colors.rgb2hex(matplotlib.pyplot.get_cmap('RdYlGn')(float(i)/100)), range(101)) 
         color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
         '#f4fab0', '#eff8aa', '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', '#07753e', '#05713c', '#026c39', '#006837']
         data = {'direction' : self.link_direction, 'source_url' : self.source.getSourceUrl(), 'time_range' : self.time_range, 'request_timestamp' : self.time}
-        
+
         x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
         #store the last N qualities of the Tx links within those dictionaries, {TX_xxx : (q1,q2,q3...)}
 
         link_list = {} # link_list['t1']['t1_de_kit'] == [{time1}, {time2}, ]
         fobj = json.load(open(self.source.getTmpPath(), 'r'))['phedex']['link']
-        
+
         for links in fobj:
             if links[self.link_direction] == self.your_name and links[self.parse_direction] not in self.blacklist:
                 link_name = links[self.parse_direction]
@@ -144,7 +144,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                         self.details_db_value_list.append(help_append)
                         if help_append['timebin'] >= x_line:
                             link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
-       
+
        # code for status evaluation TODO: find a way to evaluate trend, change of quality between two bins etc.
         data['status'] = 1.0
         for tier,links in link_list.iteritems():
@@ -179,24 +179,24 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
 
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
     def getTemplateData(self):
-        
+
         report_base = strip(self.config['report_base']) + '&'
         your_direction = strip(self.config['link_direction'])
-        
+
         if your_direction == 'from':
             their_direction = 'tofilter='
             your_direction = 'fromfilter='
         else:
             their_direction = 'fromfilter='
             your_direction = 'tofilter='
-            
+
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
-            
+
         raw_data_list = [] #contains dicts {x,y,weight,fails,done,rate,time,color,link} where the weight determines the the color
-        
+
         x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
         y_value_map = {} # maps the name of a link to a y-value
         for values in details_list:
@@ -210,18 +210,18 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 marking_color = '#af00af'
             help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name'], 'marking':marking_color}
             raw_data_list.append(help_dict)
-        
+
         name_mapper = []
-        
+
         for i in range(len(y_value_map)):
             name_mapper.append('-')
-        
+
         for key in y_value_map.iterkeys():
             name_mapper[y_value_map[key]] = key
-            
+
         for i,name in enumerate(name_mapper):
             name_mapper[i] = {'name':name, 'link':report_base + their_direction + name}
-            
+
         data['link_list'] = raw_data_list
         data['titles'] = name_mapper
         data['height'] = len(y_value_map) * 15 + 100

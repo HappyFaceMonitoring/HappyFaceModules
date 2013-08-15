@@ -21,7 +21,7 @@ from sqlalchemy import *
 from lxml import etree
 
 class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
-    
+
     config_keys = {
         'input_xml_age_limit': ('Module turns yellow when input xml file is older than input_xml_age_limit days', '3'),
         'blocktest_xml': ('URL of the input blocktest xml file', ''),
@@ -29,7 +29,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         'forced_pass' : ('A list of keywords. Every file which contains a (sub)string from this list is forced to pass the filter', '')
     }
     config_hint = ''
-    
+
     table_columns = [
         Column("failed_blocks_raw", INT),
         Column("failed_blocks", INT),
@@ -51,7 +51,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
             Column('request_timestamp', TEXT),
         ], []),
     }
-    
+
     def prepareAcquisition(self):
         self.save_data = 'no'
         self.warning_limit = float(self.config["input_xml_age_limit"])
@@ -61,12 +61,12 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         if 'blocktest_xml' not in self.config: raise hf.exceptions.ConfigError('blocktest_xml option not set')
         self.blocktest_xml = hf.downloadService.addDownload(self.config['blocktest_xml'])
         self.details_db_value_list = []
-        
+
     def extractData(self):
         data = {'request_timestamp': 0}
         data['source_url'] = self.blocktest_xml.getSourceUrl()
         data['status'] = 1.0
-        
+
         source_tree = etree.parse(open(self.blocktest_xml.getTmpPath()))
         root = source_tree.getroot()
         data["request_date"] = root.get('request_date')
@@ -126,15 +126,15 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                     'fails_raw': akt_files_raw,
                                                     'filtered':  block_filtered_out,
                                                     })
-                                        
+
             data["failed_blocks_raw"] = num_blocks_raw - num_blocks 
             data["failed_blocks"] = num_blocks
             data["failed_total_files_raw"] = num_files_raw - num_files
             data["failed_total_files"] = num_files
-            
+
             if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
                     data['status'] = 0.0
-            
+
         else:
             if old_data['data_id'] != 'NULL':
                 old_data = self.module_table.select().where(self.module_table.c.id==old_data['data_id']).execute().fetchone()
@@ -195,15 +195,15 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                             'fails_raw': akt_files_raw,
                                                             'filtered':  block_filtered_out,
                                                         })
-                                
+
                 data["failed_blocks_raw"] = num_blocks_raw - num_blocks
                 data["failed_blocks"] = num_blocks
                 data["failed_total_files_raw"] = num_files_raw - num_files
                 data["failed_total_files"] = num_files
-                
+
                 if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
                     data['status'] = 0.0
-            
+
             elif old_data['request_timestamp'] == data['request_timestamp']:
                 # we have old data, just copy them all over
                 data['data_id'] = old_data['id']
@@ -215,7 +215,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                 data['request_date'] = old_data['request_date']
                 if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
                     data['status'] = 0.0
-                
+
             else:
                 self.logger.error('Something went terrebly wrong. the timestamp of the old dataset seems to be greater than the new one...')
                 data['status'] = -2               
@@ -270,22 +270,22 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
                                                             'fails_raw': akt_files_raw,
                                                             'filtered':  block_filtered_out,
                                                         })
-                                
+
                 data["failed_blocks_raw"] = num_blocks_raw - num_blocks
                 data["failed_blocks"] = num_blocks
                 data["failed_total_files_raw"] = num_files_raw - num_files
                 data["failed_total_files"] = num_files
-                
+
             if data['status'] == 1.0 and data['request_timestamp'] + 3600 * 24 * self.warning_limit <= time.time():
                 data['status'] = 0.5
             elif data['status'] == 0.0 and data['request_timestamp'] +3600 * 24 * self.warning_limit <= time.time():
                 data['status'] = 0.1
         return data
-        
+
     def fillSubtables(self, parent_id):
         if self.save_data == 'yes':
             self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-        
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = []
@@ -296,5 +296,5 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         data['details'] = map(dict, details_list)
         for i, group in enumerate(data['details']):
             group['time_reported'] = datetime.fromtimestamp(group['time_reported'])
-        
+
         return data

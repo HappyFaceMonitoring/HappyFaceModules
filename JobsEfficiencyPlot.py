@@ -25,20 +25,20 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         'group': ('Colon separated user groups to include in the output, leave empty for all', ''),
         'qstat_xml': ('URL of the input qstat xml file', ''),
     }
-            
+
     table_columns = [
         Column("filename_eff_plot", TEXT),
         Column("filename_rel_eff_plot", TEXT),
         Column("result_timestamp", INT)
     ], ['filename_eff_plot', 'filename_rel_eff_plot']
-    
+
 
     def prepareAcquisition(self):
         group = self.config["group"].strip()
-        
+
         self.groups = []
         if group != '': self.groups = group.split(',')
-        
+
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
 
@@ -172,7 +172,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
 
         user_names = []
         total = []
-        
+
         ratio100 = []; ratio80 = []; ratio30 = []; ratio10 = []; queue = []
         rel_ratio100 = []; rel_ratio80 = []; rel_ratio30 = []; rel_ratio10 = []; rel_queue = []
 
@@ -223,12 +223,12 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
 
         axis_abs = fig_abs.add_subplot(111)
         axis_rel = fig_rel.add_subplot(111)
-        
+
         #if N > 1: axis_abs.set_yscale('log')
-        
+
         ##########################################################
         # create first plot, absolute view
-        
+
         p0 = axis_abs.bar(ind, queue,   width, color='violet')
         p1 = axis_abs.bar(ind, ratio10,   width, color='r', bottom = bot_queue)
         p2 = axis_abs.bar(ind, ratio30, width, color='orange', bottom = bot10 )
@@ -244,7 +244,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         axis_abs.set_yticks(np.arange(0,max_jobs + 5,scale_value))
         axis_abs.legend( (p0[0], p1[0], p2[0], p3[0], p4[0]), ('queue', 'ratio < 10%', '10% < ratio < 30%', '30% < ratio < 80%', 'ratio > 80%') )
 
-        
+
         fig_abs.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_eff.png"), dpi=60)
         data["filename_eff_plot"] = self.instance_name + "_jobs_eff.png"
 
@@ -256,7 +256,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         rel_p2 = axis_rel.bar(ind, rel_ratio30, width, color='orange', bottom = rel_bot10 )
         rel_p3 = axis_rel.bar(ind, rel_ratio80, width, color='y', bottom = rel_bot30 )
         rel_p4 = axis_rel.bar(ind, rel_ratio100, width, color='g', bottom = rel_bot80 )
-        
+
         axis_rel.set_position([0.10,0.2,0.85,0.75])
         axis_rel.set_ylabel('fraction in %')
         axis_rel.set_title('Job Efficiency (relative view)')
@@ -268,6 +268,6 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
 
         fig_rel.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_rel_eff.png"), dpi=60)
         data["filename_rel_eff_plot"] = self.instance_name + "_jobs_rel_eff.png"
-        
+
         return data
-        
+

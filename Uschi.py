@@ -24,8 +24,8 @@ class Uschi(hf.module.ModuleBase):
         'uschi_xml': ('Input file', '')
     }
     config_hint = ''
-    
-    
+
+
     table_columns = [
         Column('uschi_timestamp', TEXT),
         Column('uschi_timestamp_module', TEXT),
@@ -45,7 +45,7 @@ class Uschi(hf.module.ModuleBase):
 
         if 'uschi_xml' not in self.config: raise hf.exceptions.ConfigError('uschi_xml option not set')
         self.uschi_xml = hf.downloadService.addDownload(self.config['uschi_xml'])
-                
+
     def extractData(self):
         data = {'source_url': self.uschi_xml.getSourceUrl(),
                 'uschi_timestamp': '',
@@ -87,7 +87,7 @@ class Uschi(hf.module.ModuleBase):
 
                 # get frequency of the module (in minutes)
                 self.frequency_module = int(sec.get('frequency'))
-                
+
                 # get the "log" and "about" information of the test
                 log_data = sec.findall('log')
                 about_data = sec.findall('about')
@@ -97,7 +97,7 @@ class Uschi(hf.module.ModuleBase):
                 for info in about_data:
                     for line in info.text.splitlines():
                         self.about += line
-        
+
         if not self.test_found:
             data['error_string'] = 'Test was not found in data source.'
             data['status'] = -1

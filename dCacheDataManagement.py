@@ -45,14 +45,14 @@ class dCacheDataManagement(hf.module.ModuleBase):
         Column('total_on_disk_files', INT),
         Column('total_on_disk_size', FLOAT),
     ], []),}
-    
+
 
     def prepareAcquisition(self):
 
         if 'xml_source' not in self.config: raise hf.exceptions.ConfigError('xml_source option not set')
         self.xml_source = hf.downloadService.addDownload(self.config['xml_source'])
         self.details_db_value_list = []
- 
+
 
     def extractData(self):
         data = {'source_url': self.xml_source.getSourceUrl(),
@@ -115,7 +115,7 @@ class dCacheDataManagement(hf.module.ModuleBase):
         self.dataset['bare_total_size_tib']=rare_to_TiB(bare_total_size_rare)
         self.dataset['bare_total_size_tb']=rare_to_TB(bare_total_size_rare)
 
-     
+
         self.dataset['bare_on_disk_size_gib']=rare_to_GiB(bare_on_disk_size_rare)
         self.dataset['bare_on_disk_size_tib']=rare_to_TiB(bare_on_disk_size_rare)
         self.dataset['bare_on_disk_size_tb']=rare_to_TB(bare_on_disk_size_rare)
@@ -138,7 +138,7 @@ class dCacheDataManagement(hf.module.ModuleBase):
         self.dataset['total_on_disk_size_tb']=rare_to_TB(total_on_disk_size_rare )
 
         return data
-    
+
     def ajax(self, **kwargs):
         info_list = []
         if self.dataset['latest_data_id']>-1:
@@ -179,7 +179,7 @@ class dCacheDataManagement(hf.module.ModuleBase):
                 info_expand["bg_color"] = "#009966"
             else:
                 info_expand["bg_color"] = "#FFFFFF"
-            
+
 
             info_list_expand.append(info_expand)
 

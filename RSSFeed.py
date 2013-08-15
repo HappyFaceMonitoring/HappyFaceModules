@@ -12,7 +12,7 @@ class RSSFeed(hf.module.ModuleBase):
 #        'hide_feed_title': ('Hide feed title', '0')
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('title', TEXT),
     ], []
@@ -24,22 +24,22 @@ class RSSFeed(hf.module.ModuleBase):
         Column('published', INT),
         Column('content', TEXT),
     ], [])}
-    
+
 
     def prepareAcquisition(self):
-        
+
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set!')
         self.source = hf.downloadService.addDownload(self.config['source'])
-        
+
         self.status = 1.0
 
         self.details_db_value_list = []
 
     def extractData(self):
-        
+
         data = {'source_url': self.source.getSourceUrl(),
                 'status': self.status}
-        
+
         feed = modules.feedparser.parse(self.source.getTmpPath())
 
         data['title'] = feed.feed.title
@@ -71,7 +71,7 @@ class RSSFeed(hf.module.ModuleBase):
         data['status'] = self.status
 
         return data
- 
+
     def fillSubtables(self, parent_id):
         self.subtables['feeds'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 

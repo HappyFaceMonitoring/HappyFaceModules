@@ -21,7 +21,7 @@ import StringIO
 from sqlalchemy import *
 
 class FTSMonitor(hf.module.ModuleBase):
-  
+
   config_keys = {
     'failed_transfers_threshold': ('maximum allowed percentage of failed jobs per channel', ''),
     'failed_channels_warning': ('number of channels above failed_transfers_threshold that triggers a status warning', ''),
@@ -32,7 +32,7 @@ class FTSMonitor(hf.module.ModuleBase):
     'source_url_channel_members': ('URL to FTS Monitor Channel Member List', ''),
   }
   config_hint = ''
-  
+
   table_columns = ([
     Column('total_in_channels', INT),
     Column('in_channels_above_failed_threshold', INT),
@@ -41,7 +41,7 @@ class FTSMonitor(hf.module.ModuleBase):
     Column('out_channels_above_failed_threshold', INT),
     Column('out_channels_above_failed_threshold_color', TEXT),
     Column('failed_transfers_threshold', INT)], [])
-  
+
   subtable_columns = {
     'in_channel_stats': ([
       Column('Channel', TEXT),
@@ -63,7 +63,7 @@ class FTSMonitor(hf.module.ModuleBase):
       Column('FinishedDirty', INT),
       Column('Failed', INT),
       Column('Canceled', INT)], [])}
-  
+
   def prepareAcquisition(self):
     try:
       self.failed_transfers_threshold = int(self.config['failed_transfers_threshold'])
@@ -81,9 +81,9 @@ class FTSMonitor(hf.module.ModuleBase):
     self.source_url_channel_members = hf.downloadService.addDownload(self.config['source_url_channel_members'])
     self.in_details_db_value_list = []
     self.out_details_db_value_list = []
-    
+
   def extractData(self):
-    
+
     # access job statistics information
     data = {'source_url': self.source_url.getSourceUrl(), 'latest_data_id': 0}
     webpage = open(self.source_url.getTmpPath())
@@ -115,7 +115,7 @@ class FTSMonitor(hf.module.ModuleBase):
 	  if out_channel_stats['Failed'] >= self.failed_transfers_threshold:
 	    iBreachOut += 1
 	  self.out_details_db_value_list.append(out_channel_stats)
-    
+
     # parse webpage containing information on channel members
     #data = {'source_url_channel_members': self.source_url_channel_members.getSourceUrl(), 'latest_data_id': 0} leave this line commented out, otherwise 'data source' in 'show module information' won't be displayed correctly
     webpage2 = open(self.source_url_channel_members.getTmpPath())
@@ -181,7 +181,7 @@ class FTSMonitor(hf.module.ModuleBase):
     else:
       data['out_channels_above_failed_threshold_color'] = '' # 'ok' colors cell green, '' leaves it blank
     data['failed_transfers_threshold'] = self.failed_transfers_threshold
-    
+
     # set status
     if iBreachIn >= self.failed_channels_critical or iBreachOut >= self.failed_channels_critical:
       data['status'] = 0.0
@@ -189,13 +189,13 @@ class FTSMonitor(hf.module.ModuleBase):
       data['status'] = 0.5
     else:
       data['status'] = 1.0
-    
+
     return data
-    
+
   def fillSubtables(self, parent_id):
     self.subtables['in_channel_stats'].insert().execute([dict(parent_id=parent_id, **row) for row in self.in_details_db_value_list])
     self.subtables['out_channel_stats'].insert().execute([dict(parent_id=parent_id, **row) for row in self.out_details_db_value_list])
-  
+
   def getTemplateData(self):
     data = hf.module.ModuleBase.getTemplateData(self)
     in_details_list = self.subtables['in_channel_stats'].select().where(self.subtables['in_channel_stats'].c.parent_id==self.dataset['id']).execute().fetchall()

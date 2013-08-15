@@ -23,8 +23,8 @@ class PhedexStats(hf.module.ModuleBase):
         'phedex_xml': ('URL of the PhEDEx XML file', '')
     }
     config_hint = ''
-    
-    
+
+
     table_columns = [
         Column('startlocaltime', TEXT),
         Column('endlocaltime', TEXT),
@@ -37,7 +37,7 @@ class PhedexStats(hf.module.ModuleBase):
         Column('origin', TEXT),
         Column('error_message', TEXT),
     ], []),}
-    
+
 
 
     def prepareAcquisition(self):

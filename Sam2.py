@@ -22,7 +22,7 @@ from string import strip
 
 
 class Sam2(hf.module.ModuleBase):
-    
+
     ##rebuild those config keys for the new module!
     config_keys = {
         'source_url': ('source url', 'both||url'),
@@ -38,7 +38,7 @@ class Sam2(hf.module.ModuleBase):
         'SERVICE_hf_critical_sam_errors': ('if amount of errors is equal or greater than this threshold, service and happyface will change to status critical', '2')
     }
     config_hint = "Due to flexibility reasons you can configure crit and warn thresholds for each service, therefor replace SERVICE with service_type, use _ instead of - and all letters in lowercase"
-    
+
     table_columns = [], []
 
     subtable_columns = {
@@ -50,8 +50,8 @@ class Sam2(hf.module.ModuleBase):
             Column("status", TEXT)
         ], [])
     }
-    
-    
+
+
     def prepareAcquisition(self):                      
         ## get config information
         self.service_flavour = map(strip, str(self.config['service_flavour']).split(','))
@@ -63,7 +63,7 @@ class Sam2(hf.module.ModuleBase):
         self.service_error_warnings = {}
         self.service_warning_errors = {}
         self.service_error_errors = {}
-        
+
         for stype in self.service_type:
             service = stype.replace('-','_').lower()
             self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_hf_warning_sam_min_jobs'])
@@ -72,7 +72,7 @@ class Sam2(hf.module.ModuleBase):
             self.service_error_warnings[stype] = int(self.config[str(service) + '_hf_critical_sam_warnings'])
             self.service_warning_errors[stype] = int(self.config[str(service) + '_hf_warning_sam_errors'])
             self.service_error_errors[stype] = int(self.config[str(service) + '_hf_critical_sam_errors'])
-        
+
         self.blacklist = map(strip, self.config['blacklist'].split(','))
         ## add download tyo queue
         self.source = hf.downloadService.addDownload(self.config['source_url'])
@@ -89,7 +89,7 @@ class Sam2(hf.module.ModuleBase):
             services = json.loads(f.read())
         ##use first group available, you may change  this if you want to parse more than one site in one module
         services = services[0]['groups'][0]['services']
-        
+
         ##parse your group and get all the tests
         for i,service in enumerate(services):
             if service['flavour'] in self.service_flavour and service['type'] in self.service_type:
@@ -121,10 +121,10 @@ class Sam2(hf.module.ModuleBase):
         else:
             data['status'] = 1
         return data
-        
+
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
     def getTemplateData(self):
         ## you need the configuration again, because you must evaluate your summary again!
         self.base_url = self.config['report_url']
@@ -137,7 +137,7 @@ class Sam2(hf.module.ModuleBase):
         self.service_error_warnings = {}
         self.service_warning_errors = {}
         self.service_error_errors = {}
-        
+
         for stype in self.service_type:
             service = stype.replace('-','_').lower()
             self.service_warning_min_jobs[stype] = int(self.config[str(service) + '_hf_warning_sam_min_jobs'])
@@ -146,7 +146,7 @@ class Sam2(hf.module.ModuleBase):
             self.service_error_warnings[stype] = int(self.config[str(service) + '_hf_critical_sam_warnings'])
             self.service_warning_errors[stype] = int(self.config[str(service) + '_hf_warning_sam_errors'])
             self.service_error_errors[stype] = int(self.config[str(service) + '_hf_critical_sam_errors'])
-        
+
         data = hf.module.ModuleBase.getTemplateData(self)
         ok_test = []
         warning_test = []
@@ -157,7 +157,7 @@ class Sam2(hf.module.ModuleBase):
             .where(self.subtables['details'].c.parent_id==self.dataset['id'])\
             .order_by(self.subtables['details'].c.hostName.asc()).execute().fetchall()
         ## sort data and seperate into blacklisted test, critical/warning tests and ok test and build a summary!
-        
+
         for i,test in enumerate(map(dict, details_list)):
             if test['hostName'] not in hosts:
                 hosts[test['hostName']]={'ok': 0, 'warn':0, 'status':'ok', 'sum':0, 'crit':0, 'type':test['type']}
@@ -176,7 +176,7 @@ class Sam2(hf.module.ModuleBase):
                 ok_test.append(test)
                 hosts[test['hostName']]['ok'] += 1
                 hosts[test['hostName']]['sum'] += 1
-                
+
         for key,host in hosts.iteritems():
             service_type = host['type']
             if host['sum'] < self.service_error_min_jobs[service_type] or host['crit'] >= self.service_error_errors[service_type] or host['warn'] >= self.service_error_warnings[service_type]:
@@ -185,7 +185,7 @@ class Sam2(hf.module.ModuleBase):
                 host['status'] = 'warning'
             else:
                 host['status'] = 'ok'
-                
+
         for i,host in enumerate(host_ordered):
             host_ordered[i]['status'] = hosts[host['name']]['status']
         data['hosts'] = host_ordered
@@ -193,5 +193,5 @@ class Sam2(hf.module.ModuleBase):
         data['ok_test'] = ok_test
         data['warning_test'] = warning_test
         data['black_test'] = black_test
-        
+
         return data

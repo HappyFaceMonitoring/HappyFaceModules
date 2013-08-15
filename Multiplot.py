@@ -33,17 +33,17 @@ class Multiplot(hf.module.ModuleBase):
         'timerange_seconds': ('How far in the past is the start timestamp (in seconds)', '259200'),
     }
     config_hint = ''
-    
+
     table_columns = [] , []
-    
+
     subtable_columns = {
         "plots": ([
         Column('plot_file', TEXT)], ['plot_file'])
     }
-    
+
 
     def prepareAcquisition(self):
-        
+
         url = []
         self.plot = []
         for i, group in self.config.iteritems():
@@ -75,13 +75,13 @@ class Multiplot(hf.module.ModuleBase):
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
                 self.source_url.append(appender['plot_file'].getSourceUrl())
                 self.plot.append(appender)
-                
+
     def extractData(self):
         data = {}
         data['description'] = ''
         for i,group in enumerate(self.plot):
           data['description'] += 'plot%20i: '%i + group['plot_file'].getSourceUrl()
-           
+
         for i,group in enumerate(self.plot):
             if group['plot_file'].isDownloaded():
                 if imghdr:
@@ -93,10 +93,10 @@ class Multiplot(hf.module.ModuleBase):
         for i,group in enumerate(self.plot):
             group['plot_file'] = group['plot_file'].getArchiveFilename()
         return data
-        
+
     def fillSubtables(self, parent_id):
         self.subtables['plots'].insert().execute([dict(parent_id=parent_id, **row) for row in self.plot])
-   
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         files = self.subtables['plots'].select()\
@@ -108,4 +108,4 @@ class Multiplot(hf.module.ModuleBase):
                  for row in files]
         data['files'] = files
         return data
-        
+

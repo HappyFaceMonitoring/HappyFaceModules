@@ -31,7 +31,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         'limit_critical': ('Critical limit', '10')
     }
     config_hint = ''
-    
+
     table_columns = [
         Column('total', INT),
         Column('total_problem', INT),
@@ -53,16 +53,16 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         Column('retries', INT),
         Column('status_short', TEXT),
     ], [])}
-    
+
 
     def prepareAcquisition(self):
-        
+
         self.source = hf.downloadService.addDownload(self.config['source'])
         self.stage_max_retry = int(self.config['stage_max_retry'])
         self.stage_max_time = int(self.config['stage_max_time'])
         self.limit_warning = int(self.config['limit_warning'])
         self.limit_critical = int(self.config['limit_critical'])
-        
+
         try:
             self.details_cutoff = int(self.config['details_cutoff'])
         except hf.ConfigError:
@@ -77,11 +77,11 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         self.hit_time = 0
 
         self.status = 1.0
-       
+
         self.details_db_value_list = []
 
     def extractData(self):
-        
+
         data = {'source_url': self.source.getSourceUrl(),
                 'time_limit': self.stage_max_time,
                 'retry_limit': self.stage_max_retry,
@@ -99,7 +99,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 	root = root.findall('.//tbody')[0].findall('.//tr')
         stage_requests = []
         current_time = datetime.datetime.today()
-        
+
         # parse html
         for tr in root:
 	  tds = tr.findall('.//td')

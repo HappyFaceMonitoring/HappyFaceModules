@@ -19,7 +19,7 @@ from sqlalchemy import *
 from lxml import etree
 
 class CMSPhedexErrorLog(hf.module.ModuleBase):
-    
+
     config_keys = {
         'link_direction': ("transfers 'from' or 'to' you", 'from'),
         'timerange_seconds': ('Ignore errors that are older than the specified time', '7200'),
@@ -33,7 +33,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         'critical_trans': ('25% = 25', '100'),
     }
     config_hint = 'If you have problems downloading your source file use: "source_url = both|--no-check-certificate|url"'
-    
+
     table_columns = [
         Column('summary', FLOAT),
         Column('transfer', FLOAT),
@@ -49,7 +49,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         Column('source_status', TEXT),
         Column('unknown_status', TEXT),
     ], []
-    
+
     subtable_columns = {
         'details': ([
             Column('node', TEXT),
@@ -64,7 +64,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         ], [])
     }
 
-    
+
     def prepareAcquisition(self):
         self.link_direction = self.config['link_direction']
         if self.link_direction == 'from':
@@ -79,11 +79,11 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         self.critical_source = float(self.config['critical_source'])
         self.warning_trans = float(self.config['warning_trans'])
         self.critical_trans = float(self.config['critical_trans'])
-        
+
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.details_db_value_list = []
-    
+
     def extractData(self):
 
         data = {}
@@ -93,7 +93,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         data['unknown'] = 0
         data['summary'] = 0
         sourcedata = {}
-        
+
         if self.source.isDownloaded():
             data['source_url'] = self.source.getSourceUrl()
             source_tree = etree.parse(open(self.source.getTmpPath()))
@@ -101,7 +101,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
             self.source.error += '\t \t try option "--no-check-certificate" for parameter source_url'
             data['status'] = -1
             raise hf.exceptions.DownloadError(self.source)
-        
+
         root = source_tree.getroot()
         request_time = float(root.get('request_timestamp'))
         for link in root:
@@ -111,7 +111,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                     for file in block: 
                         if file.tag == 'file':
                             sourcedata[link.get(self.link_direction)].append(file)
-        
+
         for site, files in sourcedata.iteritems():
             stash = {}
             stash['node'] = site
@@ -164,14 +164,14 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 data['transfer'] += transfer
                 data['unknown'] += unknown
                 self.details_db_value_list.append(stash)
-        
+
         data['status'] = 1.0
         data['destination_status'] = 'ok'
         data['source_status'] = 'ok'
         data['transfer_status'] = 'ok'
         data['unknown_status'] = 'ok'
         data['summary'] = data['source'] + data['unknown'] + data['transfer'] + data['destination']
-        
+
         try:
             data['frac_dest'] = float(data['destination'] * 100 / data['summary'])
             data['frac_source'] = float(data['source'] * 100 / data['summary'])
@@ -182,37 +182,37 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
             data['frac_source'] = 0
             data['frac_trans'] = 0
             data['frac_unknown'] = 0
-            
+
         if float(data['summary']) > self.min_error:
-             
+
             if data['frac_dest'] >= self.warning_dest:
                 data['destination_status'] = 'warning'
                 data['status'] = 0.5
             elif data['frac_dest'] >= self.critical_dest:
                 data['destination_status'] = 'critical'
                 data['status'] = 0.0
-            
+
             if data['frac_source'] >= self.warning_source:
                 data['source_status'] = 'warning'
                 data['status'] = 0.5
             elif data['frac_source'] >= self.critical_source:
                 data['source_status'] = 'critical'
                 data['status'] = 0.0
-                
+
             if data['frac_trans'] >= self.warning_trans:
                 data['transfer_status'] = 'warning'
                 data['status'] = 0.5
             elif data['frac_trans'] >= self.critical_trans:
                 data['transfer_status'] = 'critical'
                 data['status'] = 0.0
-            
-            
-        
+
+
+
         return data
-        
+
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-        
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()

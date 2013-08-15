@@ -28,7 +28,7 @@ class Summary(hf.module.ModuleBase):
         'pic_path': ('path to local folder with the images for hf3.','/HappyFace/gridka/static/themes/armin_box_arrows/')
     }
     config_hint = 'The big problem is that different sites use different titles for their categories, so its necessary to define a list of categories for each site, make sure to use the same order for all sites!'
-    
+
     table_columns = [], []   
 
     subtable_columns = {'details': ([
@@ -40,7 +40,7 @@ class Summary(hf.module.ModuleBase):
             Column("catlink", TEXT),
             Column("order", INT)
     ], []),}
-    
+
     def prepareAcquisition(self):
 
         # definition of the database table keys and pre-defined values
@@ -52,7 +52,7 @@ class Summary(hf.module.ModuleBase):
             for i,site in enumerate(self.site_keys):
                 self.sites.append(hf.downloadService.addDownload(self.config[str(self.site_keys[i]) + '_site']))
                 self.cats.append(map(strip, self.config[str(self.site_keys[i]) + '_cat'].split(',')))
-        
+
     def extractData(self):
         data = {}
         data['status'] = 1
@@ -74,17 +74,17 @@ class Summary(hf.module.ModuleBase):
                             details_db_value['catlink'] = cat_item.text
                         if cat_item.tag == 'status':
                             details_db_value['status'] = float(cat_item.text)
-                        
+
                     for j,allowed in enumerate(self.cats[i]):
                         if allowed == details_db_value['cattitle']:
                             details_db_value['order'] = 1000*i + j
                             self.details_db_value_list.append(details_db_value)
-        
+
         return data
-            
+
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-    
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.order.asc()).execute().fetchall()
@@ -110,4 +110,3 @@ class Summary(hf.module.ModuleBase):
         data['main_names'] = map(strip, self.config['site_keys'].split(','))
         data['cat_header'] = map(strip, self.config['categories'].split(','))
         return data
-                        
