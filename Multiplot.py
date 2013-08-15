@@ -38,7 +38,7 @@ class Multiplot(hf.module.ModuleBase):
     
     subtable_columns = {
         "plots": ([
-        Column('plot_file', TEXT)],['plot_file'])
+        Column('plot_file', TEXT)], ['plot_file'])
     }
     
 
@@ -46,9 +46,11 @@ class Multiplot(hf.module.ModuleBase):
         
         url = []
         self.plot = []
-        for i,group in self.config.iteritems():
-	  if 'plot_url' in i:
-	    url.append(group)
+        for i, group in self.config.iteritems():
+            if 'plot_url' in i:
+                url.append(group)
+
+        self.source_url = []
 
         use_start_end_time = False
         try:
@@ -66,10 +68,12 @@ class Multiplot(hf.module.ModuleBase):
                 except hf.ConfigError:
                     pass
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
+                self.source_url.append(appender['plot_file'].getSourceUrl())
                 self.plot.append(appender)
         else:
             for i, group in enumerate(url):
                 appender = {'plot_file' : hf.downloadService.addDownload(group)}
+                self.source_url.append(appender['plot_file'].getSourceUrl())
                 self.plot.append(appender)
                 
     def extractData(self):
@@ -87,7 +91,7 @@ class Multiplot(hf.module.ModuleBase):
                 if extension is not None:
                     group['plot_file'].copyToArchive(self, str(i) + "." + extension)
         for i,group in enumerate(self.plot):
-            group['plot_file'] = group['plot_file'].getArchivePath()
+            group['plot_file'] = group['plot_file'].getArchiveFilename()
         return data
         
     def fillSubtables(self, parent_id):
@@ -98,6 +102,10 @@ class Multiplot(hf.module.ModuleBase):
         files = self.subtables['plots'].select()\
             .where(self.subtables['plots'].c.parent_id==self.dataset['id'])\
             .execute().fetchall()
+        files = [dict((k, hf.downloadservice.File(self.run, v))
+                      if k == "plot_file"
+                      else (k, v) for k, v in row.items())
+                 for row in files]
         data['files'] = files
         return data
         
