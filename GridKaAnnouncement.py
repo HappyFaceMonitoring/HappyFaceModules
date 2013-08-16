@@ -71,13 +71,14 @@ class GridKaAnnouncement(hf.module.ModuleBase):
 			raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
 		if 'source_url' not in self.config:
 			raise hf.exceptions.ConfigError('No source URL specified')
-		self.source_url = hf.downloadService.addDownload(self.config['source_url'])
+		self.source = hf.downloadService.addDownload(self.config['source_url'])
+		self.source_url = self.source.getSourceUrl()
 		self.incidents_db_value_list = []
 		self.interventions_db_value_list = []
 	
 	def extractData(self):
-		data = {'source_url': self.source_url.getSourceUrl(),'latest_data_id': 0}
-		webpage = open(self.source_url.getTmpPath())
+		data = {'source_url': self.source.getSourceUrl()}
+		webpage = open(self.source.getTmpPath())
 		strwebpage = webpage.read().replace("<br>","\n").replace("<br/>","\n")
 		tree = lxml.html.parse(StringIO.StringIO(strwebpage))
 		itables = 0
