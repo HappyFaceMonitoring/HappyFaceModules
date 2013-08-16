@@ -44,12 +44,12 @@ class PhedexStats(hf.module.ModuleBase):
 
         if 'phedex_xml' not in self.config: raise hf.exceptions.ConfigError('phedex_xml option not set')
         self.phedex_xml = hf.downloadService.addDownload(self.config['phedex_xml'])
+        self.source_url = self.phedex_xml.getSourceUrl()
 
         self.details_db_value_list = []
 
     def extractData(self):
-        data = {'source_url': self.phedex_xml.getSourceUrl(),
-                'startlocaltime': '',
+        data = {'startlocaltime': '',
                 'endlocaltime': '',
                 'failed_transfers': '',
                 'status': 1.0}

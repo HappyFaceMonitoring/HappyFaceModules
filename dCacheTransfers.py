@@ -69,11 +69,11 @@ class dCacheTransfers(hf.module.ModuleBase):
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('No source file')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
+        self.source_url = self.source.getSourceUrl()
         self.details_db_value_list = []
 
     def extractData(self):
         data = {}
-        data['source_url'] = self.source.getSourceUrl()
         data['below_speed_warning_limit'] = 0
         data['below_speed_critical_limit'] = 0
         data['exceed_time_warning_limit'] = 0

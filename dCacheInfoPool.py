@@ -84,6 +84,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
 
         if 'source_xml' not in self.config: raise hf.exceptions.ConfigError('source_xml option not set')
         self.source_xml = hf.downloadService.addDownload(self.config['source_xml'])
+        self.source_url = self.source_xml.getSourceUrl()
         self.details_db_value_list = []
 
     def extractData(self):
@@ -98,7 +99,6 @@ class dCacheInfoPool(hf.module.ModuleBase):
         else:
             self.unit = 1024 * 1024.0
             data['unit'] = 'TiB'
-        data['source_url'] = self.source_xml.getSourceUrl()
         data['status'] = 1
         data['special_overview'] = self.special_overview
         data['special_details'] = self.special_details

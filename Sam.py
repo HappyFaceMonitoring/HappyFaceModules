@@ -68,6 +68,7 @@ class Sam(hf.module.ModuleBase):
             self.report_url = self.config['report_url']
             if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source_url option not set')
             self.source = hf.downloadService.addDownload(self.config['source_url'])
+            self.source_url = self.source.getSourceUrl()
             self.blacklist = self.config['blacklist'].split(",")
         except KeyError, e:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
@@ -80,7 +81,6 @@ class Sam(hf.module.ModuleBase):
     def extractData(self):
         # run the test
         data = {}
-        data['source_url'] = self.source.getSourceUrl()
 
         with open(self.source.getTmpPath(), 'r') as f:
             data_object = json.loads(f.read())

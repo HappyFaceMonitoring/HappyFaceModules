@@ -84,6 +84,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.time = int(time.time())/3600*3600
         self.url += str(self.time-self.time_range*3600)
         self.source = hf.downloadService.addDownload(self.url)
+        self.source_url = self.source.getSourceUrl()
         self.details_db_value_list = []
 
         self.category = self.config['category']
@@ -112,7 +113,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         #due to portability reasons this colormap is hardcoded produce a new colormap with: color_map = map(lambda i: matplotlib.colors.rgb2hex(matplotlib.pyplot.get_cmap('RdYlGn')(float(i)/100)), range(101)) 
         color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
         '#f4fab0', '#eff8aa', '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', '#07753e', '#05713c', '#026c39', '#006837']
-        data = {'direction' : self.link_direction, 'source_url' : self.source.getSourceUrl(), 'time_range' : self.time_range, 'request_timestamp' : self.time}
+        data = {'direction' : self.link_direction, 'time_range' : self.time_range, 'request_timestamp' : self.time}
 
         x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
         #store the last N qualities of the Tx links within those dictionaries, {TX_xxx : (q1,q2,q3...)}

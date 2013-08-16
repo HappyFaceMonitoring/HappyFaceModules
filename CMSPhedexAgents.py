@@ -50,6 +50,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
         self.time_warning = float(self.config['time_warning'])
         self.time_critical = float(self.config['time_critical'])
         self.source = hf.downloadService.addDownload(self.config['source_url'])
+        self.source_url = self.source.getSourceUrl()
         self.details_db_value_list = []
 
         try:
@@ -65,7 +66,6 @@ class CMSPhedexAgents(hf.module.ModuleBase):
 
         data = {}
         help_list = []
-        data['source_url'] = self.source.getSourceUrl()
         root = etree.parse(open(self.source.getTmpPath())).getroot()
         status_list = []
         try:

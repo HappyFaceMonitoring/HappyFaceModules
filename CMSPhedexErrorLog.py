@@ -82,6 +82,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
 
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
+        self.source_url = self.source.getSourceUrl()
         self.details_db_value_list = []
 
     def extractData(self):
@@ -95,7 +96,6 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
         sourcedata = {}
 
         if self.source.isDownloaded():
-            data['source_url'] = self.source.getSourceUrl()
             source_tree = etree.parse(open(self.source.getTmpPath()))
         else:
             self.source.error += '\t \t try option "--no-check-certificate" for parameter source_url'

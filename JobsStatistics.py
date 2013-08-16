@@ -87,6 +87,7 @@ class JobsStatistics(hf.module.ModuleBase):
 
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
+        self.source_url = self.qstat_xml.getSourceUrl()
 
         self.groups_db_value_list = []
         self.details_db_value_list = []
@@ -94,7 +95,6 @@ class JobsStatistics(hf.module.ModuleBase):
 
     def extractData(self):
         data = {'result_timestamp': 0, 'details_group': ''}
-        data['source_url'] = self.qstat_xml.getSourceUrl()
 
         source_tree = etree.parse(open(self.qstat_xml.getTmpPath()))
         root = source_tree.getroot()

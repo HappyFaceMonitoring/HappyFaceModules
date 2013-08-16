@@ -58,6 +58,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
     def prepareAcquisition(self):
 
         self.source = hf.downloadService.addDownload(self.config['source'])
+        self.source_url = self.source.getSourceUrl()
         self.stage_max_retry = int(self.config['stage_max_retry'])
         self.stage_max_time = int(self.config['stage_max_time'])
         self.limit_warning = int(self.config['limit_warning'])
@@ -82,8 +83,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
     def extractData(self):
 
-        data = {'source_url': self.source.getSourceUrl(),
-                'time_limit': self.stage_max_time,
+        data = {'time_limit': self.stage_max_time,
                 'retry_limit': self.stage_max_retry,
                 'status': self.status}
 	self.stage_max_time = datetime.timedelta(hours = self.stage_max_time)

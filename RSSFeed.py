@@ -30,6 +30,7 @@ class RSSFeed(hf.module.ModuleBase):
 
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set!')
         self.source = hf.downloadService.addDownload(self.config['source'])
+        self.source_url = self.source.getSourceUrl()
 
         self.status = 1.0
 
@@ -37,8 +38,7 @@ class RSSFeed(hf.module.ModuleBase):
 
     def extractData(self):
 
-        data = {'source_url': self.source.getSourceUrl(),
-                'status': self.status}
+        data = {'status': self.status}
 
         feed = modules.feedparser.parse(self.source.getTmpPath())
 

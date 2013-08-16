@@ -51,12 +51,12 @@ class dCacheDataManagement(hf.module.ModuleBase):
 
         if 'xml_source' not in self.config: raise hf.exceptions.ConfigError('xml_source option not set')
         self.xml_source = hf.downloadService.addDownload(self.config['xml_source'])
+        self.source_url = self.xml_source.getSourceUrl()
         self.details_db_value_list = []
 
 
     def extractData(self):
-        data = {'source_url': self.xml_source.getSourceUrl(),
-                'chimera_timestamp':0,
+        data = {'chimera_timestamp':0,
                 'latest_data_id':0,
                 'bare_total_files':0,
                 'bare_total_size':0.0,

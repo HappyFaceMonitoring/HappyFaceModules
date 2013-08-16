@@ -45,10 +45,10 @@ class Uschi(hf.module.ModuleBase):
 
         if 'uschi_xml' not in self.config: raise hf.exceptions.ConfigError('uschi_xml option not set')
         self.uschi_xml = hf.downloadService.addDownload(self.config['uschi_xml'])
+        self.source_url = self.uschi_xml.getSourceUrl()
 
     def extractData(self):
-        data = {'source_url': self.uschi_xml.getSourceUrl(),
-                'uschi_timestamp': '',
+        data = {'uschi_timestamp': '',
                 'uschi_timestamp_module': '',
                 'frequency': -1,
                 'frequency_module': -1,

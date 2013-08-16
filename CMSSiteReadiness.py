@@ -39,6 +39,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         self.site_html = hf.downloadService.addDownload(self.config['site_html'])   #URL with source data
+        self.source_url = self.site_html.getSourceUrl()
         self.tracked_site = str(self.config['tracked_site'])                        #name of the tracked table e.g. T1_DE_KIT
         #number of days to be shown on H.F.3 website: if zou want to change please replace all every number 11 shown in the script
         # number - 1 = shown days

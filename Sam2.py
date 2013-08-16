@@ -76,13 +76,13 @@ class Sam2(hf.module.ModuleBase):
         self.blacklist = map(strip, self.config['blacklist'].split(','))
         ## add download tyo queue
         self.source = hf.downloadService.addDownload(self.config['source_url'])
+        self.source_url = self.source.getSourceUrl()
         ##initialize container for subtable data
         self.details_db_value_list = []
 
     def extractData(self):
         ##TODO currently no check if source is downloaded
         data = {}
-        data['source_url'] = self.source.getSourceUrl()
         help_stati = []        
         ##Use json to extract the file
         with open(self.source.getTmpPath(), 'r') as f:

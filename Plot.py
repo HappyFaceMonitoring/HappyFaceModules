@@ -58,10 +58,10 @@ class Plot(hf.module.ModuleBase):
                 pass
 
         self.plot = hf.downloadService.addDownload(url)
+        self.source_url = self.plot.getSourceUrl()
 
     def extractData(self):
         data = {
-            "source_url": self.plot.getSourceUrl()
         }
         if self.plot.isDownloaded():
             if imghdr:
@@ -76,14 +76,12 @@ class Plot(hf.module.ModuleBase):
                 "plot_file": None,
                 "status": -1.0,
                 "error_string": "Downloaded file was not an image, probably source server failed to deliver file.",
-                "source_url": self.plot.getSourceUrl(),
             })
         else:
             data.update({
                 "plot_file": None,
                 "status": -1.0,
                 "error_string": "Plot was not downloaded :"+self.plot.error,
-                "source_url": self.plot.getSourceUrl(),
             })
         return data
 

@@ -43,13 +43,13 @@ class dCacheMoverInfo(hf.module.ModuleBase):
 
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source'])
+        self.source_url = self.source.getSourceUrl()
 
         self.job_info_db_value_list = []
         self.job_summary_db_value_list = []
 
     def extractData(self):
         data = {'critical_queue_threshold':self.critical_queue_threshold}
-        data['source_url'] = self.source.getSourceUrl()
 	
 	source_tree = parse(open(self.source.getTmpPath()))
         root = source_tree.getroot()

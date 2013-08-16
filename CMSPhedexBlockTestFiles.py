@@ -60,11 +60,11 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
 
         if 'blocktest_xml' not in self.config: raise hf.exceptions.ConfigError('blocktest_xml option not set')
         self.blocktest_xml = hf.downloadService.addDownload(self.config['blocktest_xml'])
+        self.source_url = self.blocktest_xml.getSourceUrl()
         self.details_db_value_list = []
 
     def extractData(self):
         data = {'request_timestamp': 0}
-        data['source_url'] = self.blocktest_xml.getSourceUrl()
         data['status'] = 1.0
 
         source_tree = etree.parse(open(self.blocktest_xml.getTmpPath()))

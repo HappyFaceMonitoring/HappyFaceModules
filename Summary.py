@@ -49,8 +49,11 @@ class Summary(hf.module.ModuleBase):
             self.sites = []
             self.cats = []
             self.details_db_value_list = []
-            for i,site in enumerate(self.site_keys):
-                self.sites.append(hf.downloadService.addDownload(self.config[str(self.site_keys[i]) + '_site']))
+            self.source_url = []
+            for i, site in enumerate(self.site_keys):
+                site_file = hf.downloadService.addDownload(self.config[str(self.site_keys[i]) + '_site'])
+                self.sites.append(site_file)
+                self.source_url.append(site_file.getSourceUrl())
                 self.cats.append(map(strip, self.config[str(self.site_keys[i]) + '_cat'].split(',')))
 
     def extractData(self):

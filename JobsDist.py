@@ -49,6 +49,7 @@ class JobsDist(hf.module.ModuleBase):
 
         if 'qstat_xml' not in self.config: raise hf.exceptions.ConfigError('qstat_xml option not set')
         self.qstat_xml = hf.downloadService.addDownload(self.config['qstat_xml'])
+        self.source_url = self.qstat_xml.getSourceUrl()
 
 
     def extractData(self):
@@ -58,7 +59,6 @@ class JobsDist(hf.module.ModuleBase):
         data = {}
         data["filename_eff_plot"] = ""
         data["result_timestamp"] = 0
-        data['source_url'] = self.qstat_xml.getSourceUrl()
         data['status'] = 1.0
 
         source_tree = etree.parse(open(self.qstat_xml.getTmpPath()))

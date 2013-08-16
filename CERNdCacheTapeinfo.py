@@ -35,13 +35,17 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         if 'total_disk' not in self.config: raise hf.exceptions.ConfigError('total_disk option not set')
         self.total_disk = hf.downloadService.addDownload(self.config['total_disk'])
 
+        self.source_url = list(set((self.used_tape.getSourceUrl(),
+                                    self.total_tape.getSourceUrl(),
+                                    self.used_disk.getSourceUrl(),
+                                    self.total_disk.getSourceUrl())))
+
 
 
     def extractData(self):
 
 
-        data = {'source_url': self.total_tape.getSourceUrl(),
-                'used_tape_size': 0.0,
+        data = {'used_tape_size': 0.0,
                 'used_tape_timestamp': 0,
                 'total_tape_size': 0.0,
                 'used_disk_size': 0.0,
