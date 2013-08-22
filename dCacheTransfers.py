@@ -96,7 +96,10 @@ class dCacheTransfers(hf.module.ModuleBase):
 	      e_time = map(int, map(strip, tds[8].findall('.//span')[0].text.split(':')))
 	      appender['since'] = e_time[0] * 3600 + e_time[1] * 60 + e_time[2]
 	      appender['transferred'] = float(tds[10].findall('.//span')[0].text) * 1000 / 1024.0 / 1024.0 / 1024.0
-	      appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
+	      try:
+                  appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
+              except ValueError:
+                  appender['speed'] = 0.0
 	      data['total_transfers'] += 1
 	      speed_sum += appender['speed']
 	      if int(appender['speed']) <= self.speed_critical_limit:
