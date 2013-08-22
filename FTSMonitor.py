@@ -78,15 +78,16 @@ class FTSMonitor(hf.module.ModuleBase):
     if 'source_url_channel_members' not in self.config:
       raise hf.exceptions.ConfigError('No source URL for channel members specified')
     self.source = hf.downloadService.addDownload(self.config['source_url'])
-    self.source_url = self.source.getSourceUrl()
     self.source_channel_members = hf.downloadService.addDownload(self.config['source_url_channel_members'])
+    self.source_url = [self.source.getSourceUrl(),
+                       self.source_channel_members.getSourceUrl()]
     self.in_details_db_value_list = []
     self.out_details_db_value_list = []
 
   def extractData(self):
 
     # access job statistics information
-    data = {'latest_data_id': 0}
+    data = {}
     webpage = open(self.source.getTmpPath())
     strwebpage = webpage.read()
     tree = lxml.html.parse(StringIO.StringIO(strwebpage))
@@ -118,7 +119,6 @@ class FTSMonitor(hf.module.ModuleBase):
 	  self.out_details_db_value_list.append(out_channel_stats)
 
     # parse webpage containing information on channel members
-    #data = {'source_url_channel_members': self.source_channel_members.getSourceUrl(), 'latest_data_id': 0} leave this line commented out, otherwise 'data source' in 'show module information' won't be displayed correctly
     webpage2 = open(self.source_channel_members.getTmpPath())
     strwebpage2 = webpage2.read().replace("<br/>","\n")
     tree2 = lxml.html.parse(StringIO.StringIO(strwebpage2))
