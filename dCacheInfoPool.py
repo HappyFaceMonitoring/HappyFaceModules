@@ -134,7 +134,10 @@ class dCacheInfoPool(hf.module.ModuleBase):
             data['precious'] += pool['precious']
             data['removable'] += pool['removable']
 
-            if (pool['free'] + pool['removable']) / pool['total'] <= self.local_critical_ratio:
+            if pool['total'] == 0:
+		pool['status'] = 0.0
+                data['crit_pools'] += 1
+            elif (pool['free'] + pool['removable']) / pool['total'] <= self.local_critical_ratio:
                 pool['status'] = 0.0
                 data['crit_pools'] += 1
             elif (pool['free'] + pool['removable']) / pool['total'] <= self.local_warning_ratio:
@@ -158,13 +161,16 @@ class dCacheInfoPool(hf.module.ModuleBase):
 
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         details_list = map(lambda x: dict(x), details_list)
-
-
-        special_details = self.dataset['special_details']
-        special_overview = self.dataset['special_overview']
-        special_overview = self.dataset['special_overview'].split(',')
-        special_details = self.dataset['special_details'].split(',')
-
+        
+        try:
+	    special_overview = self.dataset['special_overview'].split(',')
+	except AttributeError:
+	    special_overview = []
+	try:
+	    special_details = self.dataset['special_details'].split(',')
+        except AttributeError:
+	    special_details = []
+	    
         for i,special in enumerate(special_overview):
             if '=' in special:
                 special_overview[i] = special.split('=')

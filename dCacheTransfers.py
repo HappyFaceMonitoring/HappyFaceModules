@@ -86,38 +86,43 @@ class dCacheTransfers(hf.module.ModuleBase):
         speed_sum = 0
         for line in root.findall('.//tr'):
             try:
-	      tds = line.findall('.//td')
-	      appender = {}
-	      appender['protocol'] = tds[2].findall('.//span')[0].text
-	      appender['pnfsid'] = tds[5].findall('.//span')[0].text
-	      appender['pool'] = tds[6].findall('.//span')[0].text
-	      appender['host'] = 'empty'
-	      appender['status_text'] = tds[7].findall('.//span')[0].text
-	      e_time = map(int, map(strip, tds[8].findall('.//span')[0].text.split(':')))
-	      appender['since'] = e_time[0] * 3600 + e_time[1] * 60 + e_time[2]
-	      appender['transferred'] = float(tds[10].findall('.//span')[0].text) * 1000 / 1024.0 / 1024.0 / 1024.0
-	      try:
-                  appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
-              except ValueError:
-                  appender['speed'] = 0.0
-	      data['total_transfers'] += 1
-	      speed_sum += appender['speed']
-	      if int(appender['speed']) <= self.speed_critical_limit:
+		tds = line.findall('.//td')
+		appender = {}
+		appender['protocol'] = tds[2].findall('.//span')[0].text
+		appender['pnfsid'] = tds[5].findall('.//span')[0].text
+		appender['pool'] = tds[6].findall('.//span')[0].text
+		appender['host'] = 'empty'
+		appender['status_text'] = tds[7].findall('.//span')[0].text
+		e_time = map(strip, tds[8].findall('.//span')[0].text.split(':'))
+		if 'd' in e_time[0]:
+		    help_string = map(strip, e_time[0].split())
+		    h1 = int(help_string[0]) * 24
+		    e_time[0] = h1 + int(help_string[-1])
+		e_time = map(int, e_time)
+		appender['since'] = e_time[0] * 3600 + e_time[1] * 60 + e_time[2]
+		appender['transferred'] = float(tds[10].findall('.//span')[0].text) * 1000 / 1024.0 / 1024.0 / 1024.0
+		try:
+		    appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
+		except ValueError:
+		    appender['speed'] = 0
+		data['total_transfers'] += 1
+		speed_sum += appender['speed']
+		if int(appender['speed']) <= self.speed_critical_limit:
 		  appender['status'] = 0.0
 		  data['below_speed_critical_limit'] += 1
-	      elif int(appender['speed']) <= self.speed_warning_limit:
+		elif int(appender['speed']) <= self.speed_warning_limit:
 		  appender['status'] = 0.5
 		  data['below_speed_warning_limit'] += 1
-	      else:
+		else:
 		  appender['status'] = 1.0
 		  
-	      if appender['since'] >= (self.time_critical_limit * 3600) and appender['status'] != 0.0:
+		if appender['since'] >= (self.time_critical_limit * 3600) and appender['status'] != 0.0:
 		  appender['status'] = 0.0
 		  data['exceed_time_critical_limit'] += 1
-	      elif appender['since'] >= (self.time_warning_limit * 3600) and appender['status'] == 1.0:
+		elif appender['since'] >= (self.time_warning_limit * 3600) and appender['status'] == 1.0:
 		  appender['status'] = 0.5
 		  data['exceed_time_warning_limit'] += 1
-	      self.details_db_value_list.append(appender)
+		self.details_db_value_list.append(appender)
             except IndexError:
                 continue
 
