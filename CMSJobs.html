@@ -1,0 +1,67 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+<br/>
+
+<script type="text/javascript">
+$(function() {
+	function handle_ajax_response(data) {
+		$('#${module.instance_name}_spinner').remove();
+		if(data["status"] == "success") {
+			var table = $('#${module.instance_name}_details table');
+			console.log(table);
+			console.log(data["data"].length);
+			console.log(data["data"][0]);
+			for(var i = 0; i < data["data"].length; i++) {
+				var row = data["data"][i];
+				var name = row["name"]
+				/*table.append("<tr class=\"report\" style=\"background-color: "+row["bg_color"]+"\" ><td>"+row["name"]+"</td>"
+				+ "<td>"+row["bare_total_files"]+" files<br />"+row["bare_total_size"]+" GiB</td>"
+				+ "<td>"+row["bare_on_disk_files"]+" files"+row["bare_on_disk_files_rel"]+"%<br />"
+				+row["bare_on_disk_size"]+" GiB "+row["bare_on_disk_size_rel"]+"%</td>"
+				+ "<td>"+row["total_on_disk_files"]+"<br />"+row["total_on_disk_size"]+" GiB</td></tr>");*/
+			}
+			
+		}
+		else {
+			// Todo: Give user some feedback
+		}
+	}
+	downloaded_additional_data = false;
+	$('#${module.instance_name}_toggle').click(function() {
+		$('#${module.instance_name}_details').toggle();
+		if(!downloaded_additional_data) {
+			downloaded_additional_data = true;
+			$.ajax("${module.ajaxUrl()}", {
+				error: function(jqXHR, textStatus, errorThrown) {
+					handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
+				},
+				
+				success: function(data, textStatus, jqXHR) {
+					handle_ajax_response(data);
+				2},
+				dataType: "json"
+			});
+		}
+	});
+});
+</script>
+<input type="button" value="show/hide summary" onfocus="this.blur()" id="${module.instance_name}_toggle" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<p id="${module.instance_name}_spinner">Loading contents of details table, this might take a few seconds...</br>
+<img src="${hf.config.get("paths", "static_url")}/images/spinner.gif" />
+</p>
+<h3>Summary of ${module.dataset['InstanceTitle']}</h3>
+<table class="TableData">
+	<tr><td rowspan="3">category</td><td colspan="5" align="center">number of jobs</td></tr>
+	<tr><td rowspan="2">last hour<br/>(from ${module.dataset['LastHourStart']}<br/>to ${module.dataset['LastHourEnd']})</td><td rowspan="2">current hour<br/>(from ${module.dataset['CurrentHourStart']}<br/>to ${module.dataset['CurrentHourEnd']})</td><td colspan="3" align="center">summary of complete time range<br/>(from ${module.dataset['IntervalStart']} to ${module.dataset['IntervalEnd']})</td></tr>
+	<tr><td>minimum</td><td>maximum</td><td>average</td></tr>
+	%for entry in statistics:
+	<tr><td>${entry['CatName']}</td><td>${entry['JobsLastHour']} (${entry['JobFracsLastHour']}%)</td><td>${entry['JobsCurrentHour']} (${entry['JobFracsCurrentHour']}%)</td><td>${entry['MinJobs']}</td><td>${entry['MaxJobs']}</td><td>${entry['AvgJobs']}</td></tr>
+	%endfor
+</table>
+<!--<script type="text/javascript" src="sorttable.js"></script>-->
+<!-- http://www.kryogenix.org/code/browser/sorttable/ -->
+</%def>
