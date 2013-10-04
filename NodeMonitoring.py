@@ -93,6 +93,10 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.plot_filter_attribute_value = self.config['plot_filter_attribute_value']
             self.plot_line_warning = int(self.config['plot_line_warning'])
             self.plot_line_critical = int(self.config['plot_line_critical'])
+            self.plot_left = float(self.config['plot_left'])
+            self.plot_width = float(self.config['plot_width'])
+            self.image_width = float(self.config['image_width'])
+            self.image_height = float(self.config['image_height'])
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
         self.use_secondary_key = self.secondary_key <> ''
@@ -246,7 +250,7 @@ class NodeMonitoring(hf.module.ModuleBase):
                     xlabels[i] += ' (' + SecondaryKeys[PlotIndices[i]] + ')'
 
             pos = np.arange(nbins)+0.5
-            fig = self.plt.figure(figsize=(11.0,5.6))
+            fig = self.plt.figure(figsize=(self.image_width,self.image_height))
             axis = fig.add_subplot(111)
             p = [axis.barh(pos, FilteredJobs[a], left=Bottoms[a], align='center', 
                     height=0.6, color=Colors[a]) for a in range(len(AttributeValues))]
@@ -276,7 +280,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             axis.set_title('24 hours from ' + data['IntervalStart'] + ' to ' \
                     + data['IntervalEnd'] + ' (all times are local)',
                     fontproperties=fontTitle)
-            axis.set_position([0.30,0.08,0.53,0.86])
+            axis.set_position([self.plot_left,0.08,self.plot_width,0.86])
             axis.set_xlabel('Number of Jobs')
             fontLegend = FontProperties()
             fontLegend.set_size('small')
