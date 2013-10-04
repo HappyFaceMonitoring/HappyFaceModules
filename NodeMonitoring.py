@@ -221,9 +221,11 @@ class NodeMonitoring(hf.module.ModuleBase):
 
         # Sort counts and get self.plot_filter_node_number highest
         FilteredJobs = [[0 for k in range(nbins)] for a in AttributeValues]
+        TotalFilteredJobs = [0 for k in range(nbins)]
         for a in range(len(AttributeValues)):
             for k in range(nbins):
                 FilteredJobs[a][k] = Jobs[a][PlotIndices[k]]
+                TotalFilteredJobs[k] += FilteredJobs[a][k]
         
         # calculate bottom levels in order to enforce stacking
         Bottoms = [[0 for k in range(nbins)] for c in range(
@@ -243,22 +245,29 @@ class NodeMonitoring(hf.module.ModuleBase):
             data['error_string'] = "There are no '%s' jobs running" % self.config["groups"]
             data["filename_plot"] = ""
         else:
+            max_width = max(TotalFilteredJobs)
             xlabels = [0]*nbins
-            for i in range(nbins):
-                xlabels[i] = PrimaryKeys[PlotIndices[i]]
-                if self.use_secondary_key == True:
-                    xlabels[i] += ' (' + SecondaryKeys[PlotIndices[i]] + ')'
-
             pos = np.arange(nbins)+0.5
+
             fig = self.plt.figure(figsize=(self.image_width,self.image_height))
             axis = fig.add_subplot(111)
             p = [axis.barh(pos, FilteredJobs[a], left=Bottoms[a], align='center', 
                     height=0.6, color=Colors[a]) for a in range(len(AttributeValues))]
-            fontyAxis = FontProperties()
-            fontyAxis.set_size('small')
+            #fontyAxis = FontProperties()
+            #fontyAxis.set_size('small')
             axis.set_yticks(pos)
-            axis.set_yticklabels(xlabels, fontproperties=fontyAxis)
+            #axis.set_yticklabels(xlabels, fontproperties=fontyAxis)
+            axis.set_yticklabels('')
             
+            fontyLabels = FontProperties()
+            fontyLabels.set_size('small')
+            fontyLabels.set_weight('bold')
+            for i in range(nbins):
+                xlabels[i] = PrimaryKeys[PlotIndices[i]]
+                if self.use_secondary_key == True:
+                    xlabels[i] += ' (' + SecondaryKeys[PlotIndices[i]] + ')'
+                plt.text(0.03*max_width, pos[i], '%s'%xlabels[i], ha='left', va='center', fontproperties = fontyLabels)
+
             if self.eval_threshold > -1 and TotalEval >= self.eval_threshold:
                 if self.plot_line_warning == 1 and self.eval_threshold_warning >= 0:
                     axis.axvline(TotalEval * self.eval_threshold_warning / 100.0, 
