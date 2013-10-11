@@ -66,18 +66,17 @@ class NodeMonitoring(hf.module.ModuleBase):
         Column('CurrentHourStart', TEXT),
         Column('CurrentHourEnd', TEXT),
         Column('LastHourStart', TEXT),
-        Column('LastHourEnd', TEXT)], ['filename_plot'])
+        Column('LastHourEnd', TEXT),
+        Column('PrimaryKey', TEXT),
+        Column('SecondaryKey', TEXT),
+        Column('Attribute', TEXT)], ['filename_plot'])
 
     subtable_columns = {
         'statistics':([
-            Column('CatName', TEXT),
-            Column('JobsCurrentHour', INT),
-            Column('JobFracsCurrentHour', FLOAT),
-            Column('JobsLastHour', INT),
-            Column('JobFracsLastHour', FLOAT),
-            Column('MinJobs', INT),
-            Column('MaxJobs', INT),
-            Column('AvgJobs', INT)], [])}
+            Column('PrimaryKey', TEXT),
+            Column('SecondaryKey', TEXT),
+            Column('AttributeValue', TEXT),
+            Column('AttributeData', INT)], [])}
 
     def prepareAcquisition(self):
         try:
@@ -95,6 +94,8 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.plot_line_critical = int(self.config['plot_line_critical'])
             self.plot_left = float(self.config['plot_left'])
             self.plot_width = float(self.config['plot_width'])
+            self.plot_ylabels_ellipsis = int(self.config['plot_ylabels_ellipsis'])
+            self.plot_ylabels_linebreak = int(self.config['plot_ylabels_linebreak'])
             self.image_width = float(self.config['image_width'])
             self.image_height = float(self.config['image_height'])
         except KeyError, ex:
@@ -227,6 +228,18 @@ class NodeMonitoring(hf.module.ModuleBase):
                 FilteredJobs[a][k] = Jobs[a][PlotIndices[k]]
                 TotalFilteredJobs[k] += FilteredJobs[a][k]
         
+        # Write filtered data to database
+        for k in range(nbins):
+            for a in range(len(AttributeValues)):
+                SubtableEntry = {
+                        'PrimaryKey': PrimaryKeys[PlotIndices[k]],
+                        'SecondaryKey': '',
+                        'AttributeValue': AttributeValues[a],
+                        'AttributeData': FilteredJobs[a][k]}
+                if self.use_secondary_key == True:
+                    SubtableEntry['SecondaryKey'] = SecondaryKeys[PlotIndices[k]]
+                self.statistics_db_value_list.append(SubtableEntry)
+        
         # calculate bottom levels in order to enforce stacking
         Bottoms = [[0 for k in range(nbins)] for c in range(
                 len(AttributeValues))]
@@ -266,6 +279,10 @@ class NodeMonitoring(hf.module.ModuleBase):
                 xlabels[i] = PrimaryKeys[PlotIndices[i]]
                 if self.use_secondary_key == True:
                     xlabels[i] += ' (' + SecondaryKeys[PlotIndices[i]] + ')'
+                if self.plot_ylabels_ellipsis > 0 and len(xlabels[i]) > self.plot_ylabels_ellipsis + 3:
+                    xlabels[i] = xlabels[i][:self.plot_ylabels_ellipsis] + '...'
+                if self.plot_ylabels_linebreak > 0 and len(xlabels[i]) > self.plot_ylabels_linebreak:
+                    xlabels[i] = xlabels[i][:self.plot_ylabels_linebreak] + '\n' + xlabels[i][self.plot_ylabels_linebreak:]
                 plt.text(0.03*max_width, pos[i], '%s'%xlabels[i], ha='left', va='center', fontproperties = fontyLabels)
 
             if self.eval_threshold > -1 and TotalEval >= self.eval_threshold:
@@ -299,6 +316,20 @@ class NodeMonitoring(hf.module.ModuleBase):
             fig.savefig(hf.downloadService.getArchivePath(self.run, 
                     self.instance_name + "_jobs_dist.png"), dpi=91)
             data["filename_plot"] = self.instance_name + "_jobs_dist.png"
+            data['PrimaryKey'] = self.primary_key
+            data['SecondaryKey'] = self.secondary_key
+            data['Attribute'] = self.attribute
 
         return data
 
+    def fillSubtables(self, parent_id):
+        self.subtables['statistics'].insert().execute(
+                [dict(parent_id=parent_id, **row) for row in self.statistics_db_value_list])
+    
+    def getTemplateData(self):
+        data = hf.module.ModuleBase.getTemplateData(self)
+        details_list = self.subtables['statistics'].select().where(
+                self.subtables['statistics'].c.parent_id==self.dataset['id']
+                ).execute().fetchall()
+        data['statistics'] = map(dict, details_list)
+        return data
