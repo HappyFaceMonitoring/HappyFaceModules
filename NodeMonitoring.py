@@ -255,7 +255,7 @@ class NodeMonitoring(hf.module.ModuleBase):
 
         if nbins == 0:
             # break image creation if there are no jobs
-            data['error_string'] = "There are no '%s' jobs running" % self.config["groups"]
+            data['error_string'] = "No plot is generated because data source contains no jobs to be displayed."
             data["filename_plot"] = ""
         else:
             max_width = max(TotalFilteredJobs)
