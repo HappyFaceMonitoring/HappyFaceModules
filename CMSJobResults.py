@@ -248,8 +248,8 @@ class CMSJobResults(hf.module.ModuleBase):
             ind = np.arange(nbins)   # the x locations for the groups
             width = 1.00   # the width of the bars: can also be len(x) sequence
             max_val = maxJobs[len(self.cat_names)-1]
-            scale_value = max_val // 10
-            if scale_value == 0: scale_value = 5
+            #scale_value = max_val // 10
+            #if scale_value == 0: scale_value = 5
             xlabels = [0]*nbins
             for i in range(0,nbins):
                 if i % 2 == 0:
@@ -291,7 +291,9 @@ class CMSJobResults(hf.module.ModuleBase):
             axis.set_ylabel('Number of Jobs')
             axis.set_xticks(ind + 0.0 * width / 2.0)
             axis.set_xticklabels(xlabels, rotation='vertical')
-            axis.set_yticks(np.arange(0, max_val * 1.05, scale_value))
+            #axis.set_yticks(np.arange(0, max_val * 1.05, scale_value))
+            axis.set_autoscaley_on(False)
+            axis.set_ylim([0,(max_val+1.0)*1.05])
             fontLegend = FontProperties()
             fontLegend.set_size('small')
             axis.legend(p_leg, cat_leg, bbox_to_anchor=(1.02, 0.5), loc=6, ncol=1,
