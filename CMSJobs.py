@@ -198,14 +198,12 @@ class CMSJobs(hf.module.ModuleBase):
         nbins = len(StartDates)
         if nbins == 0:
             # break image creation if there are no jobs
-            data['error_string'] = "There are no '%s' jobs running" % self.config["groups"]
+            data['error_string'] = "No plot is generated because data source contains no jobs to be displayed."
             data["filename_plot"] = ""
         else:
             ind = np.arange(nbins)   # the x locations for the groups
             width = 1.00   # the width of the bars: can also be len(x) sequence
             max_val = maxJobs[len(self.cat_names)-1]
-            scale_value = max_val // 10
-            if scale_value == 0: scale_value = 5
             xlabels = [0]*nbins
             for i in range(0,nbins):
                 if i % 2 == 0:
@@ -231,6 +229,8 @@ class CMSJobs(hf.module.ModuleBase):
                     ) for c in range(len(self.cat_names)-1)]
             if self.pledge_mode > 0:
                 l = axis.axhline(y=yhline, linewidth=3.0, color='Black')
+            else:
+                yhline = 0
 
             # Prepare legend entries
             p_leg = []
@@ -252,7 +252,8 @@ class CMSJobs(hf.module.ModuleBase):
             axis.set_ylabel('Number of Jobs')
             axis.set_xticks(ind + 0.0 * width / 2.0)
             axis.set_xticklabels(xlabels, rotation='vertical')
-            axis.set_yticks(np.arange(0, max_val * 1.05, scale_value))
+            axis.set_autoscaley_on(False)
+            axis.set_ylim([0,(max(max_val, yhline)+1.0)*1.05])
             fontLegend = FontProperties()
             fontLegend.set_size('small')
             axis.legend(p_leg, cat_leg, bbox_to_anchor=(1.02, 0.5), loc=6, ncol=1,
