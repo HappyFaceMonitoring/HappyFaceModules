@@ -59,12 +59,20 @@ $(function() {
     %if module.dataset['SecondaryKey'] == '':
         <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
         %for entry in statistics:
-            <tr><td>${entry['PrimaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %if entry['PrimaryKeyURL'] == '':
+                <tr><td>${entry['PrimaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %else:
+                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %endif
         %endfor
     %else:
         <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['SecondaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
         %for entry in statistics:
-            <tr><td>${entry['PrimaryKey']}</td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %if entry['PrimaryKeyURL'] == '':
+                <tr><td>${entry['PrimaryKey']}</td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %else:
+                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %endif
         %endfor
     %endif
 </table>

@@ -74,6 +74,7 @@ class NodeMonitoring(hf.module.ModuleBase):
     subtable_columns = {
         'statistics':([
             Column('PrimaryKey', TEXT),
+            Column('PrimaryKeyURL', TEXT),
             Column('SecondaryKey', TEXT),
             Column('AttributeValue', TEXT),
             Column('AttributeData', INT)], [])}
@@ -84,6 +85,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.secondary_key = self.config['secondary_key']
             self.attribute = self.config['attribute']
             self.attribute_values = self.config['attribute_values']
+            self.eval_mode = int(self.config['eval_mode'])
             self.eval_attribute_value = self.config['eval_attribute_value']
             self.eval_threshold = int(self.config['eval_threshold'])
             self.eval_threshold_warning = int(self.config['eval_threshold_warning_percentage'])
@@ -98,6 +100,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.plot_ylabels_linebreak = int(self.config['plot_ylabels_linebreak'])
             self.image_width = float(self.config['image_width'])
             self.image_height = float(self.config['image_height'])
+            self.table_link_url = self.config['table_link_url']
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
         self.use_secondary_key = self.secondary_key <> ''
@@ -109,6 +112,18 @@ class NodeMonitoring(hf.module.ModuleBase):
         self.statistics_db_value_list = []
   
     def extractData(self):
+
+        # set rack names and associated clusters
+        rack_001_010 = {
+            'rack_string': 'gridka_rack001-010',
+            'clusters': ('007','008','009','010')}
+        rack_011_020 = {
+            'rack_string': 'gridka_rack011-020',
+            'clusters': ('013','014','015','016')}
+        rack_021_030 = {
+            'rack_string': 'gridka_rack021-030',
+            'clusters': ('028')}
+        racks = [rack_001_010, rack_011_020, rack_021_030]
 
         import matplotlib
         import matplotlib.pyplot as plt
@@ -174,25 +189,54 @@ class NodeMonitoring(hf.module.ModuleBase):
         # Calculate module status
         data['status'] = 1.0
         if self.eval_threshold > -1:
-            if self.eval_attribute_value <> '':
+            TotalEval = 0
+            if self.eval_mode == 1: # total jobs evaluation (total number of jobs at different nodes are compared to all nodes)
+                Statistics = [TotalJobsPerNode[k] for k in range(len(PrimaryKeys))]
+                for k in range(len(PrimaryKeys)):
+                    TotalEval += Statistics[k]
+            elif self.eval_mode == 2: # global category evaluation (jobs in specified category is summed across all nodes)
+                i = AttributeValues.index(self.eval_attribute_value)
+                Statistics = 0
+                for k in range(len(PrimaryKeys)):
+                    Statistics += Jobs[i][k]
+                    TotalEval += TotalJobsPerNode[k]
+            elif self.eval_mode == 3: # local category evaluation (individual nodes are checked for specific category)
                 i = AttributeValues.index(self.eval_attribute_value)
                 Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
-            else:
-                Statistics = [TotalJobsPerNode[k] for k in range(len(PrimaryKeys))]
-            TotalEval = 0
-            for k in range(len(PrimaryKeys)):
-                TotalEval += Statistics[k]
+                for k in range(len(PrimaryKeys)):
+                    TotalEval += Statistics[k]
             if TotalEval >= self.eval_threshold:
-                if self.eval_threshold_warning > -1:
-                    for k in range(len(PrimaryKeys)):
-                        if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                if self.eval_mode == 1: # total jobs evaluation
+                    if self.eval_threshold_warning > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                                    self.eval_threshold_warning):
+                                data['status'] = 0.5
+                    if self.eval_threshold_critical > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                                    self.eval_threshold_critical):
+                                data['status'] = 0.0
+                elif self.eval_mode == 2: # global category evaluation
+                    if self.eval_threshold_warning > -1:
+                        if 100.0 * Statistics / float(TotalEval) >= float(
                                 self.eval_threshold_warning):
                             data['status'] = 0.5
-                if self.eval_threshold_critical > -1:
-                    for k in range(len(PrimaryKeys)):
-                        if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                    if self.eval_threshold_critical > -1:
+                        if 100.0 * Statistics / float(TotalEval) >= float(
                                 self.eval_threshold_critical):
                             data['status'] = 0.0
+                elif self.eval_mode == 3: # local category evaluation
+                    if self.eval_threshold_warning > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                                    self.eval_threshold_warning):
+                                data['status'] = 0.5
+                    if self.eval_threshold_critical > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalEval) >= float(
+                                    self.eval_threshold_critical):
+                                data['status'] = 0.0
 
         ################################################################
         ### Plot data
@@ -229,15 +273,28 @@ class NodeMonitoring(hf.module.ModuleBase):
                 TotalFilteredJobs[k] += FilteredJobs[a][k]
         
         # Write filtered data to database
-        for k in range(nbins):
-            for a in range(len(AttributeValues)):
+        for k in range(nbins-1,-1,-1):  # same ordering as in plot
+            for a in range(len(AttributeValues)-1,-1,-1): # same ordering as in plot
                 SubtableEntry = {
                         'PrimaryKey': PrimaryKeys[PlotIndices[k]],
+                        'PrimaryKeyURL': '',
                         'SecondaryKey': '',
                         'AttributeValue': AttributeValues[a],
                         'AttributeData': FilteredJobs[a][k]}
                 if self.use_secondary_key == True:
                     SubtableEntry['SecondaryKey'] = SecondaryKeys[PlotIndices[k]]
+                if self.table_link_url <> '':
+                    if self.primary_key == 'WNHostName':
+                        cluster = PrimaryKeys[PlotIndices[k]].upper().split('-')
+                        for r in range(len(racks)):
+                            if cluster[1] in racks[r]['clusters']:
+                                SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
+                                        replace('RACK', racks[r]['rack_string']).\
+                                        replace('CLUSTER', cluster[0] + '-' + cluster[1]).\
+                                        replace('HOST', PrimaryKeys[PlotIndices[k]] + '.gridka.de')
+                    elif self.primary_key == 'TaskMonitorId':
+                        SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
+                                replace('TASKMONITORID', PrimaryKeys[PlotIndices[k]])
                 self.statistics_db_value_list.append(SubtableEntry)
         
         # calculate bottom levels in order to enforce stacking
