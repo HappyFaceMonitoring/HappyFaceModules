@@ -1,0 +1,254 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol">Total number of stage requests</td>
+<td>${module.dataset["total"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Pool2Pool:</td>
+<td>${module.dataset["status_pool2pool"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Staging:</td>
+<td>${module.dataset["status_staging"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Suspended:</td>
+<td>${module.dataset["status_suspended"]}</td>
+<tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Waiting:</td>
+<td>${module.dataset["status_waiting"]}</td>
+</tr>
+<td class="dCacheDatarestoreLazyFirstCol">Stage request with problems</td>
+<td>${module.dataset["total_problem"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Waiting:</td>
+<td>${module.dataset["status_waiting"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Suspended:</td>
+<td>${module.dataset["status_suspended"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Unknown:</td>
+<td>${module.dataset["status_unknown"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol">... time limit hit (${module.dataset["time_limit"]} hours)</td>
+<td>${module.dataset["hit_time"]}</td>
+</tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol">... retry limit hit (${module.dataset["retry_limit"]})</td>
+<td>${module.dataset["hit_retry"]}</td>
+</tr>
+</table>
+
+<input type="button" value="Pool2Pool" onfocus="this.blur()" onclick="$('#${module.instance_name}_Pool2Pool_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Pool2Pool_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Pool2Pool:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Staging" onfocus="this.blur()" onclick="$('#${module.instance_name}_Staging_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Staging_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Staging:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Waiting" onfocus="this.blur()" onclick="$('#${module.instance_name}_Waiting_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Waiting_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Waiting:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Suspended" onfocus="this.blur()" onclick="$('#${module.instance_name}_Suspended_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Suspended_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Suspended:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Unknown" onfocus="this.blur()" onclick="$('#${module.instance_name}_Unkown_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Unknown_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Unknown:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Expired" onfocus="this.blur()" onclick="$('#${module.instance_name}_Expired_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Expired_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Expired:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+<input type="button" value="Tried" onfocus="this.blur()" onclick="$('#${module.instance_name}_Tried_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_Tried_details" style="display:none;">
+<table class="TableDetails dCacheDatarestoreLazyTableDetails">
+<tr class="TableHeader">
+<td>pnfsID</td>
+<td>Start</td>
+<td>Retries</td>
+<td>Status</td>
+</tr>
+% for info in Tried:
+<tr>
+<td>${info['pnfs']}</td>
+<td>${info['started_full']}</td>
+<td>${info['retries']}</td>
+<td>${info['status_short']}</td>
+</tr>
+
+<tr>
+<td colspan="4">${info['path']}</td>
+</tr>
+
+<tr>
+<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
+</tr>
+% endfor
+
+</table>
+</div>
+
+</%def>

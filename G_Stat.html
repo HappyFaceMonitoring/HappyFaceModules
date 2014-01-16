@@ -1,0 +1,98 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script>
+    function toggle(id) {
+        element = document.getElementById(id);
+        if (element.style.display == 'none')
+            element.style.display = '';
+        else
+            element.style.display = 'none';
+    }
+</script>
+% if not details_gstat:
+    <p>List empty!</p>
+% else:
+    % if module.dataset['status'] == 1:
+        <p>All records are OK!</p>
+    % endif      
+      
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>BDII Hostname</td>
+        <td>Service Name</td>
+        <td>Current state</td>
+        <td>Information</td>
+        <td>Last check</td>
+        
+        </tr>
+        % for detail_gstat in details_gstat:
+            % if 'ok' == detail_gstat['current_state'].lower():
+                <tr bgcolor=#AAFFAA>
+            % elif 'critical' == detail_gstat['current_state'].lower():
+                <tr bgcolor=#FF6464>
+            % elif  'warning' == detail_gstat['current_state'].lower():
+                <tr bgcolor=#FFFF96>
+            % else:
+                <tr bgcolor=#EEEEEE>
+            % endif
+                <td><a href="javascript: void(0);" onclick="toggle('${detail_gstat['bdii_hostname'] + '_' + detail_gstat['service_name']}');">${detail_gstat['bdii_hostname']}</a></td>
+                <td>${detail_gstat['service_name']}</td>
+                <td>${detail_gstat['current_state']}</td>
+                <td>${detail_gstat['information']}</td>
+                <td>${detail_gstat['last_check'].strftime("%Y-%m-%d %H:%M:%S")}</td>
+            </tr>
+            <tr id=${detail_gstat['bdii_hostname'] + '_' + detail_gstat['service_name']} bgcolor=#EEEEEE style='display: none'>
+                <td/>
+                <td colspan=4>
+                    ${detail_gstat['error_info']}
+                </td>
+            </tr>
+        % endfor
+</table>
+<br/>
+
+<!--
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div  class="DetailedInfo" id="${module.instance_name}_details"  style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+            <td>BDII Hostname</td>
+            <td>Service Name</td>
+            <td>Details</td>
+        </tr>
+        % for detail_gstat in details_gstat:
+            <tr bgcolor="#FFCC99">
+                <td>${detail_gstat['bdii_hostname']}</td>
+                <td>${detail_gstat['service_name']}</td>
+            % if 'INFO' in detail_gstat['error_info']:
+                <td>
+            % for item in detail_gstat['error_info'].split('\\n'):
+                ${item}<br/></br/>
+            %endfor
+            </td>
+    
+            % elif 'ERROR' in detail_gstat['error_info']:
+                <td>
+                % for item in detail_gstat['error_info'].split('\\n'):
+                    ${item} <br/>
+                %endfor
+                </td>
+            % elif 'WARN' in detail_gstat['error_info']:
+                <td>
+                % for item in detail_gstat['error_info'].split('\\n'):
+                    ${item}<br/>
+                %endfor
+                </td>
+            % else:
+                <td></td>
+            % endif
+            </tr>
+        % endfor
+    </table>
+</div>
+
+% endif
+-->
+</%def>

@@ -1,0 +1,171 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if module.dataset['status'] < 1 or queues_always_visible:
+    % if queues_always_visible:
+        <table class="TableData">
+            <tr class="TableHeader">
+                <td>Queue Name (always visible)</td>
+                <td>Finished</td>
+                <td>Failed</td>
+                <td>Def</td>
+                <td>Ass</td>
+                <td>Wait</td>
+                <td>Act</td>
+                <td>Sent</td>
+                <td>Run</td>
+                <td>Hold</td>
+                <td>Trans</td>
+            </tr>
+            % for detail in details:
+                % if detail['queue_name'] in queues_always_visible:
+                    % if (detail['failed'] + detail['finished']) != 0 and float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_critical_threshold']:
+                        <tr bgcolor=#FF6464>
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['finished']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${detail['defined']}</td>
+                            <td>${detail['assigned']}</td>
+                            <td>${detail['waiting']}</td>
+                            <td>${detail['activated']}</td>
+                            <td>${detail['sent']}</td>
+                            <td>${detail['running']}</td>
+                            <td>${detail['holding']}</td>
+                            <td>${detail['transferring']}</td>
+                        </tr>
+                    % elif (detail['failed'] + detail['finished']) != 0 and float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_warning_threshold']:
+                        <tr bgcolor=#FFFF96>
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['finished']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${detail['defined']}</td>             
+                            <td>${detail['assigned']}</td>
+                            <td>${detail['waiting']}</td>
+                            <td>${detail['activated']}</td>
+                            <td>${detail['sent']}</td>
+                            <td>${detail['running']}</td>
+                            <td>${detail['holding']}</td>
+                            <td>${detail['transferring']}</td>
+                        </tr>
+                    % else:
+                        <tr bgcolor=#AAFFAA>
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['finished']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${detail['defined']}</td>
+                            <td>${detail['assigned']}</td>
+                            <td>${detail['waiting']}</td>
+                            <td>${detail['activated']}</td>
+                            <td>${detail['sent']}</td>
+                            <td>${detail['running']}</td>
+                            <td>${detail['holding']}</td>
+                            <td>${detail['transferring']}</td>
+                        </tr>
+                    % endif
+                % endif
+            % endfor
+    % endif
+    % if module.dataset['status'] < 1:
+        <%
+            queues_not_always_visible_and_bad = []
+            for detail in details:
+                if (detail['queue_name'] not in queues_always_visible) and (detail['failed'] + detail['finished']) != 0 and (float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_warning_threshold'] or (float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_critical_threshold'])):
+                    queues_not_always_visible_and_bad.append(detail['queue_name'])
+        %>
+        % if queues_not_always_visible_and_bad:
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Queue Name</td>
+                    <td>Finished</td>
+                    <td>Failed</td>
+                    <td>Def</td>
+                    <td>Ass</td>
+                    <td>Wait</td>
+                    <td>Act</td>
+                    <td>Sent</td>
+                    <td>Run</td>
+                    <td>Hold</td>
+                    <td>Trans</td>
+                </tr>
+                % for detail in details:
+                    % if (detail['queue_name'] not in queues_always_visible):
+                        % if (detail['failed'] + detail['finished']) != 0 and float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_critical_threshold']:
+                            <tr bgcolor=#FF6464>
+                                <td>${detail['queue_name']}</td>
+                                <td>${detail['finished']}</td>
+                                <td>${detail['failed']}</td>
+                                <td>${detail['defined']}</td>
+                                <td>${detail['assigned']}</td>
+                                <td>${detail['waiting']}</td>
+                                <td>${detail['activated']}</td>
+                                <td>${detail['sent']}</td>
+                                <td>${detail['running']}</td>
+                                <td>${detail['holding']}</td>
+                                <td>${detail['transferring']}</td>
+                            </tr>
+                        % elif (detail['failed'] + detail['finished']) != 0 and float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. >= config_settings['failed_jobs_warning_threshold']:
+                            <tr bgcolor=#FFFF96>
+                                <td>${detail['queue_name']}</td>
+                                <td>${detail['finished']}</td>
+                                <td>${detail['failed']}</td>
+                                <td>${detail['defined']}</td>
+                                <td>${detail['assigned']}</td>
+                                <td>${detail['waiting']}</td>
+                                <td>${detail['activated']}</td>
+                                <td>${detail['sent']}</td>
+                                <td>${detail['running']}</td>
+                                <td>${detail['holding']}</td>
+                                <td>${detail['transferring']}</td>
+                            </tr>
+                        % endif
+                    % endif
+                % endfor
+        % endif
+    % endif
+    </table>
+% else:
+    <p>All monitored queues are ok.</p>
+% endif
+% if details:
+    <input type="button" value="show/hide good queues" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+    <div id="${module.instance_name}_details" style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+            <td>Queue Name</td>
+            <td>Finished</td>
+            <td>Failed</td>
+            <td>Def</td>
+            <td>Ass</td>
+            <td>Wait</td>
+            <td>Act</td>
+            <td>Sent</td>
+            <td>Run</td>
+            <td>Hold</td>
+            <td>Trans</td>
+        </tr>
+        % for detail in details:
+            % if detail['queue_name'] not in queues_always_visible:
+                % if (detail['failed'] + detail['finished']) == 0 or (float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. < config_settings['failed_jobs_critical_threshold'] and float(detail['failed'])/(float(detail['failed']) + float(detail['finished']))*100. < config_settings['failed_jobs_warning_threshold']):
+                    <tr bgcolor=#AAFFAA>
+                        <td>${detail['queue_name']}</td>
+                        <td>${detail['finished']}</td>
+                        <td>${detail['failed']}</td>
+                        <td>${detail['defined']}</td>             
+                        <td>${detail['assigned']}</td>
+                        <td>${detail['waiting']}</td>
+                        <td>${detail['activated']}</td>
+                        <td>${detail['sent']}</td>
+                        <td>${detail['running']}</td>
+                        <td>${detail['holding']}</td>
+                        <td>${detail['transferring']}</td>
+                    </tr>
+                % endif
+            % endif
+        % endfor
+    </table>
+    </div>
+    </p>
+% endif
+</%def>
+

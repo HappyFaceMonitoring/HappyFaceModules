@@ -1,0 +1,516 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+        <style media="screen" type="text/css">
+            .checkbox_container {
+                float: left;
+                margin: 0px 10px 0px 0px;
+            }
+        </style>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+        <script type="text/javascript">
+            window.onload = function() {
+                FillCalendarLists("${module.instance_name}_day_from", "${module.instance_name}_month_from", "${module.instance_name}_year_from", "${module.instance_name}_hour_from", "${module.instance_name}_minute_from");
+                FillCalendarLists("${module.instance_name}_day_to", "${module.instance_name}_month_to", "${module.instance_name}_year_to", "${module.instance_name}_hour_to", "${module.instance_name}_minute_to");
+            }
+
+            var download_file_name;
+            function Query() {
+                $.ajax({
+                    url: 'http://happy3/webservice/db_backend.py',
+                    datatype: 'text',
+                    data: { 'data': CreateDbQuery() },
+                    success: function(data, textStatus, jqXHR) { download_file_name = data; GenerateDownloadLink(download_file_name, 'Download'); }
+                });
+            }
+
+            function GenerateDownloadLink(download_file_name, display_name) {
+                var link = 'http://happy3/webservice/' + download_file_name;
+                var href = '<a download="Download" href=' + link + '>' + display_name + '</a>';
+                document.getElementById('${module.instance_name}_file_download').innerHTML = href;
+            }
+
+            /*
+            var b64data;
+            function Query() {
+                //alert ('query');
+                $.ajax({
+                    url: 'db_backend.py',
+                    datatype: 'text',
+                    data: { 'data': CreateDbQuery() },
+                    success: function(data, textStatus, jqXHR) { b64data = data; GenerateURIDownloadLink(b64data, 'Download'); }
+                });
+                //alert(typeof(b64data));
+                return b64data;
+            }
+
+            function GenerateURIDownloadLink(b64data, display_name) {
+                var link = 'data:application/octet-stream;charset=utf-8;base64,' + b64data;
+                var href = '<a download="dump" href=' + link + '>' + display_name + '</a>';
+                document.getElementById('file_download').innerHTML = href;
+            }
+            */
+
+            function CheckByParent(id, checked) {
+                var collection = document.getElementById(id).getElementsByTagName('INPUT');
+                for (var i = 0; i < collection.length; i++) {
+                    if (collection[i].type.toUpperCase() == 'CHECKBOX')
+                        collection[i].checked = checked;
+                }
+            }
+
+            function FillCalendarLists(daysId, monthsId, yearsId, hoursId, minutesId) {
+                var months = ['Jan', 'Feb' ,'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+                var today = new Date();
+                var daysId = document.getElementById(daysId);
+                var monthsId = document.getElementById(monthsId);
+                var yearsId = document.getElementById(yearsId);
+                var hoursId = document.getElementById(hoursId);
+                var minutesId = document.getElementById(minutesId);
+                for (var i = 0; i < 31; i++)
+                {
+                    var option;
+                    if (i+1 < 10)
+                        option = '0' + (i+1).toString();
+                    else
+                        option = (i+1).toString()
+                    if (today.getDate()-1 == i)
+                        daysId.options[i] = new Option(option, option, true, true);
+                    else
+                        daysId.options[i] = new Option(i+1, option);
+                }
+                for (var i = 0; i < 12; i++)
+                {
+                    if (i+1 < 10)
+                        option = '0' + (i+1).toString();
+                    else
+                        option = (i+1).toString()
+                    if (today.getMonth() == i)
+                        monthsId.options[i] = new Option(months[today.getMonth()], option, true, true);
+                    else
+                        monthsId.options[i] = new Option(months[i], option);
+                }
+                var numberOfYears = 10;
+                var thisyear = today.getFullYear()-numberOfYears;
+                for (var i = 0; i < numberOfYears; i++) {
+                    yearsId.options[i] = new Option(thisyear, thisyear);
+                    thisyear += 1;
+                }
+                yearsId.options[numberOfYears] = new Option(today.getFullYear(), today.getFullYear(), true, true);
+                var thishour = today.getHours();
+                for (var i = 0; i < 24; i++)
+                {
+                    if (i < 10)
+                        option = '0' + i.toString();
+                    else
+                        option = i.toString()
+                    hoursId.options[i] = new Option(i, option);
+                }
+                hoursId.options[thishour].selected = true;
+                var thisminute = today.getMinutes();
+                for (var i = 0; i < 4; i++) {
+                    var option;
+                    var interval = 15;
+                    if (i*interval < 10)
+                        option = '0' + (i*interval).toString();
+                    else
+                        option = (i*interval).toString();
+                    minutesId.options[i] = new Option(option, option);
+                }
+                if (thisminute > 45)
+                    minutesId.options[3].selected = true;
+                else
+                    minutesId.options[Math.round(thisminute/15.)].selected = true;
+            }
+
+            function Tree(id, name, selected, level) {   
+                var id = id;
+                var name = name;
+                // selected for data request
+                var selected = selected;
+                // 'root' is level 0
+                var level = level;
+                var total_depth = 0;
+                // active in view
+                var active = false;
+                var father;
+                var children = new Array();
+                var isLeaf = true;
+                
+                if ('root' != id && 'root' != name) {
+                    if (this.level >= total_depth) {
+                        total_depth = level;
+                        do {
+                            father.setTotalDepth(total_depth);
+                            father = father.getFather();
+                        }
+                        while ('root' != father.getId() && 'root' != father.getName());
+                        father.setTotalDepth(total_depth);
+                        // pass total_depth to all children: to be done!
+                    }
+                }
+
+                this.getChildren = function() {
+                    return children;
+                }
+                this.getId = function() {
+                    return id;
+                }
+                this.getName = function() {
+                    return name;
+                }
+                this.isSelected = function() {
+                    return selected;
+                }
+                this.setSelected = function(s) {
+                    selected = s;
+                    return selected;
+                }
+                this.getLevel = function() {
+                    return level;
+                }
+                this.getTotalDepth = function() {
+                    return total_depth;
+                }
+                this.isActive = function() {
+                    return active;
+                }
+                this.getFather = function() {
+                    return father;
+                }
+                this.setActive = function(a) {
+                    active = a;
+                    document.getElementById(this.getId());
+                    if (false == active)
+                        this.setChildrenInactive();
+                    return active;
+                }
+                this.setTotalDepth = function(depth) {
+                    total_depth = depth;
+                    return total_depth;
+                }
+                // set all children and their children etc. inactive
+                this.setChildrenInactive = function() {
+                    for (var i = 0; i < children.length; i++) {
+                        children[i].setActive(false);
+                        children[i].setChildrenInactive();
+                    }
+                }
+                this.setFather = function(f) {
+                    father = f;
+                    return father;
+                }
+                this.addChild = function(id, name, selected, level) {
+                    children[children.length] = new Tree(id, name, selected, level);
+                    children[children.length-1].setFather(this);
+                    //document.write(children[children.length-1].setFather(this).getName());
+                    isLeaf = false;
+                    return children[children.length-1];
+                }
+            }
+
+            var dbTree; // global variable for tree root
+            function LoadDbStructureFile() {
+
+                /*
+                var dbStructureFile = new XMLHttpRequest();
+                dbStructureFile.open("GET", "http://happy3/webservice/db_structure.json", true);
+                dbTree = new Tree('root', 'root', true, 0);
+                dbTree.setActive(true);
+                dbTree.setTotalDepth(3);
+                dbStructureFile.onreadystatechange = function() {
+                    if (4 == dbStructureFile.readyState) {
+                        if (200 == dbStructureFile.status) {
+                            var content_text = dbStructureFile.responseText;
+                            var content = JSON.parse(content_text);
+                            for (var i = 0; i < content.length; i++) {
+                                // add module table to tree
+                                var child = dbTree.addChild(content[i].module_table_name, content[i].module_name, false, 1);
+                                var child_module_table = child.addChild(content[i].module_table_name, content[i].module_name, false, 2);
+                                //child_module_table.setActive(true);
+                                for (var j = 0; j < content[i].module_table_columns.length; j++) {
+                                    var child_child_module_table = child_module_table.addChild(content[i].module_table_columns[j], content[i].module_table_columns[j], false, 3);
+                                }
+                                // add subtables to tree
+                                for (var j = 0; j < content[i].subtables.length; j++) {
+                                    var child_child = child.addChild(content[i].subtables[j].subtable_name, content[i].subtables[j].subtable_name, false, 2);
+                                    for (var k = 0; k < content[i].subtables[j].subtable_columns.length; k++) {
+                                        var child_child_child = child_child.addChild(content[i].subtables[j].subtable_columns[k], content[i].subtables[j].subtable_columns[k], false, 3);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                dbStructureFile.send(null);
+                */
+                dbTree = new Tree('root', 'root', true, 0);
+                dbTree.setActive(true);
+                dbTree.setTotalDepth(3);
+                var content_text = '${database_tables}';
+                var content = JSON.parse(content_text);
+                for (var i = 0; i < content.length; i++) {
+                    // add module table to tree
+                    var child = dbTree.addChild(content[i].module_table_name, content[i].module_name, false, 1);
+                    var child_module_table = child.addChild(content[i].module_table_name, content[i].module_name, false, 2);
+                    //child_module_table.setActive(true);
+                    for (var j = 0; j < content[i].module_table_columns.length; j++) {
+                        var child_child_module_table = child_module_table.addChild(content[i].module_table_columns[j], content[i].module_table_columns[j], false, 3);
+                    }
+                    // add subtables to tree
+                    for (var j = 0; j < content[i].subtables.length; j++) {
+                        var child_child = child.addChild(content[i].subtables[j].subtable_name, content[i].subtables[j].subtable_name, false, 2);
+                        for (var k = 0; k < content[i].subtables[j].subtable_columns.length; k++) {
+                           var child_child_child = child_child.addChild(content[i].subtables[j].subtable_columns[k], content[i].subtables[j].subtable_columns[k], false, 3);
+                        }
+                    }
+                }
+
+                setTimeout(function() {ActivateFirstTime();}, 100);
+                return dbTree;
+            }
+
+            function ActivateFirstTime() {
+                var entries = dbTree.getChildren();
+                var div_1 = document.getElementById('${module.instance_name}_level_1');
+                for (var i = 0; i < entries.length; i++) {
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = entries[i].getName();
+                    checkbox.value = entries[i].getId();
+                    checkbox.id = '${module.instance_name}_' + entries[i].getId() + '_module';
+                    checkbox.onclick = function() { Activate(this.id, 1, this.checked); };
+                    var label = document.createElement('label');
+                    label.htmlFor = entries[i].getId();
+                    label.appendChild(document.createTextNode(entries[i].getName()));
+                    var br = document.createElement('br');
+                    div_1.appendChild(checkbox);
+                    div_1.appendChild(label);
+                    div_1.appendChild(br);
+                }
+
+                var div_2 = document.getElementById('${module.instance_name}_level_2');
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'loading_2';
+                checkbox.value = 'loading_2';
+                checkbox.id = '${module.instance_name}_loading_2';
+                var label = document.createElement('label');
+                label.htmlFor = '${module.instance_name}_loading_2';
+                label.appendChild(document.createTextNode(' (...)'));
+                var br = document.createElement('br');
+                div_2.appendChild(checkbox);
+                div_2.appendChild(label);
+                div_2.appendChild(br);
+
+                var div_3 = document.getElementById('${module.instance_name}_level_3');
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'loading_3';
+                checkbox.value = 'loading_3';
+                checkbox.id = '${module.instance_name}_loading_3';
+                var label = document.createElement('label');
+                label.htmlFor = '${module.instance_name}_loading_3';
+                label.appendChild(document.createTextNode(' (...)'));
+                var br = document.createElement('br');
+                div_3.appendChild(checkbox);
+                div_3.appendChild(label);
+                div_3.appendChild(br);
+
+            }
+
+            function Activate(id, level, checked) {
+                //if (checked)
+                //    window.alert('Id ' + id + ' was checked.');
+                var selected = id;
+                // iterate over all levels
+                for (var i = level; i < dbTree.getTotalDepth(); i++) {
+                    // clear all options on lower levels
+                    for (var j = i; j < dbTree.getTotalDepth(); j++) {
+                        document.getElementById('${module.instance_name}_level_'+((j+1).toString())).innerHTML = "";
+                    }
+                }
+
+                // deselect all others
+                if (level != dbTree.getTotalDepth()) {
+                    CheckByParent('${module.instance_name}_level_'+(level.toString()), false);
+                    document.getElementById(selected).checked = true;
+                }
+
+                // set all others inactive
+                function SetAllInactive(entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        entries[i].setActive(false);
+                        if (level != 1) {
+                            for (var j = 0; j < entries[i].getChildren().length; j++) {
+                                entries[i].getChildren()[j].setActive(false);
+                            }
+                        }
+                    }
+                }
+
+                function FindIdNonRecursive(id, level, entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        if (entries[i].getLevel() == level && '${module.instance_name}_' + entries[i].getId() + '_module' == id) {
+                            return entries[i];
+                        }
+                        for (var j = 0; j < entries[i].getChildren().length; j++) {
+                            if (entries[i].getChildren()[j].getLevel() == level && '${module.instance_name}_' + entries[i].getChildren()[j].getId() == id) {
+                                return entries[i].getChildren()[j];
+                            }
+                        }
+                    }
+                }
+
+                function MarkSelected(id, level, entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        for (var j = 0; j < entries[i].getChildren().length; j++) {
+                            if (entries[i].getChildren()[j].isActive() == true) {
+                                for (var k = 0; k < entries[i].getChildren()[j].getChildren().length; k++) {
+                                    if ('${module.instance_name}_' + entries[i].getChildren()[j].getChildren()[k].getId() == id) {
+                                        entries[i].getChildren()[j].getChildren()[k].setSelected(checked);
+                                        //window.alert('set selected ' + entries[i].getChildren()[j].getChildren()[k]);
+                                        //window.alert(entries[i].getChildren()[j].getChildren()[k].getId());
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                var entries = dbTree.getChildren();
+
+                if (level == dbTree.getTotalDepth()) {
+                    MarkSelected(selected, level, entries);
+                }
+
+                if (level != dbTree.getTotalDepth()) {
+                    var entries = dbTree.getChildren();
+                    SetAllInactive(entries);
+                    var entry = FindIdNonRecursive(selected, level, entries);
+                    entry.setSelected();
+                    entry.setActive(true);
+                    var children = entry.getChildren();
+                
+                    var div = document.getElementById('${module.instance_name}_level_'+((level+1).toString()));
+                    for (var i = 0; i < children.length; i++) {
+                        var checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = children[i].getName();
+                        checkbox.value = children[i].getId();
+                        checkbox.id = '${module.instance_name}_' + children[i].getId();
+                        checkbox.checked = children[i].isSelected();
+                        checkbox.onclick = function() { Activate(this.id, level+1, this.checked); };
+                        var label = document.createElement('label');
+                        label.htmlFor = children[i].getId();
+                        label.appendChild(document.createTextNode(children[i].getName()));
+                        var br = document.createElement('br');
+                        div.appendChild(checkbox);
+                        div.appendChild(label);
+                        div.appendChild(br);
+                    }
+                }
+            }
+
+            function CreateDbQuery() {
+                var query_string = '';
+                var query_string_mr = '';
+                var from_timestamp_mr = document.getElementById('${module.instance_name}_year_from').options[document.getElementById('${module.instance_name}_year_from').selectedIndex].value + '-' + document.getElementById('${module.instance_name}_month_from').options[document.getElementById('${module.instance_name}_month_from').selectedIndex].value + '-' + document.getElementById('${module.instance_name}_day_from').options[document.getElementById('${module.instance_name}_day_from').selectedIndex].value + ' ' + document.getElementById('${module.instance_name}_hour_from').options[document.getElementById('${module.instance_name}_hour_from').selectedIndex].value + ':' + document.getElementById('${module.instance_name}_minute_from').options[document.getElementById('${module.instance_name}_minute_from').selectedIndex].value + ':00.000000'
+                var from_timestamp = '\'' + from_timestamp_mr + '\'';
+                var to_timestamp_mr = document.getElementById('${module.instance_name}_year_to').options[document.getElementById('${module.instance_name}_year_to').selectedIndex].value + '-' + document.getElementById('${module.instance_name}_month_to').options[document.getElementById('${module.instance_name}_month_to').selectedIndex].value + '-' + document.getElementById('${module.instance_name}_day_to').options[document.getElementById('${module.instance_name}_day_to').selectedIndex].value + ' ' + document.getElementById('${module.instance_name}_hour_to').options[document.getElementById('${module.instance_name}_hour_to').selectedIndex].value + ':' + document.getElementById('${module.instance_name}_minute_to').options[document.getElementById('${module.instance_name}_minute_to').selectedIndex].value + ':00.000000';
+                var to_timestamp = '\'' + to_timestamp_mr + '\'';
+                var entries = dbTree.getChildren();
+                for (var i = 0; i < entries.length; i++) {
+                    for (var j = 0; j < entries[i].getChildren().length; j++) {
+                        var num_selected = 0;
+                        var partial_string = '';
+                        for (var k = 0; k < entries[i].getChildren()[j].getChildren().length; k++) {
+                            if (entries[i].getChildren()[j].getChildren()[k].isSelected() == true) {
+                                //window.alert('selected');
+                                if (num_selected > 0)
+                                    partial_string += (', ' + entries[i].getChildren()[j].getId() + '.' + entries[i].getChildren()[j].getChildren()[k].getId());
+                                else
+                                    partial_string += (entries[i].getChildren()[j].getId() + '.' + entries[i].getChildren()[j].getChildren()[k].getId());
+                                num_selected ++;
+                            }
+                        }
+                        if (num_selected > 0)
+                        {
+                            if (j == 0)
+                                query_string += ('SELECT hf_runs.id, hf_runs.time, ' + partial_string + ' FROM hf_runs INNER JOIN ' + entries[i].getChildren()[j].getId() + ' ON hf_runs.id = ' + entries[i].getChildren()[j].getId() + '.id WHERE ' + from_timestamp + ' < hf_runs.time AND ' + to_timestamp + ' > hf_runs.time; ');
+                            else
+                                query_string += ('SELECT hf_runs.id, hf_runs.time, ' + partial_string + ' FROM hf_runs INNER JOIN ' + entries[i].getChildren()[j].getId() + ' ON hf_runs.id = ' + entries[i].getChildren()[j].getId() + '.parent_id WHERE ' + from_timestamp + ' < hf_runs.time AND ' + to_timestamp + ' > hf_runs.time; ');
+                            //query_string += ('SELECT ' + partial_string + ' FROM ' + entries[i].getChildren()[j].getId() + '; ');
+                        }
+                    }
+                }
+
+                // machine-readable query format
+                for (var i = 0; i < entries.length; i++) {
+                    for (var j = 0; j < entries[i].getChildren().length; j++) {
+                        var num_selected = 0
+                        var partial_string = '';
+                        for (var k = 0; k < entries[i].getChildren()[j].getChildren().length; k++) {
+                            if (entries[i].getChildren()[j].getChildren()[k].isSelected() == true) {
+                                if (num_selected > 0)
+                                partial_string += (',' + entries[i].getChildren()[j].getChildren()[k].getId());
+                                else
+                                    partial_string += entries[i].getChildren()[j].getChildren()[k].getId();
+                                num_selected ++;
+                            }
+                        }
+                        if (num_selected > 0) {
+                            query_string_mr += '&table_name=' + entries[i].getChildren()[j].getId();
+                            query_string_mr += '&columns=' + partial_string;
+                        }
+                    }
+                }
+                query_string_mr += '&timestamp_from=' + from_timestamp_mr;
+                query_string_mr += '&timestamp_to=' + to_timestamp_mr;
+
+                //window.alert('Query string: ' + query_string);
+                window.alert('MR Query string: ' + query_string_mr);
+                return query_string;
+            }
+        </script>
+
+        <button type="button" id="${module.instance_name}_getDbStructure" onclick="LoadDbStructureFile(); $(this).hide();">GET IT!</button>
+        <div id="select_from_db">
+            <div id="${module.instance_name}_level_1" class="checkbox_container"></div>
+            <div id="${module.instance_name}_level_2" class="checkbox_container"></div>
+            <div id="${module.instance_name}_level_3" class="checkbox_container"></div>
+        </div>
+        <div id="select_dates" style="clear: both;">
+            <table>
+                <tr>
+                    <td>
+                        From:
+                    </td>
+                    <td>
+                        <select id="${module.instance_name}_day_from"></select>
+                        <select id="${module.instance_name}_month_from"></select>
+                        <select id="${module.instance_name}_year_from"></select>,
+                        <select id="${module.instance_name}_hour_from"></select>:
+                        <select id="${module.instance_name}_minute_from"></select>
+                    <td>
+                </tr>
+                <tr>
+                    <td>
+                        To:
+                    </td>
+                    <td>
+                        <select id="${module.instance_name}_day_to"></select>
+                        <select id="${module.instance_name}_month_to"></select>
+                        <select id="${module.instance_name}_year_to"></select>,
+                        <select id="${module.instance_name}_hour_to"></select>:
+                        <select id="${module.instance_name}_minute_to"></select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <button type="button" id="${module.instance_name}_createDbQuery" style="z-index: 2; position: relative;" onclick="Query();">QUERY!</button>
+        <div id="${module.instance_name}_file_download"></div>
+
+</%def>

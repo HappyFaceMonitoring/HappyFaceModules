@@ -1,0 +1,101 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if not destination_details:
+    <p>No space tokens in chosen time interval (${module.dataset['time_interval']} minutes)!</p>
+% else:
+    <p>Transfers for destination site ${module.dataset['site_name']} in interval ${module.dataset['time_interval']} minutes.</p>
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Space Token</td>
+        <td>Throughput [MB]</td>
+        <td>Successful</td>
+        <td>Failed</td>
+        <td>Failed (site related)</td>
+        <td>Efficiency</td>
+        <td>Efficiency (site related)</td>
+        </tr>
+        % for detail in destination_details:
+            % if float(destination_warning_threshold) <= detail['efficiency'] <= 1:
+                <tr bgcolor=#AAFFAA>
+            % elif float(destination_critical_threshold) <= detail['efficiency'] < float(destination_warning_threshold):
+                <tr bgcolor=#FFFF96>
+            % elif 0 <= detail['efficiency'] < float(destination_critical_threshold) and detail['successful'] + detail['failed'] > 0:
+                <tr bgcolor=#FF6464>
+            % else:
+                <tr>
+            % endif
+            <td>${detail['token']}</td>
+            <td>${round(detail['throughput']/1000000, 2)}</td>
+            <td>${detail['successful']}</td>
+            <td>${detail['failed']}</td>
+            <td>${detail['failed_reason_destination']}</td>
+            <td>${round(detail['efficiency'], 2)}</td>
+            <td>${round(float(detail['successful'])/(float(detail['failed_reason_destination']) + float(detail['successful'])), 2)}</td>
+            </tr>
+        % endfor
+        <tfoot>
+            <tr>
+                <td>All tokens</td>
+                <td>${round(module.dataset['destination_throughput_total']/1000000, 2)}</td>
+                <td>${module.dataset['destination_successful_transfers_total']}</td>
+                <td>${module.dataset['destination_failed_transfers_total']}</td>
+                <td>${module.dataset['destination_failures_total']}</td>
+                <td>${round(module.dataset['destination_efficiency_total'], 2)}</td>
+                <td>${round(float(module.dataset['destination_successful_transfers_total'])/(float(module.dataset['destination_failures_total']) + float(module.dataset['destination_successful_transfers_total'])), 3)}</td>
+            </tr>
+        <tfoot>
+    </table>
+% endif
+
+<p/>
+% if not source_details:
+    <p>No space tokens in chosen time interval (${module.dataset['time_interval']} minutes)!</p>
+% else:
+    <p>Transfers from site ${module.dataset['site_name']} in interval ${module.dataset['time_interval']} minutes.</p>
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Space Token</td>
+        <td>Throughput [MB]</td>
+        <td>Successful</td>
+        <td>Failed</td>
+        <td>Failed (site related)</td>
+        <td>Efficiency</td>
+        <td>Efficiency (site related)</td>
+        </tr>
+        % for detail in source_details:
+            % if float(source_warning_threshold) <= detail['efficiency'] <= 1:
+                <tr bgcolor=#AAFFAA>
+            % elif float(source_critical_threshold) <= detail['efficiency'] < float(source_warning_threshold):
+                <tr bgcolor=#FFFF96>
+            % elif 0 <= detail['efficiency'] < float(source_critical_threshold) and detail['successful'] + detail['failed'] > 0:
+                <tr bgcolor=#FF6464>
+            % else:
+                <tr>
+            % endif
+            <td>${detail['token']}</td>
+            <td>${round(detail['throughput']/1000000, 2)}</td>
+            <td>${detail['successful']}</td>
+            <td>${detail['failed']}</td>
+            <td>${detail['failed_reason_source']}</td>
+            <td>${round(detail['efficiency'], 2)}</td>
+            <td>${round(float(detail['successful'])/(float(detail['failed_reason_source']) + float(detail['successful'])), 2)}</td>
+            </tr>
+        % endfor
+        <tfoot>
+            <tr>
+                <td>All tokens</td>
+                <td>${round(module.dataset['source_throughput_total']/1000000, 2)}</td>
+                <td>${module.dataset['source_successful_transfers_total']}</td>
+                <td>${module.dataset['source_failed_transfers_total']}</td>
+                <td>${module.dataset['source_failures_total']}</td>
+                <td>${round(module.dataset['source_efficiency_total'], 2)}</td>
+                <td>${round(float(module.dataset['source_successful_transfers_total'])/(float(module.dataset['source_failures_total']) + float(module.dataset['source_successful_transfers_total'])), 2)}</td>
+            </tr>
+        <tfoot>
+    </table>
+% endif
+
+</%def>
+

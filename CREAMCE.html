@@ -1,0 +1,85 @@
+## HTML Template
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<script>
+	function toggle(id) {
+		element = document.getElementById(id);
+		if (element.style.display == 'none')
+			element.style.display = '';
+		else
+			element.style.display = 'none';
+	}
+</script>
+
+<%def name="table(title, list, secondaryColumn=None, secondaryName=None, subtable=None)">
+
+<%def name="printRow(key,value)">
+<tr>
+% if subtable and key in subtable:
+<td><a href="javascript: void(0);" onclick="toggle('${key}');">${key[:50]}</a></td>
+% else:
+<td>${key[:50]}</td>
+% endif
+% if secondaryColumn:
+	<td>${value[secondaryColumn]}</td>
+% endif
+% for t in type_list:
+	<td>
+	${value.get(t['type'],0)}
+	</td>
+% endfor
+<td>${value['total']}</td>
+</tr>
+
+% if subtable and key in subtable:
+<tr id="${key}" style="display:none;">
+	<td colspan=13>
+	% for i in subtable[key]:
+		${type_list[i]['name']}: <br />
+		%for j in subtable[key][i]:
+			${j['job_id']}:${j['lrmsJobId']}:${j['time_stamp']} <br />
+		% endfor
+	% endfor
+	</td>
+</tr>
+% endif
+
+</%def>
+
+<table class="TableData">
+	<tr class="TableHeader">
+		<th>${title}</th>
+		% if secondaryColumn:
+			<th>${secondaryName}</th>
+		% endif
+		% for t in type_list:
+			<th>${t['name']}</th>
+		% endfor
+		<th>Total</th>
+	</tr>
+
+	% for k,v in iter(sorted(list.iteritems())):
+	% if k:
+		${printRow(k,v)}
+	% endif
+	% endfor
+	${printRow('Total',list[None])}
+
+
+</table>
+
+</%def>
+
+${table('Queue',queue_list)}
+
+<br />
+
+${table('User',user_list, 'local_name', 'Local User')}
+
+<br />
+
+${table('Node',node_list, subtable=job_list)}
+
+</%def>

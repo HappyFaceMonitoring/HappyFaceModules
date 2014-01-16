@@ -1,0 +1,35 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script>
+    function toggle(id) {
+        element = document.getElementById(id);
+        if (element.style.display == 'none')
+            element.style.display = '';
+        else
+            element.style.display = 'none';
+    }
+</script>
+
+% for host in hostlist:
+    <a href="javascript: void(0);" onclick="toggle('${host}');">${host}</a>
+    <table class="TableData" width="350" id="${host}" style="display: none">
+        <tr class="TableHeader">
+            <td>Variable</td>
+            <td>Value</td>
+            <td>Description</td>
+        </tr>
+        % for detail in host_details:
+            % if detail['host'] == host:
+                <tr>
+                    <td>${detail['variable']}</td>
+                    <td>${detail['value']} ${detail['unit']}</td>
+                    <td>${detail['info']}</td>
+                </tr>
+            % endif
+        % endfor
+    </table>
+<br>
+% endfor
+</%def>

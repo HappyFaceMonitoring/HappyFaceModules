@@ -1,0 +1,184 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData" width="350">
+<tbody><tr><th>AMGA</th>
+</tr><tr>
+<td class="GangliaTableHeader">
+<table class="GangliaSubTable">
+<tbody><tr>
+<th width="150">Info type</th>
+<th width="150" align="center">Value [unit]</th>
+<th width="50" align="center">Status</th>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["bytes_out_res"] >= 1.0:
+ 
+% elif module.dataset["bytes_out_res"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+bytes_out:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["bytes_out"]} [bytes/sec]
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["bytes_out_res"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["bytes_out_res"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["bytes_out_res"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["load_fifteen_res"] >= 1.0:
+ 
+% elif module.dataset["load_fifteen_res"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+load_fifteen:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["load_fifteen"]} 
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["load_fifteen_res"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["load_fifteen_res"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["load_fifteen_res"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["disk_free_res"] >= 1.0:
+ 
+% elif module.dataset["disk_free_res"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+disk_free:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["disk_free"]} [Gb]
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["disk_free_res"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["disk_free_res"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["disk_free_res"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+<tr><th>DIRAC</th>
+</tr><tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["bytes_out_res_1"] >= 1.0:
+ 
+% elif module.dataset["bytes_out_res_1"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+bytes_out:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["bytes_out_1"]} [bytes/sec]
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["bytes_out_res_1"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["bytes_out_res_1"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["bytes_out_res_1"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["load_fifteen_res_1"] >= 1.0:
+ 
+% elif module.dataset["load_fifteen_res_1"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+load_fifteen:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["load_fifteen_1"]} 
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["load_fifteen_res_1"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["load_fifteen_res_1"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["load_fifteen_res_1"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td class="GangliaTableHeader">
+
+% if module.dataset["disk_free_res_1"] >= 1.0:
+ 
+% elif module.dataset["disk_free_res_1"] >= 0.5:
+ 
+% else:
+ 
+% endif
+<table class="GangliaSubTable">
+<tbody><tr>
+<td class="GangliaSubTableHeaderLeft" width="150">
+disk_free:
+</td>
+<td class="GangliaSubTableHeaderRight" width="150" align="center">
+${module.dataset["disk_free_1"]} [Gb]
+</td><td class="result" bgcolor="#A9F5A9" width="50" align="center">
+ ${module.dataset["disk_free_res_1"]}
+ </td><td class="result" bgcolor="#F4FA58" width="50" align="center">
+ ${module.dataset["disk_free_res_1"]}
+ </td><td class="result" bgcolor="#FE2E2E" width="50" align="center">
+ ${module.dataset["disk_free_res_1"]}
+ </td></tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+<br>
+
+</%def>

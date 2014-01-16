@@ -1,0 +1,46 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if not details:
+    <p>List empty! Last build date of the <a href=${source_html_link}>Apel web page</a>: ${module.dataset['last_build']}</p>
+% else:
+    % if module.dataset['status'] == 1:
+        <p>All records are OK! Last build date of the <a href=${source_html_link}>Apel web page</a>: ${module.dataset['last_build']}</p>
+    % endif
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Record Start</td>
+        <td>Record End</td>
+        <td>Count Database</td>
+        <td>Count Published</td>
+        <td>Synchronization Status</td>
+        </tr>
+        % for index, detail in enumerate(details):
+            % if index == 0:
+                % if (detail['sync_status'].lower())[0:2] == 'ok' and module.dataset['status'] == 1:
+                    <tr bgcolor=#AAFFAA>
+                % elif (detail['sync_status'].lower())[0:4] == 'warn' or module.dataset['status'] == 0.5:
+                    <tr bgcolor=#FFFF96>
+                % else:
+                    <tr bgcolor=#FF6464>
+                % endif
+            % else:
+                % if (detail['sync_status'].lower())[0:2] == 'ok':
+                    <tr bgcolor=#AAFFAA>
+                % elif (detail['sync_status'].lower())[0:4] == 'warn':
+                    <tr bgcolor=#FFFF96>
+                % else:
+                    <tr bgcolor=#FF6464>
+                % endif
+            % endif
+            <td>${detail['record_start'].strftime("%Y-%m-%d")}</td>
+            <td>${detail['record_end'].strftime("%Y-%m-%d")}</td>
+            <td>${detail['record_count_database']}</td>
+            <td>${detail['record_count_published']}</td>
+            <td>${detail['sync_status']}</td>
+            </tr>
+        % endfor
+    </table>
+% endif
+</%def>

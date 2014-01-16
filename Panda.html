@@ -1,0 +1,88 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if not module.dataset['site_names'].split(','):
+    <p>No sites in list!</p>
+% else:
+    % if module.dataset['status'] == 1:
+        <p>All sites are OK!</p>
+    % endif
+    <table class="TableData">
+    <tr class="TableHeader">
+    <td>Site Name</td>
+    <td>Queue Name</td>
+    <td>Queue Type</td>
+    <td>Status</td>
+    <td>Efficiency</td>
+    <td>Active</td>
+    <td>Running</td>
+    <td>Defined</td>
+    <td>Holding</td>
+    <td>Finished</td>
+    <td>Failed</td>
+    <td>Cancelled</td>
+    </tr>
+    % for site in module.dataset['site_names'].split(','):
+        % if rowspan[site] >= 1:
+            <tr><td rowspan="${rowspan[site]}" bgcolor=#CCCCCC>${site}</td>
+            % for detail in site_details:
+                % if detail['site_name'] == site:
+                    % if detail['status'].lower() == 'online' and 100. - float(detail['efficiency']) < config['failed_warning'] and 100. - float(detail['efficiency']) < config['failed_critical']:
+                        <td bgcolor=#AAFFAA><a href=${detail['queue_link']}>${detail['queue_name']}</a></td>
+                        <td bgcolor=#AAFFAA>${detail['queue_type']}</td>
+                        <td bgcolor=#AAFFAA>${detail['status']}</td>
+                        <td bgcolor=#AAFFAA>${detail['efficiency']}</td>
+                        <td bgcolor=#AAFFAA>${detail['active_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['running_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['defined_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['holding_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['finished_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['failed_jobs']}</td>
+                        <td bgcolor=#AAFFAA>${detail['cancelled_jobs']}</td>
+                    % elif detail['status'].lower() == 'online' and 100. - float(detail['efficiency']) >= config['failed_warning'] and 100. - float(detail['efficiency']) < config['failed_critical']:
+                        <td bgcolor=#FFFF96><a href=${detail['queue_link']}>${detail['queue_name']}</a></td>
+                        <td bgcolor=#FFFF96>${detail['queue_type']}</td>
+                        <td bgcolor=#FFFF96>${detail['status']}</td>
+                        <td bgcolor=#FFFF96>${detail['efficiency']}</td>
+                        <td bgcolor=#FFFF96>${detail['active_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['running_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['defined_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['holding_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['finished_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['failed_jobs']}</td>
+                        <td bgcolor=#FFFF96>${detail['cancelled_jobs']}</td>
+                    % elif (detail['status'].lower() == 'offline') or (detail['status'].lower() == 'brokeroff'):
+                        <td bgcolor=#EEEEEE><a href=${detail['queue_link']}>${detail['queue_name']}</a></td>
+                        <td bgcolor=#EEEEEE>${detail['queue_type']}</td>
+                        <td bgcolor=#EEEEEE>${detail['status']}</td>
+                        <td bgcolor=#EEEEEE>${detail['efficiency']}</td>
+                        <td bgcolor=#EEEEEE>${detail['active_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['running_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['defined_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['holding_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['finished_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['failed_jobs']}</td>
+                        <td bgcolor=#EEEEEE>${detail['cancelled_jobs']}</td>
+                    
+                    % else:
+                        <td bgcolor=#FF6464><a href=${detail['queue_link']}>${detail['queue_name']}</a></td>
+                        <td bgcolor=#FF6464>${detail['queue_type']}</td>
+                        <td bgcolor=#FF6464>${detail['status']}</td>
+                        <td bgcolor=#FF6464>${detail['efficiency']}</td>
+                        <td bgcolor=#FF6464>${detail['active_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['running_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['defined_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['holding_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['finished_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['failed_jobs']}</td>
+                        <td bgcolor=#FF6464>${detail['cancelled_jobs']}</td>
+                    % endif
+                    </tr>
+                % endif
+            % endfor
+        % endif
+    % endfor
+    </table>
+% endif
+</%def>

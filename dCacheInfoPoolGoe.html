@@ -1,0 +1,89 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+function ${module.instance_name}_row_button(name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    counter = 1;
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="group,'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value="${module.instance_name}_'+name+'" />');
+    $('input[id*="${module.instance_name}_variable"]').each(function(idx, item){
+        if(item.checked){
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_'+counter+'" value="${module.instance_name},groups,'+item.value+','+item.value+'" />');
+            counter++;
+            }});
+    $('#${module.instance_name}_plot_form').submit();
+}
+
+function ${module.instance_name}_col_button(name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    counter = 1;
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value="${module.instance_name}_'+name+'" />');
+    $('input[id*="${module.instance_name}_group_"]').each(function(idx, item){
+        if(item.checked){
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_'+counter+'" value="${module.instance_name},details,'+name+','+item.value+'" />');
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter_'+counter+'" value="poolname,'+item.value+'" />');
+            counter++;
+            }});
+    $('#${module.instance_name}_plot_form').submit();
+}
+function ${module.instance_name}_toggle(gnarfz) {
+    $('input[id*="${module.instance_name}_group_"]').prop("checked", !$('input[id*="${module.instance_name}_group_"]').is(":checked"));
+    $('input[id*="${module.instance_name}_variable"]').prop("checked", !$('input[id*="${module.instance_name}_variable"]').is(":checked"));
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="'+gnarfz+'" value="asdf" />');
+}
+</script>
+<form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getTimeseriesUrl()}" target="_blank">
+ <table style="font: bold 0.7em sans-serif; width:800px; background-color: #ddd; border: 1px #999 solid;">
+  <tr>
+   <td>Start:</td>
+   <td>
+    <%
+    import datetime
+    backintime = run['time']-datetime.timedelta(days=2)
+    %>
+    <input name="start_date" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+    <input name="start_time" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
+   </td>
+   <td>End:</td>
+   <td>
+    <input name="end_date" type="text" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+    <input name="end_time" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
+   </td>
+  </tr>
+ </table>
+<form>
+<table class=TableData>
+%for i,col in enumerate(overview):
+<tr>
+<td>${col[0]}</td>
+<td>${col[1]}</td>
+</tr>
+%endfor
+</table>
+</form>
+
+<input type="button" value="error/warning results" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class='TableData'>
+%for i,group in enumerate(details):
+<tr class= ${group[0]}>
+%for j,tds in enumerate(group):
+%if tds is not 'critical' and tds is not 'warning' and tds is not 'ok' and tds is not 'none':
+  %if j == 1 and i>1:
+<td><input type="checkbox" id="${'%s_group_%i' %(module.instance_name, i)}" value="${tds}" checked="checked" />${tds}</td>
+%else:
+  <td>${tds}</td>
+  %endif
+%endif
+%endfor
+
+</tr>
+%endfor
+</table>
+</div>
+
+</%def>

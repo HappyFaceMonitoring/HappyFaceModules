@@ -1,0 +1,64 @@
+
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+% if not service_info:
+    <p>No services in list!</p>
+% elif dataset['services_not_ok'] == 0:
+    <p>All ${dataset['services_ok']} services are OK!</p>
+% else:
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Host</td>
+        <td>Service</td>
+        <td>Status</td>
+        <td>Status MR</td>
+        </tr>
+        % for info in service_info:
+            % if info['status_short'].lower() != 'ok':
+                % if info['status_short'].lower() == 'warning':
+                    <tr bgcolor=#FFFF96>
+                % elif info['status_short'].lower() == 'critical':
+                    <tr bgcolor=#FF6464>
+                % endif
+                <td><a href="${info['host_link']}">${info['host_name']}</a></td>
+                <td><a href="${info['service_link']}">${info['service_name']}</a></td>
+                <td><span title="${['status_long']}">${info['status_short']}</span></td>
+                <td>${info['status_machine_readable']}</td>
+                </tr>
+            % endif
+        % endfor
+    </table>
+% endif
+
+
+
+% if dataset['services_ok'] != 0:
+    <input type="button" value="show/hide good services" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+    <div id="${module.instance_name}_details" style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Host</td>
+        <td>Service</td>
+        <td>Status</td>
+        <td>Status MR</td>
+        </tr>
+        % for info in service_info:
+            % if info['status_short'].lower() == 'ok':
+                <tr bgcolor=#AAFFAA>
+                    <td><a href="${info['host_link']}">${info['host_name']}</a></td>
+                    <td><a href="${info['service_link']}">${info['service_name']}</a></td>
+                    <td><span title="${['status_long']}">${info['status_short']}</span></td>
+                    <td>${info['status_machine_readable']}</td>
+                    </tr>
+                % endif
+            % endfor
+        </table>
+    </div>
+% endif
+
+</%def>
+
+

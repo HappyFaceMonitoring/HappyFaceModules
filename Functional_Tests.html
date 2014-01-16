@@ -1,0 +1,177 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if module.dataset['status_aft'] != 1 or queues_aft_always_visible:
+    <p>Analysis queues:</p>
+    % if queues_aft_always_visible:
+        <table class="TableData">
+            <tr class="TableHeader">
+                <td>Queue Name (always visible)</td>
+                <td>Status</td>
+                <td>Link</td>
+            </tr>
+            % for detail in aft_details:
+                % if detail['queue_name'] in queues_aft_always_visible:
+                    % if detail['status'] != '100' and detail['status'] != 'no-test':
+                        <tr bgcolor=#FF6464>
+                    % elif detail['status'] == '100':
+                        <tr bgcolor=#AAFFAA>
+                    % elif detail['status'] == 'no-test':
+                        <tr bgcolor=#EEEEEE>
+                    % endif
+                        <td>${detail['queue_name']}</td>
+                        <td>${detail['status']}</td>
+                        <td><a href="${detail['link']}">Details</a></td>
+                    </tr>
+                % endif
+            % endfor
+    % endif
+    % if module.dataset['status_aft'] != 1:
+        <%
+            queues_not_always_visible_and_bad = []
+            for detail in aft_details:
+                if (detail['queue_name'] not in queues_aft_always_visible) and detail['status'] != '100' and detail['status'] != 'no-test':
+                    queues_not_always_visible_and_bad.append(detail['queue_name'])
+        %>
+        % if queues_not_always_visible_and_bad:
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Queue Name</td>
+                    <td>Status</td>
+                    <td>Link</td>
+                </tr>
+                % for detail in aft_details:
+                    % if detail['status'] != '100' and detail['status'] != 'no-test' and (detail['queue_name'] not in queues_aft_always_visible):
+                        <tr bgcolor=#FF6464>
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['status']}</td>
+                            <td><a href="${detail['link']}">Details</a></td>
+                        </tr>
+                    % endif
+                % endfor
+         % endif
+    % endif
+        </table>
+% endif
+% if not aft_details:
+    <p>No queues specified for analysis functional tests.</p>
+% else:
+    % if module.dataset['status_aft'] == 1:
+        <p>All analysis queues are good.</p>
+    % endif
+    <input type="button" value="show/hide good queues" onfocus="this.blur()" onclick="$('#${module.instance_name}_details_aft').slideToggle()" />
+    <div id="${module.instance_name}_details_aft" style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+            <td>Queue Name</td>
+            <td>Status</td>
+            <td>Link</td>
+        </tr>
+        % for detail in aft_details:
+            % if detail['queue_name'] not in queues_aft_always_visible:
+                % if detail['status'] == '100' or detail['status'] == 'no-test':
+                    % if detail['status'] == '100':
+                        <tr bgcolor=#AAFFAA>
+                    % elif detail['status'] == 'no-test':
+                        <tr bgcolor=#EEEEEE>
+                    % endif
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['status']}</td>
+                            <td><a href="${detail['link']}">Details</a></td>
+                        </tr>
+                % endif
+            % endif
+        % endfor
+    </table>
+    </div>
+    </p>
+% endif
+
+% if module.dataset['status_pft'] != 1 or queues_pft_always_visible:
+    <p>Production queues:</p>
+    % if queues_pft_always_visible:
+        <table class="TableData">
+            <tr class="TableHeader">
+                <td>Queue Name (always visible)</td>
+                <td>Status</td>
+                <td>Link</td>
+            </tr>
+            % for detail in pft_details:
+                % if detail['queue_name'] in queues_pft_always_visible:
+                    % if detail['status'] != '100' and detail['status'] != 'no-test':
+                        <tr bgcolor=#FF6464>
+                    % elif detail['status'] == '100':
+                        <tr bgcolor=#AAFFAA>
+                    % elif detail['status'] == 'no-test':
+                        <tr bgcolor=#EEEEEE>
+                    % endif
+                        <td>${detail['queue_name']}</td>
+                        <td>${detail['status']}</td>
+                        <td><a href="${detail['link']}">Details</a></td>
+                    </tr>
+                % endif
+            % endfor
+    % endif
+    % if module.dataset['status_pft'] != 1:
+        <%
+            queues_not_always_visible_and_bad = []
+            for detail in pft_details:
+                if (detail['queue_name'] not in queues_pft_always_visible) and detail['status'] != '100' and detail['status'] != 'no-test':
+                    queues_not_always_visible_and_bad.append(detail['queue_name'])
+        %>
+        % if queues_not_always_visible_and_bad:
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Queue Name</td>
+                    <td>Status</td>
+                    <td>Link</td>
+                </tr>
+                % for detail in pft_details:
+                    % if detail['status'] != '100' and detail['status'] != 'no-test' and (detail['queue_name'] not in queues_pft_always_visible):
+                        <tr bgcolor=#FF6464>
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['status']}</td>
+                            <td><a href="${detail['link']}">Details</a></td>
+                        </tr>
+                    % endif
+                % endfor
+         % endif
+    % endif
+        </table>
+% endif
+% if not pft_details:
+    <p>No queues specified for production functional tests.</p>
+% else:
+    % if module.dataset['status_pft'] == 1:
+        <p>All production queues are good.</p>
+    % endif
+    <input type="button" value="show/hide good queues" onfocus="this.blur()" onclick="$('#${module.instance_name}_details_pft').slideToggle()" />
+    <div id="${module.instance_name}_details_pft" style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+            <td>Queue Name</td>
+            <td>Status</td>
+            <td>Link</td>
+        </tr>
+        % for detail in pft_details:
+            % if detail['queue_name'] not in queues_pft_always_visible:
+                % if detail['status'] == '100' or detail['status'] == 'no-test':
+                    % if detail['status'] == '100':
+                        <tr bgcolor=#AAFFAA>
+                    % elif detail['status'] == 'no-test':
+                        <tr bgcolor=#EEEEEE>
+                    % endif
+                            <td>${detail['queue_name']}</td>
+                            <td>${detail['status']}</td>
+                            <td><a href="${detail['link']}">Details</a></td>
+                        </tr>
+                % endif
+            % endif
+        % endfor
+    </table>
+    </div>
+    </p>
+% endif
+</%def>
+

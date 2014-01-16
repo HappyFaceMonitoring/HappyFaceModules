@@ -1,0 +1,260 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% for queue in failed:
+    <p>Compute node information for queue <b>${queue}</b> (totally ${failed[queue]}/${finished[queue] + failed[queue]} job failures):</p>
+        <table class="TableData">
+            <tr class="TableHeader">
+                <td>Worker Node</td>
+                <td>Running</td>
+                <td>Transferring</td>
+                <td>Finished</td>
+                <td>Cancelled</td>
+                <td>Failed</td>
+                <td>Failed (Percentage)</td>
+            </tr>
+            <%
+                iterator = 0
+                iterator1 = 0
+            %>
+            % for detail in details:
+                % if detail['queue_name'] == queue:
+                    % if iterator < (float(config_settings['failed_jobs_number_shown_as_warning']) + float(config_settings['failed_jobs_number_shown_as_critical'])) and detail['failed'] > 0:
+                        % if iterator < float(config_settings['failed_jobs_number_shown_as_critical']):
+                            <tr bgcolor=#FF6464>
+                                <td>${detail['worker_node']}</td>
+                                % if detail['running'] == 0:
+                                    <td>${detail['running']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'running')}>${detail['running']}</a></td>
+                                % endif
+                                % if detail['transferring'] == 0:
+                                    <td>${detail['transferring']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'transferring')}>${detail['transferring']}</a></td>
+                                % endif
+                                % if detail['finished'] == 0:
+                                    <td>${detail['finished']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'finished')}>${detail['finished']}</a></td>
+                                % endif
+                                % if detail['cancelled'] == 0:
+                                    <td>${detail['cancelled']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'cancelled')}>${detail['cancelled']}</a></td>
+                                % endif
+                                % if detail['failed'] == 0:
+                                    <td>${detail['failed']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'failed')}>${detail['failed']}</a></td>
+                                % endif
+                                <td>${round(float(detail['failed'])/float(failed[queue])*100)}</td>
+                            </tr>
+                        % else:
+                            <tr bgcolor=#FFFF96>
+                                <td>${detail['worker_node']}</td>
+                                % if detail['running'] == 0:
+                                    <td>${detail['running']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'running')}>${detail['running']}</a></td>
+                                % endif
+                                % if detail['transferring'] == 0:
+                                    <td>${detail['transferring']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'transferring')}>${detail['transferring']}</a></td>
+                                % endif
+                                % if detail['finished'] == 0:
+                                    <td>${detail['finished']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'finished')}>${detail['finished']}</a></td>
+                                % endif
+                                % if detail['cancelled'] == 0:
+                                    <td>${detail['cancelled']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'cancelled')}>${detail['cancelled']}</a></td>
+                                % endif
+                                % if detail['failed'] == 0:
+                                    <td>${detail['failed']}</td>
+                                % else:
+                                    <td><a href=${config_settings['link_status']%(queue,'failed')}>${detail['failed']}</a></td>
+                                % endif
+                                <td>${round(float(detail['failed'])/float(failed[queue])*100)}</td>
+                            </tr>
+                        <%
+                            iterator1 += 1
+                        %>
+                        % endif
+                    <%
+                        iterator += 1
+                    %>
+                    % endif
+                % endif
+            % endfor
+        </table>
+
+        <input type="button" value="show/hide good queues" onfocus="this.blur()" onclick="$('#${module.instance_name}_${queue}_details').slideToggle()" />
+        <div id="${module.instance_name}_${queue}_details" style="display:none;">
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Worker Node</td>
+                    <td>Running</td>
+                    <td>Transferring</td>
+                    <td>Finished</td>
+                    <td>Cancelled</td>
+                    <td>Failed</td>
+                    <td>Failed (Percentage)</td>
+                </tr>
+                <%
+                    iterator2 = 0
+                %>
+                %for i, detail in enumerate(details):
+                    % if detail['queue_name'] == queue:
+                        % if iterator2 >= iterator:
+                        <tr bgcolor=#AAFFAA>
+                            <td>${detail['worker_node']}</td>
+                            % if detail['running'] == 0:
+                                <td>${detail['running']}</td>
+                            % else:
+                                <td><a href=${config_settings['link_status']%(queue,'running')}>${detail['running']}</a></td>
+                            % endif
+                            % if detail['transferring'] == 0:
+                                <td>${detail['transferring']}</td>
+                            % else:
+                                <td><a href=${config_settings['link_status']%(queue,'transferring')}>${detail['transferring']}</a></td>
+                            % endif
+                            % if detail['finished'] == 0:
+                                <td>${detail['finished']}</td>
+                            % else:
+                                <td><a href=${config_settings['link_status']%(queue,'finished')}>${detail['finished']}</a></td>
+                            % endif
+                            % if detail['cancelled'] == 0:
+                                <td>${detail['cancelled']}</td>
+                            % else:
+                                <td><a href=${config_settings['link_status']%(queue,'cancelled')}>${detail['cancelled']}</a></td>
+                            % endif
+                            % if detail['failed'] == 0:
+                                <td>${detail['failed']}</td>
+                            % else:
+                                <td><a href=${config_settings['link_status']%(queue,'failed')}>${detail['failed']}</a></td>
+                            % endif
+                            <td>${round(float(detail['failed'])/float(failed[queue])*100)}</td>
+                        </tr>
+                        % endif
+                        <%
+                            iterator2 += 1
+                        %>
+                    % endif
+                % endfor
+            </table>
+        </div>
+        </p>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1.0', {'packages': ['corechart']});
+        google.setOnLoadCallback(drawBarGraph);
+
+        function drawBarGraph() {
+            var data = new google.visualization.arrayToDataTable(${plotlist[queue]});
+            var options = {
+                title: 'Compute Node Failures for queue ${queue}',
+                <%
+                    width = 600
+                %>
+                % if len(plotlist[queue]) >= 50:
+                <%
+                    width = 930
+                %>
+                % else:
+                <%
+                    width = 930/50*len(plotlist[queue])
+                %>
+                % endif
+                % if width < 600:
+                <%
+                    width = 600
+                %>
+                % endif
+                width: ${width},
+                height: 400,
+                hAxis: {title: 'compute nodes', textPosition: 'none'},
+                vAxis: {title: 'failed jobs'},
+                isStacked: true,
+                series: [{color: 'red', visibleInLegend: false},{color: 'yellow', visibleInLegend: false},{color: 'green', visibleInLegend: false}]
+            };
+            var chart = new google.visualization.ColumnChart(document.getElementById('${module.instance_name}_${queue}_bar_chart_div'));
+            chart.draw(data,options);
+        }
+    </script>
+    <div id="${module.instance_name}_${queue}_bar_chart_div">Here should be a bar chart</div>
+
+    % if transferring[queue] == 0:
+        <p>No transferring jobs at all.</p>
+    % else:
+        <p>Transferring jobs (warning and critical), totally ${transferring[queue]} transfers:</p>
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Worker Node</td>
+                    <td>Running</td>
+                    <td>Finished</td>
+                    <td>Cancelled</td>
+                    <td>Failed</td>
+                    <td>Failed (%)</td>
+                    <td>Transferring</td>
+                    <td>Transferring (%)</td>
+                </tr>
+                <%
+                    iterator3 = 0
+                %>
+                % for detail in details_transferring_sort:
+                    % if detail['queue_name'] == queue:
+                        % if iterator3 < config_settings['transferring_jobs_number_shown'] and detail['transferring'] != 0:
+                            % if detail['transferring'] >= config_settings['transferring_jobs_critical_threshold']:
+                                <tr bgcolor=#FF6464>
+                            % elif detail['transferring'] >= config_settings['transferring_jobs_warning_threshold']:
+                                <tr bgcolor=#FFFF96>
+                            % else:
+                                <tr bgcolor=#AAFFAA>
+                            % endif
+                                    <td>${detail['worker_node']}</td>
+                                    % if detail['running'] == 0:
+                                        <td>${detail['running']}</td>
+                                    % else:
+                                        <td><a href=${config_settings['link_status']%(queue,'running')}>${detail['running']}</a></td>
+                                    % endif
+                                    % if detail['finished'] == 0:
+                                        <td>${detail['finished']}</td>
+                                    % else:
+                                        <td><a href=${config_settings['link_status']%(queue,'finished')}>${detail['finished']}</a></td>
+                                    % endif
+                                    % if detail['cancelled'] == 0:
+                                        <td>${detail['cancelled']}</td>
+                                    % else:
+                                        <td><a href=${config_settings['link_status']%(queue,'cancelled')}>${detail['cancelled']}</a></td>
+                                    % endif
+                                    % if detail['failed'] == 0:
+                                        <td>${detail['failed']}</td>
+                                    % else:
+                                        <td><a href=${config_settings['link_status']%(queue,'failed')}>${detail['failed']}</a></td>
+                                    % endif
+                                    <td>${round(float(detail['failed'])/float(failed[queue])*100)}</td>
+                                    % if detail['transferring'] == 0:
+                                        <td>${detail['transferring']}</td>
+                                    % else:
+                                        <td><a href=${config_settings['link_status']%(queue,'transferring')}>${detail['transferring']}</a></td>
+                                    % endif
+                                    <td>${round(float(detail['transferring'])/float(transferring[queue])*100)}</td>
+                                </tr>
+                                <%
+                                    iterator3 += 1
+                                %>
+                        % endif
+                    % endif
+                % endfor
+            </table>
+    % endif
+        </p>
+
+% endfor
+</%def>

@@ -1,0 +1,71 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% for vo_name in vo_names:
+    <p>SAM tests for VO ${vo_name}:</p>
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Profile</td>
+        <td>Hostname</td>
+        <td>Type</td>
+        <td>Name</td>
+        <td style="white-space:nowrap;">Execution Time</td>
+        <td>Status</td>
+        </tr>
+        % for profile_name in profile_names[vo_name]:
+            % for service_hostname in service_hostnames:
+                % for detail in details:
+                    % if detail['vo_name'] == vo_name and detail['profile_name'] == profile_name and detail['service_hostname'] == service_hostname and detail['status'].lower() != 'ok':
+                            % if detail['status'].lower() == 'warning':
+                                <tr bgcolor=#FFFF96>
+                            % elif detail['status'].lower() == 'critical':
+                                <tr bgcolor=#FF6464>
+                            % elif detail['status'].lower() == 'unknown':
+                                <tr bgcolor=#EEEEEE>
+                            % endif
+                                <td>${detail['profile_name']}</td>
+                                <td>${detail['service_hostname']}</td>
+                                <td>${detail['type']}</td>
+                                <td>${detail['name']}</td>
+                                <td style="white-space:nowrap;">${detail['execution_time']}</td>
+                                <td title="${detail['output_summary']}">${detail['status']}</td>
+                            </tr>
+                    % endif
+                % endfor
+            % endfor
+        % endfor
+    </table>
+    <input type="button" value="show/hide good services" onfocus="this.blur()" onclick="$('#${module.instance_name}_details_${vo_name}').slideToggle()" />
+    <div id="${module.instance_name}_details_${vo_name}" style="display:none;">
+    <table class="TableData">
+        <tr class="TableHeader">
+        <td>Profile</td>
+        <td>Hostname</td>
+        <td>Type</td>
+        <td>Name</td>
+        <td style="white-space:nowrap;">Execution Time</td>
+        <td>Status</td>
+        </tr>
+        % for profile_name in profile_names[vo_name]:
+            % for service_hostname in service_hostnames:
+                % for detail in details:
+                    % if detail['vo_name'] == vo_name and detail['profile_name'] == profile_name and detail['service_hostname'] == service_hostname and detail['status'].lower() == 'ok':
+                            <tr bgcolor=#AAFFAA>
+                                <td>${detail['profile_name']}</td>
+                                <td>${detail['service_hostname']}</td>
+                                <td>${detail['type']}</td>
+                                <td>${detail['name']}</td>
+                                <td style="white-space:nowrap;">${detail['execution_time']}</td>
+                                <td title="${detail['output_summary']}">${detail['status']}</td>
+                            </tr>
+                    % endif
+                % endfor
+            % endfor
+        % endfor
+    </table>
+    </div>
+    </p>
+% endfor
+</%def>
+

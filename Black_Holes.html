@@ -1,0 +1,53 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% for queue in failed:
+    <p>Black Hole tests for queue ${queue} (totally ${failed[queue]} job failures):</p>
+        <table class="TableData">
+            <tr class="TableHeader">
+                <td>Worker Node</td>
+                <td>Failed Jobs</td>
+                <td>Failed Jobs (Percentage)</td>
+            </tr>
+            % for detail in details:
+                % if detail['queue_name'] == queue:
+                    % if float(config_settings['black_hole_critical_threshold']) != 0 and float(detail['failed'])/float(failed[queue]) >= float(config_settings['black_hole_critical_threshold']):
+                        <tr bgcolor=#FF6464>
+                            <td>${detail['worker_node']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${round(float(detail['failed'])/float(failed[queue])*100)}</td>
+                        </tr>
+                    % elif float(config_settings['black_hole_critical_threshold']) != 0 and float(detail['failed'])/float(failed[queue]) >= float(config_settings['black_hole_warning_threshold']):
+                        <tr bgcolor=#FFFF96>
+                            <td>${detail['worker_node']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${round(float(detail['failed'])/float(failed[queue])*100.)}</td>
+                        </tr>
+                    % endif
+                % endif
+            % endfor
+        </table>
+        <input type="button" value="show/hide good queues" onfocus="this.blur()" onclick="$('#${module.instance_name}_${queue}_details').slideToggle()" />
+        <div id="${module.instance_name}_${queue}_details" style="display:none;">
+            <table class="TableData">
+                <tr class="TableHeader">
+                    <td>Worker Node</td>
+                    <td>Failed Jobs</td>
+                    <td>Failed Jobs (Percentage)</td>
+                </tr>
+                %for detail in details:
+                    % if float(config_settings['black_hole_critical_threshold']) != 0 and float(detail['failed'])/float(failed[queue]) < float(config_settings['black_hole_critical_threshold']) and float(detail['failed'])/float(failed[queue]) < float(config_settings['black_hole_warning_threshold']):
+                        <tr bgcolor=#AAFFAA>
+                            <td>${detail['worker_node']}</td>
+                            <td>${detail['failed']}</td>
+                            <td>${round(float(detail['failed'])/float(failed[queue])*100.)}</td>
+                        </tr>
+                    % endif
+                % endfor
+            </table>
+        </div>
+        </p>
+% endfor
+</%def>
+

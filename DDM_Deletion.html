@@ -1,0 +1,69 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if not details:
+    <p>No space tokens available!</p>
+% else:
+    <p>DDM Deletion for site ${module.dataset['site_name']}</p>
+    <table class="TableData">
+        <tr>
+            <td></td>
+            <td colspan=5>Datasets</td>
+            <td colspan=2>Files</td>
+            <td colspan=2>Volumes [GB]</td>
+            <td></td>
+        </tr>
+        <tr class="TableHeader">
+            <td>Space Token</td>
+            <td>To delete</td>
+            <td>Waiting</td>
+            <td>Resolved</td>
+            <td>Queued</td>
+            <td>Deleted</td>
+            <td>To delete</td>
+            <td>Deleted</td>
+            <td>To delete</td>
+            <td>Deleted</td>
+            <td>Errors</td>
+        </tr>
+        % for detail in details:
+            % if int(detail['deletion_errors']) >= int(config_settings['deletion_errors_critical_threshold']):
+                <tr bgcolor=#FF6464>
+            % elif int(detail['deletion_errors']) >= int(config_settings['deletion_errors_warning_threshold']):
+                <tr bgcolor=#FFFF96>
+            % else:
+                <tr bgcolor=#AAFFAA>
+            % endif
+                <td>${detail['space_token_name']}</td>
+                <td>${detail['datasets_to_delete']}</td>
+                <td>${detail['datasets_waiting']}</td>
+                <td>${detail['datasets_resolved']}</td>
+                <td>${detail['datasets_queued']}</td>
+                <td>${detail['datasets_deleted']}</td>
+                <td>${detail['files_to_delete']}</td>
+                <td>${detail['files_deleted']}</td>
+                <td>${detail['gbs_to_delete']}</td>
+                <td>${detail['gbs_deleted']}</td>
+                <td>${detail['deletion_errors']}</td>
+            </tr>
+        % endfor
+        <tfoot>
+            <tr>
+                <td>Summary</td>
+                <td>${summary['datasets_to_delete']}</td>
+                <td>${summary['datasets_waiting']}</td>
+                <td>${summary['datasets_resolved']}</td>
+                <td>${summary['datasets_queued']}</td>
+                <td>${summary['datasets_deleted']}</td>
+                <td>${summary['files_to_delete']}</td>
+                <td>${summary['files_deleted']}</td>
+                <td>${summary['gbs_to_delete']}</td>
+                <td>${summary['gbs_deleted']}</td>
+                <td>${summary['deletion_errors']}</td>
+            </tr>
+        <tfoot>
+    </table>
+% endif
+</%def>
+
