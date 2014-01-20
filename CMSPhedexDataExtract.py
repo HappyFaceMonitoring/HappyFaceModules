@@ -122,7 +122,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         fobj = json.load(open(self.source.getTmpPath(), 'r'))['phedex']['link']
 
         for links in fobj:
-            if links[self.link_direction] == self.your_name and links[self.parse_direction] not in self.blacklist:
+            if links[self.link_direction].startswith(self.your_name) and links[self.parse_direction] not in self.blacklist:
                 link_name = links[self.parse_direction]
                 tier = 't' + link_name[1]
                 for transfer in links['transfer']:
