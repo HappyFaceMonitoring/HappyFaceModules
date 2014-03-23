@@ -134,6 +134,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
             details_list.update(appending)
 
         for i,group in enumerate(info_list):
+            group['njobs'] = len(self.config['watch_jobs'].split(','))
             details_list[group['pool']].append(group)
 
         data['details_list'] = details_list

@@ -77,7 +77,7 @@ function ${module.instance_name}_toggle(gnarfz) {
 %for i,group in enumerate(value):
 %if i == 0:
 <tr class="${group['status']}">
-<td rowspan="5">${group['pool']}</td>
+<td rowspan="${group['njobs']}">${group['pool']}</td>
 <td>${group['job']}</td>
 <td>${group['active']}</td>
 <td>${group['max']}</td>
