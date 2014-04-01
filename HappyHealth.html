@@ -1,0 +1,100 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+    <table class="TableData">
+        %if ((100.0*module.dataset["space_free"])/float(module.dataset["space_total"])) > float(dataset[u'space_stat_warn']):
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>total space</td>
+                <td bgcolor=#AAFFAA>${round(module.dataset["space_total"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>used space</td>
+                <td bgcolor=#AAFFAA>${round(module.dataset["space_used"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>free space</td>
+                <td bgcolor=#AAFFAA>${round(module.dataset["space_free"]/1000000000.0 , 3)} GB</td>
+            </tr>
+        %elif ((100.0*module.dataset["space_free"])/float(module.dataset["space_total"])) > float(dataset[u'space_stat_crit']):
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>total space</td>
+                <td bgcolor=#FFFF96>${round(module.dataset["space_total"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>used space</td>
+                <td bgcolor=#FFFF96>${round(module.dataset["space_used"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>free space</td>
+                <td bgcolor=#FFFF96>${round(module.dataset["space_free"]/1000000000.0 , 3)} GB</td>
+            </tr>
+        %else:
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>total space</td>
+                <td bgcolor=#FF6464>${round(module.dataset["space_total"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>used space</td>
+                <td bgcolor=#FF6464>${round(module.dataset["space_used"]/1000000000.0 , 3)} GB</td>
+            </tr>
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>free space</td>
+                <td bgcolor=#FF6464>${round(module.dataset["space_free"]/1000000000.0 , 3)} GB</td>
+            </tr>
+        %endif
+        
+        %if module.dataset["avg_load_last_1min"] > float(dataset["load0_stat_crit"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>avg load in last min</td>
+                <td bgcolor=#FF6464>${module.dataset["avg_load_last_1min"]}</td>
+            </tr>
+        %elif module.dataset["avg_load_last_1min"] > float(dataset["load0_stat_warn"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>avg load in last min</td>
+                <td bgcolor=#FFFF96>${module.dataset["avg_load_last_1min"]}</td>
+            </tr>
+        %else:
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>avg load in last min</td>
+                <td bgcolor=#AAFFAA>${module.dataset["avg_load_last_1min"]}</td>
+            </tr>
+        %endif
+
+        %if module.dataset["avg_load_last_5min"] > float(dataset["load1_stat_crit"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>avg load in last 5min</td>
+                <td bgcolor=#FF6464>${module.dataset["avg_load_last_5min"]}</td>
+            </tr>
+        %elif module.dataset["avg_load_last_5min"] > float(dataset["load1_stat_warn"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>avg load in last 5min</td>
+                <td bgcolor=#FFFF96>${module.dataset["avg_load_last_5min"]}</td>
+            </tr>
+        %else:
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>avg load in last 5min</td>
+                <td bgcolor=#AAFFAA>${module.dataset["avg_load_last_5min"]}</td>
+            </tr>
+        %endif
+
+        %if module.dataset["avg_load_last_15min"] > float(dataset["load2_stat_crit"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FF6464>avg load in last 15min</td>
+                <td bgcolor=#FF6464>${module.dataset["avg_load_last_15min"]}</td>
+            </tr>
+        %elif module.dataset["avg_load_last_15min"] > float(dataset["load2_stat_warn"]):
+            <tr class="TableHeader">
+                <td bgcolor=#FFFF96>avg load in last 15min</td>
+                <td bgcolor=#FFFF96>${module.dataset["avg_load_last_15min"]}</td>
+            </tr>
+        %else:
+            <tr class="TableHeader">
+                <td bgcolor=#AAFFAA>avg load in last 15min</td>
+                <td bgcolor=#AAFFAA>${module.dataset["avg_load_last_15min"]}</td>
+            </tr>
+        %endif
+    </table>
+</%def>
+
+
