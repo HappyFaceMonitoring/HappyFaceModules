@@ -1,0 +1,80 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<script type="text/javascript">
+$(function(){
+
+var form_id = "#${module.instance_name}_plot_form";
+$("#${module.instance_name}_toggle").click(function(){
+    var boxes = $(form_id+" :checkbox");
+    boxes.prop("checked", !boxes.is(":checked"));
+});
+function ${module.instance_name}_row_button(group) {
+    $(form_id+" :hidden").remove();
+    $(form_id).append('<input type="hidden" name="label" value="1" />');
+    $("id^='${module.instance_name}_group_'").each(function(idx, element) {
+        console.log("element.name");
+    });
+    return false;
+};
+
+});
+</script>
+<form>
+<table class=TableData>
+<tr>
+<td> Average Poolcosts </td>
+<td>${module.dataset["avg_sum"]}</td>
+</tr>
+<tr>
+<td> Average Cost1 </td>
+<td>${module.dataset["avg_cost1"]}</td>
+</tr>
+<tr>
+<td> Average Cost2 </td>
+<td>${module.dataset["avg_cost2"]}</td>
+</tr>
+<tr>
+<td> Numer of pools with combined costs ... </td>
+<td> ${pools["crit_pools"] + pools["warn_pools"] + pools["avg_pools"] + pools["low_pools"]} </td>
+</tr>
+<tr>
+<td> ...above critical costs </td>
+<td>${pools["crit_pools"]}</td>
+</tr>
+<tr>
+<td> ...between warning and critical costs </td>
+<td>${pools["warn_pools"]}</td>
+</tr>
+<tr>
+<td> ...between average and warning costs </td>
+<td>${pools["avg_pools"]}</td>
+</tr>
+<tr>
+<td> ...below average costs</td>
+<td>${pools["low_pools"]}</td>
+</tr>
+</table>
+</form>
+
+<input type="button" value="details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class=TableData>
+<tr class=TableHeader>
+<td> Pool </td>
+<td> Combined Costs </td>
+<td> Cost 1 </td>
+<td> Cost 2 </td>
+</tr>
+%for i,group in enumerate(details):
+<tr class=${group['status']}>
+<td> ${group['pool']} </td>
+<td> ${"%.2e" %group['sum']} </td>
+<td> ${"%.2e" %group['costs_1']} </td>
+<td> ${"%.2e" %group['costs_2']} </td>
+</tr>
+%endfor
+</table>
+</div>
+</%def>

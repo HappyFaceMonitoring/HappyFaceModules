@@ -41,9 +41,9 @@ class NodeMonitoring(hf.module.ModuleBase):
                 over', ''),
         'eval_threshold': ('number of jobs above which a status is calculated, \
                 set to -1 to disable evaluation', ''),
-        'eval_threshold_warning': ('number of jobs above which status is set to \
+        'eval_threshold_warning_percentage': ('number of jobs above which status is set to \
                 warning, set to -1 to disable warning', ''),
-        'eval_threshold_critical': ('number of jobs above which status is set to \
+        'eval_threshold_critical_percentage': ('number of jobs above which status is set to \
                 critical, set to -1 to disable critical', ''),
         'plot_filter_node_number': ('maximum number of worker nodes that are to \
                 appear in the plot', ''),
@@ -54,7 +54,9 @@ class NodeMonitoring(hf.module.ModuleBase):
         'plot_line_warning': ('set to 1 to draw a line indicating the warning \
                 threshold in the plot, set to 0 to hide this line', ''),
         'plot_line_critical': ('set to 1 to draw a line indicating the critical \
-                threshold in the plot, set to 0 to hide this line', '')
+                threshold in the plot, set to 0 to hide this line', ''),
+	'eval_mode': ('1 total, 2 local, 3 global', '1'),
+	'table_link_url': ('I really do not know what this parameter is for!', ''),
     }
     config_hint = ''
     
