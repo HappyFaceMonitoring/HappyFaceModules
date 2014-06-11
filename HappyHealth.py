@@ -14,22 +14,22 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, time, os
+import hf
+import time
+import os
 from sqlalchemy import *
-
-#TODO: Name: HappyHealth...  Konvention Name der class gross!!!
 
 class HappyHealth(hf.module.ModuleBase):
     config_keys = {
-        'directory': ('Path of the directory to show its space', ''),
-        'space_stat_warn': ('Percentage of free space until status is OK', ''),
-        'space_stat_crit': ('Percentage of free space when status is critical', ''),
-        'load0_stat_warn': ('load until status is OK', ''),
-        'load0_stat_crit': ('load when status is critical', ''),
-        'load1_stat_warn': ('load until status is OK', ''),
-        'load1_stat_crit': ('load when status is critical', ''),
-        'load2_stat_warn': ('load until status is OK', ''),
-        'load2_stat_crit': ('load when status is critical', ''),
+        'directory':('Path of the directory to show its space', ''),
+        'space_stat_warn':('Percentage of free space until status is OK', ''),
+        'space_stat_crit':('Percentage of free space when status is critical', ''),
+        'load0_stat_warn':('load until status is OK', ''),
+        'load0_stat_crit':('load when status is critical', ''),
+        'load1_stat_warn':('load until status is OK', ''),
+        'load1_stat_crit':('load when status is critical', ''),
+        'load2_stat_warn':('load until status is OK', ''),
+        'load2_stat_crit':('load when status is critical', ''),
     }
     config_hint = ''
 
@@ -49,34 +49,21 @@ class HappyHealth(hf.module.ModuleBase):
             data["dataset"][option] = self.config[option]
         return data
 
-
     def prepareAcquisition(self):
-
-        if 'directory' not in self.config: raise hf.exceptions.ConfigError('directory option not set')
-        if 'space_stat_warn' not in self.config: raise hf.exceptions.ConfigError('space_stat_warn option not set')
-        if 'space_stat_crit' not in self.config: raise hf.exceptions.ConfigError('space_stat_crit option not set')
-        if 'load0_stat_warn' not in self.config: raise hf.exceptions.ConfigError('load0_stat_warn option not set')
-        if 'load0_stat_crit' not in self.config: raise hf.exceptions.ConfigError('load0_stat_crit option not set')
-        if 'load1_stat_warn' not in self.config: raise hf.exceptions.ConfigError('load1_stat_warn option not set')
-        if 'load1_stat_crit' not in self.config: raise hf.exceptions.ConfigError('load1_stat_crit option not set')
-        if 'load2_stat_warn' not in self.config: raise hf.exceptions.ConfigError('load2_stat_warn option not set')
-        if 'load2_stat_crit' not in self.config: raise hf.exceptions.ConfigError('load2_stat_crit option not set')
-
         self.source_url = 'local'
         self.path = self.config["directory"]
         self.sp_limit1 = self.config["space_stat_warn"]
         self.sp_limit2 = self.config["space_stat_crit"]
-        self.load_limit_warn = [ self.config["load0_stat_warn"] ]
-        self.load_limit_crit = [ self.config["load0_stat_crit"] ]
-        self.load_limit_warn.append( self.config["load1_stat_warn"] )
-        self.load_limit_crit.append( self.config["load1_stat_crit"] )
-        self.load_limit_warn.append( self.config["load2_stat_warn"] )
-        self.load_limit_crit.append( self.config["load2_stat_crit"] )
+        self.load_limit_warn = [self.config["load0_stat_warn"]]
+        self.load_limit_crit = [self.config["load0_stat_crit"]]
+        self.load_limit_warn.append(self.config["load1_stat_warn"])
+        self.load_limit_crit.append(self.config["load1_stat_crit"])
+        self.load_limit_warn.append(self.config["load2_stat_warn"])
+        self.load_limit_crit.append(self.config["load2_stat_crit"])
 
     def extractData(self):
-
         st = os.statvfs(self.path)
-        load_status = [0,1,2]
+        load_status = [0, 1, 2]
         totalspace = st.f_blocks*st.f_frsize
         usedspace = (st.f_blocks-st.f_bavail)*st.f_frsize
         freespace = st.f_bavail*st.f_frsize
@@ -85,14 +72,13 @@ class HappyHealth(hf.module.ModuleBase):
         data = {
         }
         data.update({
-            "space_total": totalspace,
-            "space_used": usedspace,
-            "space_free": freespace,
-            "avg_load_last_1min": load[0],
-            "avg_load_last_5min": load[1],
-            "avg_load_last_15min": load[2]
+            "space_total":totalspace,
+            "space_used":usedspace,
+            "space_free":freespace,
+            "avg_load_last_1min":load[0],
+            "avg_load_last_5min":load[1],
+            "avg_load_last_15min":load[2]
         })
-
         if freespace_percentage < self.sp_limit2:
             sp_status = 0.0
         elif freespace_percentage < self.sp_limit1:
@@ -107,7 +93,6 @@ class HappyHealth(hf.module.ModuleBase):
                 load_status[i] = 0.5
             else:
                 load_status[i] = 1.0
-
         data["status"] = (load_status[0]+load_status[1]+load_status[2]+sp_status)/4.0	
 
         return data
