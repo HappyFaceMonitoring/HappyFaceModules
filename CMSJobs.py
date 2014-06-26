@@ -28,12 +28,6 @@ class CMSJobs(hf.module.ModuleBase):
 
     config_keys = {
         'source_url': ('URL to XML data source', ''),
-        'start_date_tag_index': ('index of tag containing start date and time \
-                of datapoint within an xml item', ''),
-        'category_tag_index': ('index of tag containing category of \
-                datapoint within an xml item', ''),
-        'data_tag_index': ('index of tag containing numerical data to be used \
-                within an xml item', ''),
         'categories': ('string containing pipe separated list of categories \
                 that are supposed to appear in the specified order', ''),
         'pledge': ('either numerical value or tag name that contains y-value of \
@@ -66,9 +60,6 @@ class CMSJobs(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         try:
-            self.start_date_tag_index = int(self.config['start_date_tag_index'])
-            self.category_tag_index = int(self.config['category_tag_index'])
-            self.data_tag_index = int(self.config['data_tag_index'])
             self.cat_names = self.config['categories'].split('|')
             self.pledge = self.config['pledge']
         except KeyError, ex:
@@ -101,29 +92,33 @@ class CMSJobs(hf.module.ModuleBase):
         webpage = open(self.source.getTmpPath())
         strwebpage = webpage.read()
         tree = lxml.html.parse(StringIO.StringIO(strwebpage))
-        rowlist = tree.findall(".//item")
+        
+        # Get lists for startdates, categories, data
+        startdatelist = tree.findall(".//s_date")
+        catlist = tree.findall(".//s_activity")
+        datalist = tree.findall(".//sum")
 
         # Get different StartDates
         StartDates = []
-        for i in range(1,len(rowlist)):
-            StartDate = rowlist[i][self.start_date_tag_index].text_content()
+        for i in range(len(startdatelist)):
+            StartDate = startdatelist[i].text_content()
             if not StartDate in StartDates:
                 StartDates.append(StartDate)
 
         # Get categories and add them to the category list derived from
         # the config file if they are not already listed there
-        for i in range(1,len(rowlist)):
-            Category = rowlist[i][self.category_tag_index].text_content()
+        for i in range(len(catlist)):
+            Category = catlist[i].text_content()
             if not Category in self.cat_names:
                 self.cat_names.append(Category)
         self.cat_names.append('total')
 
         # Initialize nested job list: Jobs[c][t]
         Jobs = [[0 for t in range(len(StartDates))] for c in range(len(self.cat_names))]
-        for i in range(1,len(rowlist)):
-            iStartDate = rowlist[i][self.start_date_tag_index].text_content()
-            iCategory = rowlist[i][self.category_tag_index].text_content()
-            iData = int(rowlist[i][self.data_tag_index].text_content())
+        for i in range(len(datalist)):
+            iStartDate = startdatelist[i].text_content()
+            iCategory = catlist[i].text_content()
+            iData = int(datalist[i].text_content())
             t = StartDates.index(iStartDate)
             c = self.cat_names.index(iCategory)
             Jobs[c][t] = iData
