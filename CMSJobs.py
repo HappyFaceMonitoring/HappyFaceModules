@@ -30,6 +30,10 @@ class CMSJobs(hf.module.ModuleBase):
         'source_url': ('URL to XML data source', ''),
         'categories': ('string containing pipe separated list of categories \
                 that are supposed to appear in the specified order', ''),
+        'category_tag': ('tag containing category of \
+                datapoint within an xml item', ''),
+        'data_tag': ('tag containing numerical data to be used \
+                within an xml item', ''),
         'pledge': ('either numerical value or tag name that contains y-value of \
                 horizontal line to be drawn across the plot, leave blank if no \
                 line is to be drawn, if you want to specify a tag name then put \
@@ -95,19 +99,19 @@ class CMSJobs(hf.module.ModuleBase):
         
         # Get lists for startdates, categories, data
         startdatelist = tree.findall(".//s_date")
-        catlist = tree.findall(".//s_activity")
-        datalist = tree.findall(".//sum")
-
+        catlist = tree.findall(".//%s" % str(self.config['category_tag']))
+        datalist = tree.findall(".//%s" % str(self.config['data_tag']))
+        
         # Get different StartDates
         StartDates = []
-        for i in range(len(startdatelist)):
+        for i in range(1, len(startdatelist)):
             StartDate = startdatelist[i].text_content()
             if not StartDate in StartDates:
                 StartDates.append(StartDate)
 
         # Get categories and add them to the category list derived from
         # the config file if they are not already listed there
-        for i in range(len(catlist)):
+        for i in range(1, len(catlist)):
             Category = catlist[i].text_content()
             if not Category in self.cat_names:
                 self.cat_names.append(Category)
@@ -115,7 +119,7 @@ class CMSJobs(hf.module.ModuleBase):
 
         # Initialize nested job list: Jobs[c][t]
         Jobs = [[0 for t in range(len(StartDates))] for c in range(len(self.cat_names))]
-        for i in range(len(datalist)):
+        for i in range(1, len(datalist)):
             iStartDate = startdatelist[i].text_content()
             iCategory = catlist[i].text_content()
             iData = int(datalist[i].text_content())
