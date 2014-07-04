@@ -71,7 +71,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.url = self.config['base_url']
         self.link_direction = self.config['link_direction']
         self.your_name = self.config['your_name']
-        self.eval_time = int(self.config['eval_time'])
+        #self.eval_time = int(self.config['eval_time'])
         if self.link_direction == 'from':
             self.parse_direction = 'to'
         else:
@@ -91,7 +91,12 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.button_pic_in = self.config['button_pic_path_in']
         self.button_pic_out = self.config['button_pic_path_out']
         self.qualitiy_broken_value = float(self.config['qualitiy_broken_value'])
-
+                
+    def getPhedexConfigData(self):
+        self.eval_time = int(self.config['eval_time'])
+        self.time = int(time.time())/3600*3600
+        self.x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
+        
         self.critical_failures = {}
         self.warning_failures = {}
         self.critical_quality = {}
@@ -108,47 +113,15 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             if tier != 't0':
                 self.critical_ratio[tier] =  float(self.config[tier + '_critical_ratio'])
                 self.warning_ratio[tier] = float(self.config[tier + '_warning_ratio'])
-
-    def extractData(self):
-        #due to portability reasons this colormap is hardcoded produce a new colormap with: color_map = map(lambda i: matplotlib.colors.rgb2hex(matplotlib.pyplot.get_cmap('RdYlGn')(float(i)/100)), range(101)) 
-        color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
+        
+        self.color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
         '#f4fab0', '#eff8aa', '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', '#07753e', '#05713c', '#026c39', '#006837']
-        data = {'direction' : self.link_direction, 'time_range' : self.time_range, 'request_timestamp' : self.time}
-
-        x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
-        #store the last N qualities of the Tx links within those dictionaries, {TX_xxx : (q1,q2,q3...)}
-
-        link_list = {} # link_list['t1']['t1_de_kit'] == [{time1}, {time2}, ]
-        fobj = json.load(open(self.source.getTmpPath(), 'r'))['phedex']['link']
-
-        for links in fobj:
-            if links[self.link_direction].startswith(self.your_name) and links[self.parse_direction] not in self.blacklist:
-                link_name = links[self.parse_direction]
-                tier = 't' + link_name[1]
-                for transfer in links['transfer']:
-                    help_append = {}
-                    help_append['timebin'] = int(transfer['timebin'])
-                    help_append['done_files'] = done = int(transfer['done_files'])
-                    help_append['fail_files'] = fail = int(transfer['fail_files'])
-                    help_append['rate'] = int(transfer['rate'])
-                    help_append['name'] = link_name
-                    #quality = done_files/(done_files + fail_files), if else to catch ZeroDivisionError
-                    if done != 0:
-                        help_append['quality'] = float(done)/float(done + fail)
-                        help_append['color'] = color_map[int(help_append['quality']*100)]
-                        self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= x_line:
-                            link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
-                    elif fail != 0:
-                        help_append['quality'] = 0.0
-                        help_append['color'] = color_map[int(help_append['quality']*100)]
-                        self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= x_line:
-                            link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
-
-       # code for status evaluation TODO: find a way to evaluate trend, change of quality between two bins etc.
-        data['status'] = 1.0
+    
+    def getTierStatus(self, link_list):
+        status = {}
+        status['all'] = 1.0
         for tier,links in link_list.iteritems():
+            status['%s' % tier] = 1.0
             good_link = 0
             bad_link = 0
             warn_link = 0
@@ -168,21 +141,70 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 except IndexError:
                     pass
             if tier == 't0' and bad_link > 0: #here you could use a config parameter
-                data['status'] = 0.0
-                break
+                if status['all'] != 0.0:
+                    status['all'] = 0.0
             elif tier != 't0':
-                if ((2.0 * bad_link + warn_link) / (2.0 * bad_link + warn_link + good_link) >= self.critical_ratio[tier]) and self.eval_amount[tier] <= (bad_link + warn_link + good_link):
-                    data['status'] = 0.0
-                    break
-                elif ((2.0 * bad_link + warn_link) / (2.0 * bad_link + warn_link + good_link) >= self.warning_ratio[tier]) and self.eval_amount[tier] <= (bad_link + warn_link + good_link):
-                    data['status'] = 0.5
+                metric = (2.0 * bad_link + warn_link) / (2.0 * bad_link + warn_link + good_link)
+                sum_links = bad_link + warn_link + good_link
+                if (metric >= self.critical_ratio[tier]) and (self.eval_amount[tier] <= (sum_links)):
+                    if status['all'] != 0.0:
+                        status['all'] = 0.0
+                    status['%s' % tier] = 0.0
+                elif (metric >= self.warning_ratio[tier]) and (self.eval_amount[tier] <= (sum_links)):
+                    if status['all'] != 0.5:
+                        status['all'] = 0.5
+                    status['%s' % tier] = 0.5
+        return status
+
+    def extractData(self):
+        
+        self.getPhedexConfigData()
+        
+        data = {'direction' : self.link_direction, 'time_range' : self.time_range, 'request_timestamp' : self.time}
+
+        #store the last N qualities of the Tx links within those dictionaries, {TX_xxx : (q1,q2,q3...)}
+
+        link_list = {} # link_list['t1']['t1_de_kit'] == [{time1}, {time2}, ]
+        fobj = json.load(open(self.source.getTmpPath(), 'r'))['phedex']['link']
+
+        for links in fobj:
+            if links[self.link_direction].startswith(self.your_name) and links[self.parse_direction] not in self.blacklist:
+                link_name = links[self.parse_direction]
+                tier = 't' + link_name[1]
+                for transfer in links['transfer']:
+                    help_append = {}
+                    help_append['timebin'] = int(transfer['timebin'])
+                    help_append['done_files'] = done = int(transfer['done_files'])
+                    help_append['fail_files'] = fail = int(transfer['fail_files'])
+                    help_append['rate'] = int(transfer['rate'])
+                    help_append['name'] = link_name
+                    #quality = done_files/(done_files + fail_files), if else to catch ZeroDivisionError
+                    if done != 0:
+                        help_append['quality'] = float(done)/float(done + fail)
+                        help_append['color'] = self.color_map[int(help_append['quality']*100)]
+                        self.details_db_value_list.append(help_append)
+                        if help_append['timebin'] >= self.x_line:
+                            link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
+                    elif fail != 0:
+                        help_append['quality'] = 0.0
+                        help_append['color'] = self.color_map[int(help_append['quality']*100)]
+                        self.details_db_value_list.append(help_append)
+                        if help_append['timebin'] >= self.x_line:
+                            link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
+
+        # code for status evaluation TODO: find a way to evaluate trend, change of quality between two bins etc.
+        status = self.getTierStatus(link_list)
+        data['status'] = status['all']
+        
         return data
 
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
 
     def getTemplateData(self):
-
+        
+        self.getPhedexConfigData()
+        
         report_base = strip(self.config['report_base']) + '&'
         your_direction = strip(self.config['link_direction'])
 
@@ -197,9 +219,12 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
 
         raw_data_list = [] #contains dicts {x,y,weight,fails,done,rate,time,color,link} where the weight determines the the color
-
-        x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
+        x_list = {} #for Summary of the quality of all links at one time
+        y_list = {} #for Summary of the qualitiy of one link over different times
+        
+        x0 = self.time / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
         y_value_map = {} # maps the name of a link to a y-value
+        
         for values in details_list:
             if values['name'] not in y_value_map: #add a new entry if the link name is not in the value_map 
                 y_value_map[values['name']] = len(y_value_map)
@@ -210,8 +235,39 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             elif int(self.config['%s_warning_failures'%t_number]) <= int(values['fail_files']):
                 marking_color = '#af00af'
             help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name'], 'marking':marking_color}
+            help_append = {'x': int(values['timebin']-x0)/3600, 'done_files': int(values['done_files']), 'fail_files': int(values['fail_files'])}
             raw_data_list.append(help_dict)
-
+            if values['timebin'] >= self.x_line:
+                y_list[help_dict['y']] = y_list.get(help_dict['y'], {})
+                y_list[help_dict['y']][help_dict['x']] = help_dict['w']
+            if (values['timebin'] >= x0):
+                x_list.setdefault(help_dict['x'], {}).setdefault('t%s' % values['name'][1], {}).setdefault(values['name'], []).append(help_append)
+        
+        #create list for Summaries of the qualities of the links over different times
+        y_summary = []
+        for y_value in y_list:
+            y_append_help = {'y': y_value}
+            total = 0.0
+            i = 0
+            for x_value in y_list[y_value]:
+                total += float(y_list[y_value][x_value])
+                i += 1
+            avg = total/float(i)
+            y_append_help['color'] = self.color_map[int(avg*100)]
+            y_append_help['quality'] = str('%.2f' % avg)
+            y_summary.append(y_append_help)
+        
+        #create list for Summaries of the qualities of all links over one time
+        
+        x_summary = []
+        for link_list in x_list:
+            x_append_help = {'x': link_list}
+            status = self.getTierStatus(x_list[link_list])
+            for tier in status:
+                x_append_help[tier] = status[tier]
+                x_append_help['%s_color' % tier] = self.color_map[int(status[tier]*100)]
+            x_summary.append(x_append_help)
+        
         name_mapper = []
 
         for i in range(len(y_value_map)):
@@ -231,4 +287,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         data['button_pic_out'] = self.config['button_pic_path_out']
         data['info_link_1'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
         data['info_link_2'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
+        data['eval_time'] = 'last %s hrs' % self.eval_time
+        data['y_summary'] = y_summary
+        data['x_summary'] = x_summary
         return data

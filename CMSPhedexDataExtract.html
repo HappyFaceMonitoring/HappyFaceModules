@@ -4,32 +4,32 @@
 <%def name="content()">
 <style>
 #${module.instance_name}_histogram {
-	position: relative;
-	height: ${height}px;
-	width: *;
-	z-index: 0;
+        position: relative;
+        height: ${height}px;
+        width: *;
+        z-index: 0;
 }
 
 #${module.instance_name}_histogram span {
-	position: absolute;
-	height: 14px;
-	width: ${width-1}px;
-	z-index: 6;
-	border-left: 1px solid #000;
-	border-right: 1px solid #000;
-	border-top: 1px solid #000;
-	border-bottom: 1px solid #000;
+        position: absolute;
+        height: 14px;
+        width: ${width-1}px;
+        z-index: 6;
+        border-left: 1px solid #000;
+        border-right: 1px solid #000;
+        border-top: 1px solid #000;
+        border-bottom: 1px solid #000;
 }
 
 #${module.instance_name}_histogram a {
-	height: 14px;
-	width: 85.2%;
-	position: absolute;
-	z-index: 5;
-	font-size: small;
-	border-bottom: 1px solid #000;
-	display: block;
-	padding-bottom: 1px;
+        height: 14px;
+        width: 85.2%;
+        position: absolute;
+        z-index: 5;
+        font-size: small;
+        border-bottom: 1px solid #000;
+        display: block;
+        padding-bottom: 1px;
 }
 
 </style>
@@ -40,10 +40,26 @@
     <font color=${cols['marking']} size="tiny">~^~</font>
     </span>
 %endfor
-%for i,title in enumerate(titles):
-  <a style='top:${15*i+49}px; padding-bottom:2px;' href = '${title['link']}'>${title['name']}</a>
-  <a style="top:${15*i+50}px; left:171px; width:15px; z-index:6; background-image:url('${button_pic_in}');" href='${info_link_1}${title['name']}'></a>
-  <a style="top:${15*i+50}px; left:186px; width:15px; z-index:6; background-image:url('${button_pic_out}');" href='${info_link_2}${title['name']}'></a>
+%for row in y_summary:
+    <span style = "top:${15*row['y']+50}px; right:${width+80}px; background:${row['color']};"
+    title="eval. time: ${eval_time} &#xA;avg. quality: ${row['quality']}">
+    </span>
 %endfor
+%for row in x_summary:
+    <span style = "top:${height-50+5}px; left:${width*row['x']+201}px; background:${row.get('t1_color')};">
+    </span>
+    <span style = "top:${height-35+5}px; left:${width*row['x']+201}px; background:${row.get('t2_color')};">
+    </span>
+    <span style = "top:${height-20+5}px; left:${width*row['x']+201}px; background:${row.get('t3_color')};">
+    </span>
+%endfor
+%for i,title in enumerate(titles):
+    <a style='top:${15*i+49}px; padding-bottom:2px;' href = '${title['link']}'>${title['name']}</a>
+    <a style="top:${15*i+50}px; left:171px; width:15px; z-index:6; background-image:url('${button_pic_in}');" href='${info_link_1}${title['name']}'></a>
+    <a style="top:${15*i+50}px; left:186px; width:15px; z-index:6; background-image:url('${button_pic_out}');" href='${info_link_2}${title['name']}'></a>
+%endfor
+<a style='top:${height-51+5}px; padding-bottom:2px;' >Summary T1</a>
+<a style='top:${height-36+5}px; padding-bottom:2px;' >Summary T2</a>
+<a style='top:${height-21+5}px; padding-bottom:2px;' >Summary T3</a>
 </div>
 </%def>
