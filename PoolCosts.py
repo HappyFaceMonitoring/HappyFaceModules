@@ -20,7 +20,7 @@ from sqlalchemy import *
 
 class PoolCosts(hf.module.ModuleBase):
     config_keys = {
-        'source_url': ('Link to Source File', 'ekp.happyface.physik.uni-karlsruhe.de/~happyface/upload/out/pc'),
+        'source_url': ('Link to Source File', 'http://www-ekp.physik.uni-karlsruhe.de/~happyface/upload/out/pc'),
         'warning_threshold': ('multiplier for status_warning >1.0', '1.95'),
         'critical_threshold': ('multiplier for critical status >1.0', '1.80')
     }
