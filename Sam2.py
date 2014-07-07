@@ -45,6 +45,7 @@ class Sam2(hf.module.ModuleBase):
         'details': ([
             Column("type", TEXT),
             Column("hostName", TEXT),
+            Column("hostStatus", TEXT),
             Column("timeStamp", TEXT),
             Column("metric", TEXT),
             Column("status", TEXT)
@@ -95,6 +96,7 @@ class Sam2(hf.module.ModuleBase):
             if service['flavour'] in self.service_flavour and service['type'] in self.service_type:
                 service_host = service['hostname']
                 service_type = service['type']
+                host_status = str(service['status']).lower()
                 warnings = 0
                 errors = 0
                 tests = 0
@@ -106,7 +108,7 @@ class Sam2(hf.module.ModuleBase):
                         elif str(status_str) == 'critical':
                             errors += 1
                         tests += 1
-                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
+                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'hostStatus':host_status, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
                 if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
                     help_stati.append('critical')
                 elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
@@ -161,7 +163,7 @@ class Sam2(hf.module.ModuleBase):
         for i,test in enumerate(map(dict, details_list)):
             if test['hostName'] not in hosts:
                 hosts[test['hostName']]={'ok': 0, 'warn':0, 'status':'ok', 'sum':0, 'crit':0, 'type':test['type']}
-                host_ordered.append({'name':test['hostName'], 'status':'ok', 'type':test['type']})
+                host_ordered.append({'name':test['hostName'], 'hostStatus':test['hostStatus'], 'status':'ok', 'type':test['type']})
             if test['metric'] in self.blacklist:
                 black_test.append(test)                
             elif str(test['status']) == 'warning':
