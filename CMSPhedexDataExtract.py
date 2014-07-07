@@ -95,7 +95,6 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
     def getPhedexConfigData(self):
         self.eval_time = int(self.config['eval_time'])
         self.time = int(time.time())/3600*3600
-        self.x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
         
         self.critical_failures = {}
         self.warning_failures = {}
@@ -151,7 +150,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                         status['all'] = 0.0
                     status['%s' % tier] = 0.0
                 elif (metric >= self.warning_ratio[tier]) and (self.eval_amount[tier] <= (sum_links)):
-                    if status['all'] != 0.5:
+                    if status['all'] == 1.0:
                         status['all'] = 0.5
                     status['%s' % tier] = 0.5
         return status
@@ -166,6 +165,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
 
         link_list = {} # link_list['t1']['t1_de_kit'] == [{time1}, {time2}, ]
         fobj = json.load(open(self.source.getTmpPath(), 'r'))['phedex']['link']
+        x_line = self.time - self.eval_time * 3600 #data with a timestamp greater than this one will be used for status evaluation
 
         for links in fobj:
             if links[self.link_direction].startswith(self.your_name) and links[self.parse_direction] not in self.blacklist:
@@ -183,13 +183,13 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                         help_append['quality'] = float(done)/float(done + fail)
                         help_append['color'] = self.color_map[int(help_append['quality']*100)]
                         self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= self.x_line:
+                        if help_append['timebin'] >= x_line:
                             link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
                     elif fail != 0:
                         help_append['quality'] = 0.0
                         help_append['color'] = self.color_map[int(help_append['quality']*100)]
                         self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= self.x_line:
+                        if help_append['timebin'] >= x_line:
                             link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
 
         # code for status evaluation TODO: find a way to evaluate trend, change of quality between two bins etc.
@@ -222,8 +222,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         x_list = {} #for Summary of the quality of all links at one time
         y_list = {} #for Summary of the qualitiy of one link over different times
         
-        x0 = self.time / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
+        x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
         y_value_map = {} # maps the name of a link to a y-value
+        x_line = self.dataset['request_timestamp'] - self.eval_time * 3600
         
         for values in details_list:
             if values['name'] not in y_value_map: #add a new entry if the link name is not in the value_map 
@@ -237,7 +238,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name'], 'marking':marking_color}
             help_append = {'x': int(values['timebin']-x0)/3600, 'done_files': int(values['done_files']), 'fail_files': int(values['fail_files'])}
             raw_data_list.append(help_dict)
-            if values['timebin'] >= self.x_line:
+            if values['timebin'] >= x_line:
                 y_list[help_dict['y']] = y_list.get(help_dict['y'], {})
                 y_list[help_dict['y']][help_dict['x']] = help_dict['w']
             if (values['timebin'] >= x0):
