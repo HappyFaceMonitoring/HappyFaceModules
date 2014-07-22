@@ -45,7 +45,6 @@ class Sam2(hf.module.ModuleBase):
         'details': ([
             Column("type", TEXT),
             Column("hostName", TEXT),
-            Column("hostStatus", TEXT),
             Column("timeStamp", TEXT),
             Column("metric", TEXT),
             Column("status", TEXT)
@@ -108,7 +107,8 @@ class Sam2(hf.module.ModuleBase):
                         elif str(status_str) == 'critical':
                             errors += 1
                         tests += 1
-                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'hostStatus':host_status, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
+                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
+                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':'summary_%s' % test['name'], 'status':host_status})
                 if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
                     help_stati.append('critical')
                 elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
@@ -151,6 +151,7 @@ class Sam2(hf.module.ModuleBase):
 
         data = hf.module.ModuleBase.getTemplateData(self)
         ok_test = []
+        summary_list = []
         warning_test = []
         black_test = []
         hosts = {}
@@ -161,11 +162,13 @@ class Sam2(hf.module.ModuleBase):
         ## sort data and seperate into blacklisted test, critical/warning tests and ok test and build a summary!
 
         for i,test in enumerate(map(dict, details_list)):
-            if test['hostName'] not in hosts:
+            if test['hostName'] not in hosts and str(test['metric'][0:7]) != 'summary':
                 hosts[test['hostName']]={'ok': 0, 'warn':0, 'status':'ok', 'sum':0, 'crit':0, 'type':test['type']}
-                host_ordered.append({'name':test['hostName'], 'hostStatus':test['hostStatus'], 'status':'ok', 'type':test['type']})
+                host_ordered.append({'name':test['hostName'], 'status':'ok', 'type':test['type']})
             if test['metric'] in self.blacklist:
-                black_test.append(test)                
+                black_test.append(test)
+            elif str(test['metric'][0:7]) == 'summary':
+                summary_list.append(test)
             elif str(test['status']) == 'warning':
                 warning_test.append(test)
                 hosts[test['hostName']]['warn'] += 1
@@ -190,10 +193,14 @@ class Sam2(hf.module.ModuleBase):
 
         for i,host in enumerate(host_ordered):
             host_ordered[i]['status'] = hosts[host['name']]['status']
+            for j,test in enumerate(map(dict, details_list)):
+                if test['hostName'] == host['name'] and str(test['metric'][0:7]) == 'summary':
+                    host_ordered[i]['hostStatus'] = test['status']
         data['hosts'] = host_ordered
         data['url'] = self.base_url
         data['ok_test'] = ok_test
         data['warning_test'] = warning_test
         data['black_test'] = black_test
+        data['summary_list'] = summary_list
 
         return data
