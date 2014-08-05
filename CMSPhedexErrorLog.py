@@ -185,26 +185,26 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
 
         if float(data['summary']) > self.min_error:
 
-            if data['frac_dest'] >= self.warning_dest:
-                data['destination_status'] = 'warning'
-                data['status'] = 0.5
-            elif data['frac_dest'] >= self.critical_dest:
+            if data['frac_dest'] >= self.critical_dest:
                 data['destination_status'] = 'critical'
                 data['status'] = 0.0
-
-            if data['frac_source'] >= self.warning_source:
-                data['source_status'] = 'warning'
+            elif data['frac_dest'] >= self.warning_dest:
+                data['destination_status'] = 'warning'
                 data['status'] = 0.5
-            elif data['frac_source'] >= self.critical_source:
+
+            if data['frac_source'] >= self.critical_source:
                 data['source_status'] = 'critical'
                 data['status'] = 0.0
-
-            if data['frac_trans'] >= self.warning_trans:
-                data['transfer_status'] = 'warning'
+            elif data['frac_source'] >= self.warning_source:
+                data['source_status'] = 'warning'
                 data['status'] = 0.5
-            elif data['frac_trans'] >= self.critical_trans:
+
+            if data['frac_trans'] >= self.critical_trans:
                 data['transfer_status'] = 'critical'
                 data['status'] = 0.0
+            elif data['frac_trans'] >= self.warning_trans:
+                data['transfer_status'] = 'warning'
+                data['status'] = 0.5
 
 
 
