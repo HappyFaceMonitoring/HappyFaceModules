@@ -249,7 +249,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('" + helpstring + "')>Plot Col</button>"))
         details_finished_list.append(help_appending)
 
-        for i,pool in enumerate(details_list):
+        for i,pool in enumerate(sorted(details_list, key = lambda p: p['poolname'])):
             help_appending= []
             if pool['status'] == 1.0:
                 help_appending.append('ok')
