@@ -143,7 +143,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
             else:
                 self.logger.error('Something went terrebly wrong. The dataset, loaded from db was coruppted, file parsed and stored in db')
             if old_data['request_timestamp'] < data['request_timestamp']:
-                #The dataset loaded from db is older than the new one, now there is work to do!
+                #The dataset in the db is older than the current, now there is work to do!
                 self.save_data = 'yes'
                 data['data_id'] = 'NULL'
                 num_blocks_raw =0 
@@ -297,4 +297,19 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         for i, group in enumerate(data['details']):
             group['time_reported'] = datetime.fromtimestamp(group['time_reported'])
 
+        return data
+        
+    def ajax(self, **kwargs):
+        details_list = []
+        data = []
+        if self.dataset['data_id'] != 'NULL':
+            details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['data_id']).execute().fetchall()
+        else:
+            details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
+	details_list = map(dict, details_list)
+	for group in details_list:
+	    if group['isfile'] == int(kwargs['isfile']) and group['filtered'] == int(kwargs['filter']):
+		data.append(group)
+        for group in data:
+            group['time_reported'] = str(datetime.fromtimestamp(group['time_reported']))
         return data
