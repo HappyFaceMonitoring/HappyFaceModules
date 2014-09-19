@@ -24,6 +24,26 @@ from numpy import array
 from datetime import datetime
 import pytz
 
+
+state_colors = {
+	'submitted': '#5CADFF',
+	'pending':   '#9D5CDE',
+	'running':   '#85CE9D',
+	'done':      '#0042A3',
+	'retrieved': '#000099',
+	'success':   '#009933',
+	'succeeded': '#009933',
+	'failed':    '#AA0000',
+	'cancelled': '#B48888',
+	'unknown':   '#ADADAD',
+}
+
+def getcolor(label):
+	for k in state_colors.keys():
+		if k in label.lower():
+			return state_colors[k]
+	return None  # None makes way for the Colors defined during plotting
+
 class CMSJobResults(hf.module.ModuleBase):
 
     config_keys = {
@@ -269,7 +289,7 @@ class CMSJobResults(hf.module.ModuleBase):
             # Create figure and plot job numbers of the different categories
             fig = self.plt.figure(figsize=(10,5.8))
             axis = fig.add_subplot(111)
-            p = [axis.bar(ind, Jobs[c], width, color=Colors[c], bottom=cat_bottoms[c]
+            p = [axis.bar(ind, Jobs[c], width, color=(getcolor(self.cat_names[c]) or Colors[c]), bottom=cat_bottoms[c]
                     ) for c in range(len(self.cat_names)-1)]
 
             # Prepare legend entries

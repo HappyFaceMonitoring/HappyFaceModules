@@ -25,6 +25,25 @@ from datetime import datetime
 import pytz
 import json
 
+state_colors = {
+	'submitted': '#5CADFF',
+	'pending':   '#9D5CDE',
+	'running':   '#85CE9D',
+	'done':      '#0042A3',
+	'retrieved': '#000099',
+	'success':   '#009933',
+	'succeeded': '#009933',
+	'failed':    '#AA0000',
+	'cancelled': '#B48888',
+	'unknown':   '#ADADAD',
+}
+
+def getcolor(label):
+	for k in state_colors.keys():
+		if k in label.lower():
+			return state_colors[k]
+	return None  # None makes way for the Colors defined during plotting
+
 class NodeMonitoring(hf.module.ModuleBase):
 
     config_keys = {
@@ -324,7 +343,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             fig = self.plt.figure(figsize=(self.image_width,self.image_height))
             axis = fig.add_subplot(111)
             p = [axis.barh(pos, FilteredJobs[a], left=Bottoms[a], align='center', 
-                    height=0.6, color=Colors[a]) for a in range(len(AttributeValues))]
+                    height=0.6, color= (getcolor(AttributeValues[a]) or Colors[a])) for a in range(len(AttributeValues))]
             #fontyAxis = FontProperties()
             #fontyAxis.set_size('small')
             axis.set_yticks(pos)
