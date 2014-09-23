@@ -34,7 +34,6 @@ state_colors = {
 	'success':   '#009933',
 	'succeeded': '#009933',
 	'failed':    '#AA0000',
-	'aborted':   '#CC6060',
 	'cancelled': '#B48888',
 	'cooloff':   '#505050',
 	'unknown':   '#ADADAD',
