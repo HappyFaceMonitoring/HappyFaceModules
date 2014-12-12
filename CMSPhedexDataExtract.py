@@ -11,6 +11,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         'link_direction': ("transfers 'from' or 'to' you", 'to'),
         'time_range': ('set timerange in hours', '24'),
         'base_url': ('use --no-check-certificate, end base url with starttime=', ''),
+        'linktest_url': ('use --no-check-certificate, end linktest url with starttime=', ''),
         'report_base':("insert base url for reports don't forget fromfilter or tofilter with your name! finish your link with starttime=, the starttime is inserted by the module ",'https://cmsweb.cern.ch/phedex/prod/Activity::ErrorInfo?tofilter=T1_DE_KIT&starttime='),
         'blacklist': ('ignore links from or to those sites, csv', ''),
         'your_name': ('Name of your site', 'T1_DE_KIT_Buffer'),
@@ -18,7 +19,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         'button_pic_path_in': ('path to your in-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_in.png'),
         'button_pic_path_out': ('path to your out-button picture', '/HappyFace/gridka/static/themes/armin_box_arrows/trans_out.png'),
         'qualitiy_broken_value': ('a timebin with a qualitiy equal or less than this will be considered as broken', '0.4'),
-
+        'link_quality_eval_time': ('links within the last link_quality_eval_time hours will be used for link quality evaluation', '3'),
+        
+        'critical_average_quality': ('threshold for link confirmation', '0.1'),
         't0_critical_failures': ('failure threshold for status critical', '10'),
         't0_warning_failures': ('failure threshold for status warning', '10'),
         't1_critical_failures': ('failure threshold for status critical', '15'),
@@ -71,7 +74,6 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.url = self.config['base_url']
         self.link_direction = self.config['link_direction']
         self.your_name = self.config['your_name']
-        #self.eval_time = int(self.config['eval_time'])
         if self.link_direction == 'from':
             self.parse_direction = 'to'
         else:
@@ -82,16 +84,47 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         except AttributeError:
             self.blacklist = []
         self.time = int(time.time())/3600*3600
+        self.link_quality_eval_time = int(self.config['link_quality_eval_time'])
+        self.quality_x_line = self.time-self.link_quality_eval_time*3600 #data with a timestamp greater than this one will be used for linkstatus confirmation
         self.url += str(self.time-self.time_range*3600)
+        
+        self.url1 = self.config['linktest_url']
+        self.url1 += str(self.time-self.time_range*3600)
+        self.source1 = hf.downloadService.addDownload(self.url1)
+        self.critical_average_quality = float(self.config['critical_average_quality'])
+        
         self.source = hf.downloadService.addDownload(self.url)
-        self.source_url = self.source.getSourceUrl()
+        self.source_url = self.source.getSourceUrl()+'\n'+self.source1.getSourceUrl()
         self.details_db_value_list = []
 
         self.category = self.config['category']
         self.button_pic_in = self.config['button_pic_path_in']
         self.button_pic_out = self.config['button_pic_path_out']
         self.qualitiy_broken_value = float(self.config['qualitiy_broken_value'])
-                
+    
+    def confirmLinkStatus(self, link_name):
+        crit_average = 0.1
+        fobj1 = json.load(open(self.source1.getTmpPath(), 'r'))['phedex']['link']
+        
+        i = 0
+        avg_quality = 0.0
+        for links in fobj1:
+            if links[self.parse_direction].startswith(link_name) and self.your_name not in links[self.link_direction]:
+                for transfer in links['transfer']:
+                    if transfer['quality'] != None and transfer['timebin'] >= self.quality_x_line:
+                        i += 1
+                        avg_quality += float(transfer['quality'])
+        if i > 0:
+            avg_quality = avg_quality/float(i)
+            if avg_quality < self.critical_average_quality:
+                link_status = 0
+            else:
+                link_status = 1
+        else:
+            link_status = 1
+        
+        return link_status
+    
     def getPhedexConfigData(self):
         self.eval_time = int(self.config['eval_time'])
         self.time = int(time.time())/3600*3600
@@ -113,6 +146,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 self.critical_ratio[tier] =  float(self.config[tier + '_critical_ratio'])
                 self.warning_ratio[tier] = float(self.config[tier + '_warning_ratio'])
         
+        self.unused_link_color = '#0000FF'
         self.color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
         '#f4fab0', '#eff8aa', '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', '#07753e', '#05713c', '#026c39', '#006837']
     
@@ -182,14 +216,24 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                     if done != 0:
                         help_append['quality'] = float(done)/float(done + fail)
                         help_append['color'] = self.color_map[int(help_append['quality']*100)]
+                        
+                        linkappend = 1
+                        if (help_append['timebin'] >= self.quality_x_line) and (help_append['quality'] < self.critical_average_quality) and (not self.confirmLinkStatus(help_append['name'])):
+                            help_append['color'] = self.unused_link_color
+                            linkappend = 0
                         self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= x_line:
+                        if (help_append['timebin'] >= x_line) and linkappend:
                             link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
                     elif fail != 0:
                         help_append['quality'] = 0.0
                         help_append['color'] = self.color_map[int(help_append['quality']*100)]
+                        
+                        linkappend = 1
+                        if help_append['timebin'] >= self.quality_x_line and not self.confirmLinkStatus(help_append['name']):
+                            help_append['color'] = self.unused_link_color
+                            linkappend = 0
                         self.details_db_value_list.append(help_append)
-                        if help_append['timebin'] >= x_line:
+                        if help_append['timebin'] >= x_line and linkappend:
                             link_list.setdefault(tier, {}).setdefault(link_name, []).append(help_append)
 
         # code for status evaluation TODO: find a way to evaluate trend, change of quality between two bins etc.
@@ -220,7 +264,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
 
         raw_data_list = [] #contains dicts {x,y,weight,fails,done,rate,time,color,link} where the weight determines the the color
         x_list = {} #for Summary of the quality of all links at one time
-        y_list = {} #for Summary of the qualitiy of one link over different times
+        y_list = {} #for Summary of the quality of one link over different times
         
         x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
         y_value_map = {} # maps the name of a link to a y-value

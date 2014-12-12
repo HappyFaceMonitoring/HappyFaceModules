@@ -150,7 +150,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             data['status'] = 0.0
         elif (data['free'] + data['removable']) / data['total'] <= self.global_warning_ratio or data['crit_pools'] > self.global_warning_poolcriticals or data['warn_pools'] > self.global_warning_poolwarnings:
             data['status'] = 0.5
-
+        
         return data
 
     def fillSubtables(self, parent_id):
@@ -197,7 +197,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
         overview_list.append(['Pools with status critical [%]', float(self.dataset['crit_pools']) / self.dataset['num_pools']*100])
         overview_list.append(['Total Space [' + self.dataset['unit'] + ']', '%.2f' %t])
         overview_list.append(['Free Space [' + self.dataset['unit'] + ']', '%.2f' %f])
-        overview_list.append(['Used Space [' + self.dataset['unit'] + ']', '%.2f' %(t - f)])
+        overview_list.append(['Used Space [%]', '%.2f' %(100.0*(t - f)/t)])
         overview_list.append(['Precious Space [' + self.dataset['unit'] + ']', '%.2f' %p])
         overview_list.append(['Removable Space [' + self.dataset['unit'] + ']', '%.2f' %r])
 
@@ -215,7 +215,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
         help_appending.append('Poolname')
         help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_0' value='total' checked='checked' />" + 'Total Space [' + self.dataset['unit'] + ']')
         help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_1' value='free' checked='checked' />" + 'Free Space [' + self.dataset['unit'] + ']')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_2' value='total-free' checked='checked' />" + 'Used Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_2' value='total-free' checked='checked' />" + 'Used Space [%]')
         help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_3' value='precious' checked='checked' />" + 'Precious Space [' + self.dataset['unit'] + ']')
         help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_4' value='removable' checked='checked' />" + 'Removable Space [' + self.dataset['unit'] + ']')
 
@@ -266,7 +266,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             help_appending.append(pool['poolname'])
             help_appending.append(str('%0.2f' % t))
             help_appending.append(str('%0.2f' % f))
-            help_appending.append(str('%0.2f' % float(t-f)))
+            help_appending.append(str('%0.2f' % (100.0*float(t-f)/float(t))))
             help_appending.append(str('%0.2f' % p))
             help_appending.append(str('%0.2f' % r))
             if special_details is not None:
