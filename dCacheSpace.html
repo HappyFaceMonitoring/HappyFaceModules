@@ -1,0 +1,103 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<table class="TableData">
+<tr class="TableHeader">
+<td class="TestTableFirstCol" width="20%"> Groups </td>
+<td class="TestTableSecondCol" width="20%"> Pools </td>
+<td class="TestTableThirdCol" width="20%"> Category </td>
+<td class="TestTableThirdCol" width="20%"> Files </td>
+<td class="TestTableThirdCol" width="20%"> Size (TB) </td>
+</tr>
+</table>
+<table class="TableData">
+<tr class="TableData">
+<td rowspan=${reduce(lambda x,y: x + y, map(lambda pool: len(table_dict['allgroups'][pool]), table_dict['allgroups']))}) width="20%"}>allgroups</td>
+    %for pool in sorted(table_dict['allgroups'].keys()):
+        %if pool == 'allpools':
+            <td BGCOLOR="E8E8E8" rowspan=${len(table_dict['allgroups'][pool])} width="20%">${pool}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            <td BGCOLOR="E8E8E8" width="20%">${filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            <td BGCOLOR="E8E8E8" width="20%">${filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            %for cat in sorted(table_dict['allgroups'][pool].keys()):
+                %if 'total' not in cat and 'unique' not in cat and 'replica' not in cat:
+                    <td BGCOLOR="E8E8E8" width="20%">${cat}</td>
+                    <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][cat]['files']}</td>
+                    <td BGCOLOR="E8E8E8" width="20%">${table_dict['allgroups'][pool][cat].get('size',None)}</td>
+                    </tr>
+                %endif
+            %endfor
+        %else:
+            <td rowspan=${len(table_dict['allgroups'][pool])} width="20%">${pool}</td>
+            <td width="20%">${filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'total' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            <td width="20%">${filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'unique' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            <td width="20%">${filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]]['files']}</td>
+            <td width="20%">${table_dict['allgroups'][pool][filter(lambda cat: 'replica' in cat, table_dict['allgroups'][pool])[0]].get('size',None)}</td>
+            </tr>
+            %for cat in sorted(table_dict['allgroups'][pool].keys()):
+                %if 'total' not in cat and 'unique' not in cat and 'replica' not in cat:
+                    <td width="20%">${cat}</td>
+                    <td width="20%">${table_dict['allgroups'][pool][cat]['files']}</td>
+                    <td width="20%">${table_dict['allgroups'][pool][cat].get('size',None)}</td>
+                    </tr>
+                %endif
+            %endfor
+        %endif
+    %endfor
+</table>
+</form>
+<input type="button" value="Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+%for group in sorted(table_dict.keys()):
+    %if group != 'allgroups':
+    <table class="TableData">
+    <tr>
+    <td rowspan=${reduce(lambda x,y: x + y, map(lambda pool: len(table_dict[group][pool]), table_dict[group]))}) width="20%"}>${group}</td>
+    %for pool in sorted(table_dict[group].keys()):
+        <td rowspan=${len(table_dict[group][pool])} width="20%">${pool}</td>
+        <td width="20%">${filter(lambda cat: 'total' in cat, table_dict[group][pool])[0]}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'total' in cat, table_dict[group][pool])[0]]['files']}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'total' in cat, table_dict[group][pool])[0]].get('size',None)}</td>
+        </tr>
+        <td width="20%">${filter(lambda cat: 'unique' in cat, table_dict[group][pool])[0]}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'unique' in cat, table_dict[group][pool])[0]]['files']}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'unique' in cat, table_dict[group][pool])[0]].get('size',None)}</td>
+        </tr>
+        <td width="20%">${filter(lambda cat: 'replica' in cat, table_dict[group][pool])[0]}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'replica' in cat, table_dict[group][pool])[0]]['files']}</td>
+        <td width="20%">${table_dict[group][pool][filter(lambda cat: 'replica' in cat, table_dict[group][pool])[0]].get('size',None)}</td>
+        </tr>
+        %for cat in sorted(table_dict[group][pool].keys()):
+            %if 'total' not in cat and 'unique' not in cat and 'replica' not in cat:
+                <td width="20%">${cat}</td>
+                <td width="20%">${table_dict[group][pool][cat]['files']}</td>
+                <td width="20%">${table_dict[group][pool][cat].get('size',None)}</td>
+                </tr>
+            %endif
+
+        %endfor
+    %endfor
+    </table>
+    %endif
+%endfor
+</div>
+
+</%def>
