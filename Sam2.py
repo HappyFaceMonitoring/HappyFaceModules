@@ -88,33 +88,35 @@ class Sam2(hf.module.ModuleBase):
         with open(self.source.getTmpPath(), 'r') as f:
             services = json.loads(f.read())
         ##use first group available, you may change  this if you want to parse more than one site in one module
-        services = services[0]['groups'][0]['services']
+        services = services['data']['results'][0]['flavours']
 
         ##parse your group and get all the tests
         for i,service in enumerate(services):
-            if service['flavour'] in self.service_flavour and service['type'] in self.service_type:
-                service_host = service['hostname']
-                service_type = service['type']
-                host_status = str(service['status']).lower()
-                warnings = 0
-                errors = 0
-                tests = 0
-                for j,test in enumerate(service['metrics']):
-                    status_str = str(test['status']).lower()
-                    if test['name'] not in self.blacklist:
-                        if str(status_str) == 'warning':
-                            warnings += 1
-                        elif str(status_str) == 'critical':
-                            errors += 1
-                        tests += 1
-                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':test['name'], 'status':status_str})
-                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['exec_time'], 'metric':'summary_%s' % test['name'], 'status':host_status})
-                if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
-                    help_stati.append('critical')
-                elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
-                    help_stati.append('warning')
-                else:
-                    help_stati.append('ok')           
+            if service['flavourname'] in self.service_flavour and service['servicename'] in self.service_type:
+                for host in service['hosts']:
+                    service_host = host['hostname']
+                    host_status = host['hostStatus']
+                    service_type = service['servicename']
+                    warnings = 0
+                    errors = 0
+                    tests = 0
+                    for j,test in enumerate(host['metric']):
+                        status_str = str(test['status']).lower()
+                        if test['metric_name'] not in self.blacklist:
+                            if str(status_str) == 'warning':
+                                warnings += 1
+                            elif str(status_str) == 'critical':
+                                errors += 1
+                            tests += 1
+                        self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['timestamp'], 'metric':test['metric_name'], 'status':status_str})
+                        self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['timestamp'], 'metric':'summary_%s' % test['metric_name'], 'status':host_status})
+                    if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
+                        help_stati.append('critical')
+                        print 'critical'
+                    elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
+                        help_stati.append('warning')
+                    else:
+                        help_stati.append('ok')           
         ##parsing the file is done, now evaluate everything
         if 'critical' in help_stati:
             data['status'] = 0
