@@ -19,13 +19,12 @@ import lxml.html
 from lxml.html.clean import clean_html
 import StringIO
 from sqlalchemy import *
-import numpy as np 
+import numpy as np
 from numpy import array
 from datetime import datetime
 import pytz
 
 class CMSJobs(hf.module.ModuleBase):
-
     config_keys = {
         'source_url': ('URL to XML data source', ''),
         'categories': ('string containing pipe separated list of categories \
@@ -40,7 +39,7 @@ class CMSJobs(hf.module.ModuleBase):
                 it in angle brackets (i.e. <TAGNAME>)', '')
     }
     config_hint = ''
-    
+
     table_columns = ([
         Column("InstanceTitle", TEXT),
         Column("filename_plot", TEXT),
@@ -64,7 +63,7 @@ class CMSJobs(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         try:
-            self.cat_names = self.config['categories'].split('|')
+            self.cat_names = filter(lambda x: x != '', self.config['categories'].split('|'))
             self.pledge = self.config['pledge']
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
@@ -82,9 +81,8 @@ class CMSJobs(hf.module.ModuleBase):
         self.source_url = []
         self.source_url.append(self.source.getSourceUrl())
         self.statistics_db_value_list = []
-  
-    def extractData(self):
 
+    def extractData(self):
         import matplotlib
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
@@ -96,63 +94,6 @@ class CMSJobs(hf.module.ModuleBase):
         webpage = open(self.source.getTmpPath())
         strwebpage = webpage.read()
         tree = lxml.html.parse(StringIO.StringIO(strwebpage))
-        
-        # Get lists for startdates, categories, data
-        startdatelist = tree.findall(".//s_date")
-        catlist = tree.findall(".//%s" % str(self.config['category_tag']))
-        datalist = tree.findall(".//%s" % str(self.config['data_tag']))
-        
-        # Get different StartDates
-        StartDates = []
-        for i in range(1, len(startdatelist)):
-            StartDate = startdatelist[i].text_content()
-            if not StartDate in StartDates:
-                StartDates.append(StartDate)
-
-        # Get categories and add them to the category list derived from
-        # the config file if they are not already listed there
-        for i in range(1, len(catlist)):
-            Category = catlist[i].text_content()
-            if not Category in self.cat_names:
-                self.cat_names.append(Category)
-        self.cat_names.append('total')
-
-        # Initialize nested job list: Jobs[c][t]
-        Jobs = [[0 for t in range(len(StartDates))] for c in range(len(self.cat_names))]
-        for i in range(1, len(datalist)):
-            iStartDate = startdatelist[i].text_content()
-            iCategory = catlist[i].text_content()
-            iData = int(datalist[i].text_content())
-            t = StartDates.index(iStartDate)
-            c = self.cat_names.index(iCategory)
-            Jobs[c][t] = iData
-
-        # Calculate derived statistics
-        minJobs = [0 for c in range(len(self.cat_names))]
-        maxJobs = [0 for c in range(len(self.cat_names))]
-        avgJobs = [0 for c in range(len(self.cat_names))]
-        JobFractions = [[0 for t in range(len(StartDates))] for c in range(len(self.cat_names))]
-        for t in range(len(StartDates)):
-            Jobs[len(self.cat_names)-1][t] = 0
-            for c in range(len(self.cat_names)-1):
-                Jobs[len(self.cat_names)-1][t] += Jobs[c][t]
-        for c in range(len(self.cat_names)):
-            minJobs[c] = min(Jobs[c])
-            maxJobs[c] = max(Jobs[c])
-            for t in range(len(StartDates)):
-                if Jobs[len(self.cat_names)-1][t] > 0:
-                    JobFractions[c][t] = 100.0 * Jobs[c][t] / float(Jobs[len(self.cat_names)-1][t])
-                else:
-                    JobFractions[c][t] = 0.0
-                avgJobs[c] += Jobs[c][t]
-            avgJobs[c] /= len(StartDates)
-            self.statistics_db_value_list.append({'CatName': self.cat_names[c],
-                    'JobsCurrentHour': Jobs[c][len(StartDates)-1],
-                    'JobFracsCurrentHour': '%.1f' % JobFractions[c][len(StartDates)-1],
-                    'JobsLastHour': Jobs[c][len(StartDates)-2],
-                    'JobFracsLastHour': '%.1f' % JobFractions[c][len(StartDates)-2],
-                    'MinJobs': minJobs[c], 'MaxJobs': maxJobs[c],
-                    'AvgJobs': avgJobs[c]})
 
         # Function to convert raw time data given in UTC to local time zone
         def ChangeTimeZone(TimeStringIn, InFormatString, OutFormatString):
@@ -160,21 +101,52 @@ class CMSJobs(hf.module.ModuleBase):
                     tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
             return(Date.strftime(OutFormatString))
 
-        # Change times to local
-        StartDatesRaw = StartDates[:]
-        for t in range(len(StartDates)):
-            StartDates[t] = ChangeTimeZone(StartDates[t], "%d-%b-%y %H:%M:%S",
-                    "%d-%b-%y %H:%M:%S")
+        # Get lists for startdates, categories, data
+        timeseries = {}
+        for entry in tree.findall('.//jobs/item'):
+            start_date = entry.find('s_date').text_content()
+            cat = entry.find(str(self.config['category_tag'])).text_content()
+            value = entry.find(str(self.config['data_tag'])).text_content()
+            start_date = ChangeTimeZone(start_date, "%d-%b-%y %H:%M:%S", "%Y-%m-%d %H:%M:%S")
+            timeseries.setdefault(start_date, {})[cat] = int(value)
+            if cat not in self.cat_names:
+                self.cat_names.append(cat)
+
+        # Get categories and add them to the category list derived from
+        # the config file if they are not already listed there
+        category_overview = {}
+        for tp in timeseries:
+            timeseries[tp]['total'] = sum(timeseries[tp].values())
+            for cat in (self.cat_names + ['total']):
+                category_overview.setdefault(cat, {})[tp] = timeseries[tp].get(cat, 0)
+
+        time_points = sorted(timeseries)
+        current_hour = time_points[-1]
+        last_hour = time_points[-2]
+        for cat in self.cat_names:
+            jobs_current = timeseries[current_hour].get(cat, 0)
+            jobs_last = timeseries[last_hour].get(cat, 0)
+            frac_current = jobs_current / float(max(1, timeseries[current_hour].get('total', 0)))
+            frac_last = jobs_last / float(max(1, timeseries[last_hour].get('total', 0)))
+            job_list = category_overview.get(cat, {}).values()
+            cat_data = {'CatName': cat,
+                'JobsCurrentHour': jobs_current,
+                'JobFracsCurrentHour': '%.1f' % (100.0 * frac_current),
+                'JobsLastHour': jobs_last,
+                'JobFracsLastHour': '%.1f' % (100.0 * frac_last),
+                'MinJobs': min(job_list), 'MaxJobs': max(job_list),
+                'AvgJobs': sum(job_list) / float(max(1, len(timeseries)))}
+            self.statistics_db_value_list.append(cat_data)
 
         data['InstanceTitle'] = self.config['name']
         data['IntervalStart'] = ChangeTimeZone(tree.find(".//start").text_content(
                 ).split(".")[0], "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
         data['IntervalEnd'] = ChangeTimeZone(tree.find(".//end").text_content(
                 ).split(".")[0], "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
-        data['CurrentHourStart'] = StartDates[len(StartDates)-1].split(' ')[1]
+        data['CurrentHourStart'] = current_hour.split(' ')[1]
         data['CurrentHourEnd'] = data['IntervalEnd'].split(' ')[1]
-        data['LastHourStart'] = StartDates[len(StartDates)-2].split(' ')[1]
-        data['LastHourEnd'] = StartDates[len(StartDates)-1].split(' ')[1]
+        data['LastHourStart'] = last_hour.split(' ')[1]
+        data['LastHourEnd'] = data['CurrentHourStart']
         data['status'] = 1.0
         if self.pledge_mode == 1:
             yhline = int(tree.find(".//{}".format(self.pledge)).text_content())
@@ -185,16 +157,16 @@ class CMSJobs(hf.module.ModuleBase):
         ### Plot data
 
         Colors = []
-        for i in range(len(self.cat_names)-1):
+        for i in range(len(self.cat_names)):
             # for list of colormaps see http://wiki.scipy.org/Cookbook/Matplotlib/Show_colormaps
-            Colors.append(cm.Spectral(1.0 - i/max(float(len(self.cat_names)-2),1.0), 1))
+            Colors.append(cm.Spectral(1.0 - i/max(float(len(self.cat_names)),1.0), 1))
             # Colors.append(cm.spectral((i+1)/float(len(self.cat_names)-0), 1))
             # Colors.append(cm.jet(i/float(len(self.cat_names)-2), 1))
             # Colors.append(cm.gist_earth((i+1)/float(len(self.cat_names)-1), 1))
             # Colors.append(cm.RdBu(1.0 - i/float(len(self.cat_names)-2), 1))
             # Colors.append(cm.YlGnBu(1.0 - i/float(len(self.cat_names)-2), 1))
 
-        nbins = len(StartDates)
+        nbins = len(time_points)
         if nbins == 0:
             # break image creation if there are no jobs
             data['error_string'] = "No plot is generated because data source contains no jobs to be displayed."
@@ -202,30 +174,38 @@ class CMSJobs(hf.module.ModuleBase):
         else:
             ind = np.arange(nbins)   # the x locations for the groups
             width = 1.00   # the width of the bars: can also be len(x) sequence
-            max_val = maxJobs[len(self.cat_names)-1]
+            max_val = max(category_overview['total'].values())
             xlabels = [0]*nbins
-            for i in range(0,nbins):
+            for i in range(0, nbins):
                 if i % 2 == 0:
-                    DateLabel = StartDates[i].split(' ')[0].split('-')
-                    TimeLabel = StartDates[i].split(' ')[1].split(':')
+                    DateLabel = time_points[i].split(' ')[0].split('-')
+                    TimeLabel = time_points[i].split(' ')[1].split(':')
                     xlabels[i] = DateLabel[0] + '-' + DateLabel[1] + '\n' + \
                             TimeLabel[0] + ':' + TimeLabel[1]
                 else:
                     xlabels[i] = ''
 
             # calculate bottom levels in order to enforce stacking
-            cat_bottoms = [[0 for t in range(len(StartDates))] for c in range(
-                    len(self.cat_names)-1)]
-            for cSet in range(1,len(self.cat_names)-1):
-                for cGet in range(0,cSet):
-                    for t in range(len(StartDates)):
-                        cat_bottoms[cSet][t] += Jobs[cGet][t]
+            cat_bottoms = [[0] * len(time_points)] * len(self.cat_names)
+            for cat_idx, cat in enumerate(self.cat_names):
+                if cat_idx > 0:
+                    cat_bottoms[cat_idx] = list(cat_bottoms[cat_idx - 1])
+                for t_idx, tp in enumerate(time_points):
+                    cat_bottoms[cat_idx][t_idx] += category_overview.get(cat, {}).get(tp, 0)
 
             # Create figure and plot job numbers of the different categories
             fig = self.plt.figure(figsize=(10,5.8))
             axis = fig.add_subplot(111)
-            p = [axis.bar(ind, Jobs[c], width, color=Colors[c], bottom=cat_bottoms[c]
-                    ) for c in range(len(self.cat_names)-1)]
+            p = []
+            for cat_idx, cat in enumerate(self.cat_names):
+                values = []
+                for tp in time_points:
+                    values.append(category_overview[cat][tp])
+                if cat_idx > 0:
+                    p.append(axis.bar(ind, values, width, color=Colors[cat_idx],
+                        bottom=cat_bottoms[cat_idx - 1]))
+                else:
+                    p.append(axis.bar(ind, values, width, color=Colors[cat_idx]))
             if self.pledge_mode > 0:
                 l = axis.axhline(y=yhline, linewidth=3.0, color='Black')
             else:
@@ -267,7 +247,7 @@ class CMSJobs(hf.module.ModuleBase):
     def fillSubtables(self, parent_id):
         self.subtables['statistics'].insert().execute(
                 [dict(parent_id=parent_id, **row) for row in self.statistics_db_value_list])
-    
+
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['statistics'].select().where(
