@@ -28,7 +28,7 @@
 <tr class=${group['status']}>
 <td>${group['type']}</td>
 <td>${group['hostName']}</td>
-<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td><a href=${str(url) + '?host=' + group['hostName'] + '&time=' + group['timeStamp'] + '&metricfqan=' + group['metricfqan']}>${group['status']}</a></td>
 <td>${group['metric']}</td>
 <td>${group['timeStamp']}</td>
 </tr>
@@ -50,7 +50,7 @@
 <tr class=${group['status']}>
 <td>${group['type']}</td>
 <td>${group['hostName']}</td>
-<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td><a href=${str(url) + '?host=' + group['hostName'] + '&time=' + group['timeStamp'] + '&metricfqan=' + group['metricfqan']}>${group['status']}</a></td>
 <td>${group['metric']}</td>
 <td>${group['timeStamp']}</td>
 </tr>
@@ -72,7 +72,7 @@
 <tr class=${group['status']}>
 <td>${group['type']}</td>
 <td>${group['hostName']}</td>
-<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
+<td><a href=${str(url) + '?host=' + group['hostName'] + '&time=' + group['timeStamp'] + '&metricfqan=' + group['metricfqan']}>${group['status']}</a></td>
 <td>${group['metric']}</td>
 <td>${group['timeStamp']}</td>
 </tr>
@@ -80,25 +80,4 @@
  </table>
 </div>
 
-<input type="button" value="summary results" onfocus="this.blur()" onclick="$('#${module.instance_name}_summary_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_summary_details" style="display:none;">
-<table class='TableData' >
-<tr class="TableHeader">
-<td>Element Type</td>
-<td>Element Name</td>
-<td>Status</td>
-<td>Test Name</td>
-<td>Test Time</td>
-</tr>
-%for i,group in enumerate(summary_list):
-<tr class=${group['status']}>
-<td>${group['type']}</td>
-<td>${group['hostName']}</td>
-<td><a href=${str(url) + '?hostName=' + group['hostName'] + '&flavour=' + group['type'] + '&metric=' + group['metric'] + '&timeStamp=' + group['timeStamp']}>${group['status']}</a></td>
-<td>${group['metric'][8:]}</td>
-<td>${group['timeStamp']}</td>
-</tr>
-%endfor
- </table>
-</div>
 </%def>
