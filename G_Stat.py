@@ -38,7 +38,7 @@ class G_Stat(hf.module.ModuleBase):
         Column('service_name', TEXT),
         Column('current_state', TEXT), 
         Column('information', TEXT),
-        Column('last_check', DATETIME),
+        Column('last_check', TIMESTAMP),
         Column('error_info', TEXT)
     ], [])}
 

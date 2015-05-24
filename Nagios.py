@@ -42,7 +42,7 @@ class Nagios(hf.module.ModuleBase):
         Column('status_short', TEXT),
         Column('status_long', TEXT),
         Column('status_machine_readable', TEXT),
-        Column('lastcheck', DATETIME), # datetime of last check
+        Column('lastcheck', TIMESTAMP), # datetime of last check
         Column('lastcheck_duration', TEXT), # lastcheck_duration of last check
         Column('attempt', TEXT) # specifies the number of attempts
         ], [])}

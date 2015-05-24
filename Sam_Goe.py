@@ -42,7 +42,7 @@ class Sam_Goe(hf.module.ModuleBase):
         Column('name', TEXT),
         Column('status', TEXT),
         Column('output_summary', TEXT),
-        Column('execution_time', DATETIME)
+        Column('execution_time', TIMESTAMP)
     ], [])}
 
     def prepareAcquisition(self):
