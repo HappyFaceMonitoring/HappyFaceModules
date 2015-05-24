@@ -216,5 +216,5 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-        data['details'] = map(dict, details_list)
+        data['details'] = sorted(map(dict, details_list), key = lambda group: group['node'])
         return data
