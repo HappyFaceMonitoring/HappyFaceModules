@@ -9,7 +9,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
     config_keys = {
         'watch_jobs': ('Colon separated list of the jobs to watch on the pools', ''),
         'pool_match_string': ('Watch only pools that match the given strings', 'rT_cms, rT_ops'),
-        'critical_queue_threshold': ('Job is bad if the number of queued tasks exceeds the threshold', '6'),
+        'critical_queue_threshold': ('Job is bad if the ratio of queued tasks to active tasks exceeds the threshold', '0.25'),
         'source': ('Download command for the qstat XML file', ''),
     }
     config_hint = ''
@@ -39,7 +39,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
     def prepareAcquisition(self):
         self.watch_jobs = map(strip, self.config['watch_jobs'].split(','))
         self.pool_match_string = map(strip, self.config['pool_match_string'].split(',')) 
-        self.critical_queue_threshold = self.config['critical_queue_threshold']
+        self.critical_queue_threshold = float(self.config['critical_queue_threshold'])
 
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set')
         self.source = hf.downloadService.addDownload(self.config['source'])
@@ -94,6 +94,12 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         # calculate happiness as ratio of queued pools to total pools,
         # be sad if there is a critical queue
         data['status'] = 1.0
+        for v in summary_dict.values():
+            queue_ratio = v['queued'] / max(1, float(v['max']))
+            if queue_ratio > 0:
+              data['status'] = min(data['status'], 0.5)
+            if queue_ratio > self.critical_queue_threshold:
+              data['status'] = 0
         self.job_summary_db_value_list = [{'job':job, 'active':v['active'], 'max':v['max'], 'queued':v['queued']} for job,v in summary_dict.iteritems()]
         return data
 
@@ -108,14 +114,16 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         summary_list = self.subtables['summary'].select().where(self.subtables['summary'].c.parent_id==self.dataset['id']).execute().fetchall()
         summary_list = map(dict, summary_list)
         for i,group in enumerate(summary_list):
-            if group['queued'] >= int(self.dataset['critical_queue_threshold']):
+            queue_ratio = group['queued'] / max(1, float(group['max']))
+            if queue_ratio >= float(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
             elif group['queued'] > 0:
                 group['status'] = 'warning'
             else:
                 group['status'] = 'ok'
         for i,group in enumerate(info_list):
-            if group['queued'] >= int(self.dataset['critical_queue_threshold']):
+            queue_ratio = group['queued'] / max(1, float(group['max']))
+            if queue_ratio >= float(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
             elif group['queued'] > 0:
                 group['status'] = 'warning'
