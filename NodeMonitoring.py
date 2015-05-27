@@ -66,6 +66,10 @@ class NodeMonitoring(hf.module.ModuleBase):
                 warning, set to -1 to disable warning', ''),
         'eval_threshold_critical_percentage': ('number of jobs above which status is set to \
                 critical, set to -1 to disable critical', ''),
+        'plot_left': ('left plot margin [relative to figure]', '0.05'),
+        'plot_width': ('plot width [relative to figure]', '0.78'),
+        'image_width': ('image width [inches]', '11.0'),
+        'image_height': ('image width [inches]', '5.6'),
         'plot_filter_node_number': ('maximum number of worker nodes that are to \
                 appear in the plot', ''),
         'plot_filter_attribute_value': ('attribute value according to which the \
@@ -77,7 +81,7 @@ class NodeMonitoring(hf.module.ModuleBase):
         'plot_line_critical': ('set to 1 to draw a line indicating the critical \
                 threshold in the plot, set to 0 to hide this line', ''),
 	'eval_mode': ('1 total, 2 local, 3 global', '1'),
-	'table_link_url': ('I really do not know what this parameter is for!', ''),
+	'table_link_url': ('Link template for table entries', ''),
     }
     config_hint = ''
     
@@ -139,14 +143,20 @@ class NodeMonitoring(hf.module.ModuleBase):
         # set rack names and associated clusters
         rack_001_010 = {
             'rack_string': 'gridka_rack001-010',
-            'clusters': ('007','008','009','010')}
+            'clusters': map(lambda x: '%03d' % (x+1), range(0,10))}
         rack_011_020 = {
             'rack_string': 'gridka_rack011-020',
-            'clusters': ('013','014','015','016')}
+            'clusters': map(lambda x: '%03d' % (x+1), range(10,20))}
         rack_021_030 = {
             'rack_string': 'gridka_rack021-030',
-            'clusters': ('028')}
-        racks = [rack_001_010, rack_011_020, rack_021_030]
+            'clusters': map(lambda x: '%03d' % (x+1), range(20,30))}
+        rack_101_110 = {
+            'rack_string': 'gridka_rack101-110',
+            'clusters': map(lambda x: '%03d' % (x+1), range(100,110))}
+        rack_111_120 = {
+            'rack_string': 'gridka_rack111-120',
+            'clusters': map(lambda x: '%03d' % (x+1), range(110,120))}
+        racks = [rack_001_010, rack_011_020, rack_021_030, rack_101_110, rack_111_120]
 
         import matplotlib
         import matplotlib.pyplot as plt
@@ -314,10 +324,10 @@ class NodeMonitoring(hf.module.ModuleBase):
                                 SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
                                         replace('RACK', racks[r]['rack_string']).\
                                         replace('CLUSTER', cluster[0] + '-' + cluster[1]).\
-                                        replace('HOST', PrimaryKeys[PlotIndices[k]] + '.gridka.de')
+                                        replace('HOST', PrimaryKeys[PlotIndices[k]])
                     elif self.primary_key == 'TaskMonitorId':
                         SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
-                                replace('TASKMONITORID', PrimaryKeys[PlotIndices[k]])
+                                replace('TASKMONITORID', PrimaryKeys[PlotIndices[k]].replace('wmagent_', ''))
                 self.statistics_db_value_list.append(SubtableEntry)
         
         # calculate bottom levels in order to enforce stacking
