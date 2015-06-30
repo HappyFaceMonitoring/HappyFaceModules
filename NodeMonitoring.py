@@ -76,8 +76,12 @@ class NodeMonitoring(hf.module.ModuleBase):
                 threshold in the plot, set to 0 to hide this line', ''),
         'plot_line_critical': ('set to 1 to draw a line indicating the critical \
                 threshold in the plot, set to 0 to hide this line', ''),
-	'eval_mode': ('1 total, 2 local, 3 global', '1'),
+	'eval_mode': ('1 total, 2 local, 3 global, 4 per node', '1'),
 	'table_link_url': ('I really do not know what this parameter is for!', ''),
+	'plot_left': ('left boundary of the plot', '0.01'),
+	'plot_width': ('width of the plot', '0.83'),
+	'image_height': ('heigth of the image', '7'),
+	'image_width': ('width of the image', '10'),
     }
     config_hint = ''
     
@@ -135,7 +139,7 @@ class NodeMonitoring(hf.module.ModuleBase):
         self.statistics_db_value_list = []
   
     def extractData(self):
-
+        
         # set rack names and associated clusters
         rack_001_010 = {
             'rack_string': 'gridka_rack001-010',
@@ -191,7 +195,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             if item[self.attribute] in AttributeValues:
                 Jobs[AttributeValues.index(item[self.attribute])][
                         PrimaryKeys.index(item[self.primary_key])] += 1
-
+        
         # Get total number of jobs across all categories per node
         TotalJobsPerNode = [0 for k in range(len(PrimaryKeys))]
         for k in range(len(PrimaryKeys)):
@@ -228,6 +232,9 @@ class NodeMonitoring(hf.module.ModuleBase):
                 Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
                 for k in range(len(PrimaryKeys)):
                     TotalEval += Statistics[k]
+            elif self.eval_mode == 4: # per node evaluation (individual nodes are checked for specific category and compared with all categories of the node)
+                i = AttributeValues.index(self.eval_attribute_value)
+                Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
             if TotalEval >= self.eval_threshold:
                 if self.eval_mode == 1: # total jobs evaluation
                     if self.eval_threshold_warning > -1:
@@ -260,6 +267,22 @@ class NodeMonitoring(hf.module.ModuleBase):
                             if 100.0 * Statistics[k] / float(TotalEval) >= float(
                                     self.eval_threshold_critical):
                                 data['status'] = 0.0
+                elif self.eval_mode == 4: # per node evaluation
+                    count = 0
+                    if self.eval_threshold_warning > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_warning):
+                                data['status'] = 0.5
+                    if self.eval_threshold_critical > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_critical):
+                                count += 1
+                                if count <= 1:
+                                    data['status'] = 0.5
+                                else:
+                                    data['status'] = 0.0
 
         ################################################################
         ### Plot data
