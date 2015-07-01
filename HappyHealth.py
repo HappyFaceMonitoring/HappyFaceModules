@@ -22,21 +22,21 @@ from sqlalchemy import *
 class HappyHealth(hf.module.ModuleBase):
     config_keys = {
         'directory':('Path of the directory to show its space', ''),
-        'space_stat_warn':('Percentage of free space until status is OK', ''),
-        'space_stat_crit':('Percentage of free space when status is critical', ''),
-        'load0_stat_warn':('load until status is OK', ''),
-        'load0_stat_crit':('load when status is critical', ''),
-        'load1_stat_warn':('load until status is OK', ''),
-        'load1_stat_crit':('load when status is critical', ''),
-        'load2_stat_warn':('load until status is OK', ''),
-        'load2_stat_crit':('load when status is critical', ''),
+        'space_stat_warn':('Percentage of free space until status is OK', '10'),
+        'space_stat_crit':('Percentage of free space when status is critical', '5'),
+        'load0_stat_warn':('load until status is OK', '2'),
+        'load0_stat_crit':('load when status is critical', '5'),
+        'load1_stat_warn':('load until status is OK', '2'),
+        'load1_stat_crit':('load when status is critical', '5'),
+        'load2_stat_warn':('load until status is OK', '2'),
+        'load2_stat_crit':('load when status is critical', '5'),
     }
     config_hint = ''
 
     table_columns = [
-        Column("space_total", INT),
-        Column("space_used", INT),
-        Column("space_free", INT),
+        Column("space_total", FLOAT),
+        Column("space_used", FLOAT),
+        Column("space_free", FLOAT),
         Column("avg_load_last_1min", FLOAT),
         Column("avg_load_last_5min", FLOAT),
         Column("avg_load_last_15min", FLOAT),
@@ -52,14 +52,16 @@ class HappyHealth(hf.module.ModuleBase):
     def prepareAcquisition(self):
         self.source_url = 'local'
         self.path = self.config["directory"]
-        self.sp_limit1 = self.config["space_stat_warn"]
-        self.sp_limit2 = self.config["space_stat_crit"]
+        self.sp_limit1 = float(self.config["space_stat_warn"])
+        self.sp_limit2 = float(self.config["space_stat_crit"])
         self.load_limit_warn = [self.config["load0_stat_warn"]]
         self.load_limit_crit = [self.config["load0_stat_crit"]]
         self.load_limit_warn.append(self.config["load1_stat_warn"])
         self.load_limit_crit.append(self.config["load1_stat_crit"])
         self.load_limit_warn.append(self.config["load2_stat_warn"])
         self.load_limit_crit.append(self.config["load2_stat_crit"])
+        self.load_limit_warn = map(float, self.load_limit_warn)
+        self.load_limit_crit = map(float, self.load_limit_crit)
 
     def extractData(self):
         st = os.statvfs(self.path)
@@ -84,7 +86,7 @@ class HappyHealth(hf.module.ModuleBase):
         elif freespace_percentage < self.sp_limit1:
             sp_status = 0.5
         else:
-            sp_status = 1.0	
+            sp_status = 1.0
 
         for i in range(3):
             if load[i] > self.load_limit_crit[i]:
@@ -93,6 +95,6 @@ class HappyHealth(hf.module.ModuleBase):
                 load_status[i] = 0.5
             else:
                 load_status[i] = 1.0
-        data["status"] = (load_status[0]+load_status[1]+load_status[2]+sp_status)/4.0	
+        data["status"] = min(load_status[0],load_status[1],load_status[2],sp_status)
 
         return data
