@@ -81,8 +81,12 @@ class NodeMonitoring(hf.module.ModuleBase):
                 threshold in the plot, set to 0 to hide this line', ''),
         'plot_line_critical': ('set to 1 to draw a line indicating the critical \
                 threshold in the plot, set to 0 to hide this line', ''),
-        'eval_mode': ('1 total, 2 local, 3 global', '1'),
+        'eval_mode': ('1 total, 2 local, 3 global, 4 per node', '1'),
         'table_link_url': ('Link template for table entries', ''),
+        'plot_left': ('left boundary of the plot', '0.01'),
+        'plot_width': ('width of the plot', '0.83'),
+        'image_height': ('heigth of the image', '7'),
+        'image_width': ('width of the image', '10'),
     }
     config_hint = ''
     
@@ -239,6 +243,9 @@ class NodeMonitoring(hf.module.ModuleBase):
                 Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
                 for k in range(len(PrimaryKeys)):
                     TotalEval += Statistics[k]
+            elif self.eval_mode == 4: # per node evaluation (individual nodes are checked for specific category and compared with all categories of the node)
+                i = AttributeValues.index(self.eval_attribute_value)
+                Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
             if TotalEval >= self.eval_threshold:
                 if self.eval_mode == 1: # total jobs evaluation
                     if self.eval_threshold_warning > -1:
@@ -271,6 +278,22 @@ class NodeMonitoring(hf.module.ModuleBase):
                             if 100.0 * Statistics[k] / float(TotalEval) >= float(
                                     self.eval_threshold_critical):
                                 data['status'] = 0.0
+                elif self.eval_mode == 4: # per node evaluation
+                    count = 0
+                    if self.eval_threshold_warning > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_warning):
+                                data['status'] = 0.5
+                    if self.eval_threshold_critical > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_critical):
+                                count += 1
+                                if count <= 1:
+                                    data['status'] = 0.5
+                                else:
+                                    data['status'] = 0.0
 
         ################################################################
         ### Plot data
