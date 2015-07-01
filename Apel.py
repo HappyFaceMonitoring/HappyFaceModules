@@ -38,13 +38,13 @@ class Apel(hf.module.ModuleBase):
         Column('apel_title', TEXT),
         Column('apel_description', TEXT),
         Column('apel_link', TEXT),
-        Column('last_build', DATETIME),
+        Column('last_build', TIMESTAMP),
     ], []
 
     subtable_columns = {
         'details_table': ([
-        Column('record_start', DATETIME),
-        Column('record_end', DATETIME),
+        Column('record_start', TIMESTAMP),
+        Column('record_end', TIMESTAMP),
         Column('record_count_database', INT), # record count in record_count_database
         Column('record_count_published', INT), # record count record_count_published
         Column('sync_status', TEXT), # synchronization status

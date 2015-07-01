@@ -35,7 +35,8 @@ class Sam2(hf.module.ModuleBase):
         'SERVICE_hf_warning_sam_warnings': ('if amount of warnings is euqal or greater than this threshold, service and happyface status will change to warning', '2'),
         'SERVICE_hf_critical_sam_warnings': ('if amount of warnings is equal or greater than this threshold, service and happyface status will change to critical', '4'),
         'SERVICE_hf_warning_sam_errors': ('if amount of errors is equal or grater than this threshold, service and happyface status will change to warning', '1'),
-        'SERVICE_hf_critical_sam_errors': ('if amount of errors is equal or greater than this threshold, service and happyface will change to status critical', '2')
+        'SERVICE_hf_critical_sam_errors': ('if amount of errors is equal or greater than this threshold, service and happyface will change to status critical', '2'),
+        'ce_blacklist': ('Colon separated group of CEs to exclude from the output', 'None')
     }
     config_hint = "Due to flexibility reasons you can configure crit and warn thresholds for each service, therefor replace SERVICE with service_type, use _ instead of - and all letters in lowercase"
 
@@ -52,7 +53,7 @@ class Sam2(hf.module.ModuleBase):
     }
 
 
-    def prepareAcquisition(self):                      
+    def prepareAcquisition(self):
         ## get config information
         self.service_flavour = map(strip, str(self.config['service_flavour']).split(','))
         self.service_type = map(strip, str(self.config['service_type']).split(','))
@@ -74,6 +75,7 @@ class Sam2(hf.module.ModuleBase):
             self.service_error_errors[stype] = int(self.config[str(service) + '_hf_critical_sam_errors'])
 
         self.blacklist = map(strip, self.config['blacklist'].split(','))
+	self.ce_blacklist = map(strip, self.config['ce_blacklist'].split(','))
         ## add download tyo queue
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.source_url = self.source.getSourceUrl()
@@ -83,7 +85,7 @@ class Sam2(hf.module.ModuleBase):
     def extractData(self):
         ##TODO currently no check if source is downloaded
         data = {}
-        help_stati = []        
+        help_stati = []
         ##Use json to extract the file
         with open(self.source.getTmpPath(), 'r') as f:
             services = json.loads(f.read())
@@ -109,14 +111,15 @@ class Sam2(hf.module.ModuleBase):
                                 errors += 1
                             tests += 1
                         self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['timestamp'], 'metric':test['metric_name'], 'status':status_str})
-                        self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp':test['timestamp'], 'metric':'summary_%s' % test['metric_name'], 'status':host_status})
+                    self.details_db_value_list.append({'type':service_type, 'hostName':service_host, 'timeStamp': '', 'metric':'summary_%s' % test['metric_name'], 'status':host_status})
+                    if service_host in self.ce_blacklist:
+                        continue
                     if tests < self.service_error_min_jobs[service_type] or errors >= self.service_error_errors[service_type] or warnings >= self.service_error_warnings[service_type]:
                         help_stati.append('critical')
-                        print 'critical'
                     elif tests < self.service_warning_min_jobs[service_type] or errors >= self.service_warning_errors[service_type] or warnings >= self.service_warning_warnings[service_type]:
                         help_stati.append('warning')
                     else:
-                        help_stati.append('ok')           
+                        help_stati.append('ok')
         ##parsing the file is done, now evaluate everything
         if 'critical' in help_stati:
             data['status'] = 0
@@ -135,6 +138,7 @@ class Sam2(hf.module.ModuleBase):
         self.service_flavour = map(strip, str(self.config['service_flavour']).split(','))
         self.service_type = map(strip, str(self.config['service_type']).split(','))
         self.blacklist = map(strip, self.config['blacklist'].split(','))
+        self.ce_blacklist = map(strip, self.config['ce_blacklist'].split(','))
         self.service_warning_min_jobs = {}
         self.service_error_min_jobs = {}
         self.service_warning_warnings = {}
@@ -164,13 +168,14 @@ class Sam2(hf.module.ModuleBase):
         ## sort data and seperate into blacklisted test, critical/warning tests and ok test and build a summary!
 
         for i,test in enumerate(map(dict, details_list)):
+            test['metricfqan'] = test['metric'].replace(' ', '%20').replace('/', '_')
             if test['hostName'] not in hosts and str(test['metric'][0:7]) != 'summary':
                 hosts[test['hostName']]={'ok': 0, 'warn':0, 'status':'ok', 'sum':0, 'crit':0, 'type':test['type']}
-                host_ordered.append({'name':test['hostName'], 'status':'ok', 'type':test['type']})
-            if test['metric'] in self.blacklist:
+            if test['metric'] in self.blacklist or test['hostName'] in self.ce_blacklist:
                 black_test.append(test)
             elif str(test['metric'][0:7]) == 'summary':
                 summary_list.append(test)
+                host_ordered.append({'name':test['hostName'], 'status': test['status'].lower(), 'hostStatus': test['status'], 'type':test['type']})
             elif str(test['status']) == 'warning':
                 warning_test.append(test)
                 hosts[test['hostName']]['warn'] += 1
@@ -193,11 +198,6 @@ class Sam2(hf.module.ModuleBase):
             else:
                 host['status'] = 'ok'
 
-        for i,host in enumerate(host_ordered):
-            host_ordered[i]['status'] = hosts[host['name']]['status']
-            for j,test in enumerate(map(dict, details_list)):
-                if test['hostName'] == host['name'] and str(test['metric'][0:7]) == 'summary':
-                    host_ordered[i]['hostStatus'] = test['status']
         data['hosts'] = host_ordered
         data['url'] = self.base_url
         data['ok_test'] = ok_test
