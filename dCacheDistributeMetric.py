@@ -47,9 +47,16 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
     }
     
     def ideal_fun(self, number_list, num_of_pools):
-        return_list = []
+        return_list = {'ideal': [],'with_offset': [],'xlist': []}
         for number in number_list:
-            return_list.append((max(0,(1.0/float(number))-(1.0/float(num_of_pools))))**0.5)
+            if float(number) not in return_list['xlist']:
+                return_list['ideal'].append(float((max(0,(1.0/float(number))-(1.0/float(num_of_pools))))**0.5))
+                return_list['xlist'].append(float(number))
+        sorted = zip(return_list['xlist'], return_list['ideal'])
+        sorted.sort()
+        return_list['xlist'], return_list['ideal']= zip(*sorted)
+        offset = np.array(np.interp(return_list['xlist'], [min(return_list['xlist']),max(return_list['xlist'])], [0.4, 0.07]))
+        return_list['with_offset'] = (np.array(return_list['ideal'])+offset).tolist()
         return return_list
 
     def prepareAcquisition(self):
@@ -99,8 +106,8 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             num_of_files = line[-1]
             dist_metric = line[1]
             namelist.append(name)
-            xlist.append(num_of_files)
-            ylist.append(dist_metric)
+            xlist.append(int(num_of_files))
+            ylist.append(float(dist_metric))
             self.details_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
         
         self.plt = plt
@@ -115,10 +122,11 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             scale_value = max_value // 4
         """
         ideal_list = self.ideal_fun(xlist, data['num_pools'])
-        
+        #para_list = np.array(np.interp(xlist, [min(xlist),max(xlist)], [0.07, 0.4])).tolist()
         p1 = axis.plot(xlist, ylist, 'bx')
-        p2 = axis.plot(xlist, ideal_list, 'r*')
-        plt.fill_between(xlist, np.array(ideal_list) + 20 , np.array(ideal_list) - 20 , alpha = 0.2)
+        #p2 = axis.plot(ideal_list['xlist'], ideal_list['ideal'], 'r*')
+        p3 = axis.fill_between(ideal_list['xlist'], ideal_list['ideal'], ideal_list['with_offset'], alpha=0.2, color='red')
+        #plt.fill_between(xlist, ideal_list , ideal_list, alpha = 0.2)
         
         axis.set_position([0.2,0.3,0.75,0.6])
         axis.set_ylabel('Usage of Pools')
