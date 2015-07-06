@@ -1,6 +1,7 @@
+
 # -*- coding: utf-8 -*-
 #
-# Copyright 2013 Institut fÃ¼r Experimentelle Kernphysik - Karlsruher Institut fÃ¼r Technologie
+# Copyright 2013 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -26,25 +27,25 @@ import pytz
 import json
 
 state_colors = {
-	'submitted': '#5CADFF',
-	'pending':   '#9D5CDE',
-	'running':   '#85CE9D',
-	'done':      '#0042A3',
-	'retrieved': '#000099',
-	'success':   '#009933',
-	'succeeded': '#009933',
-	'failed':    '#AA0000',
-	'aborted':   '#CC6060',
-	'cancelled': '#B48888',
-	'cooloff':   '#505050',
-	'unknown':   '#ADADAD',
+        'submitted': '#5CADFF',
+        'pending':   '#9D5CDE',
+        'running':   '#85CE9D',
+        'done':      '#0042A3',
+        'retrieved': '#000099',
+        'success':   '#009933',
+        'succeeded': '#009933',
+        'failed':    '#AA0000',
+        'aborted':   '#CC6060',
+        'cancelled': '#B48888',
+        'cooloff':   '#505050',
+        'unknown':   '#ADADAD',
 }
 
 def getcolor(label):
-	for k in state_colors.keys():
-		if k in label.lower():
-			return state_colors[k]
-	return None  # None makes way for the Colors defined during plotting
+        for k in state_colors.keys():
+                if k in label.lower():
+                        return state_colors[k]
+        return None  # None makes way for the Colors defined during plotting
 
 class NodeMonitoring(hf.module.ModuleBase):
 
@@ -80,8 +81,12 @@ class NodeMonitoring(hf.module.ModuleBase):
                 threshold in the plot, set to 0 to hide this line', ''),
         'plot_line_critical': ('set to 1 to draw a line indicating the critical \
                 threshold in the plot, set to 0 to hide this line', ''),
-	'eval_mode': ('1 total, 2 local, 3 global', '1'),
-	'table_link_url': ('Link template for table entries', ''),
+        'eval_mode': ('1 total, 2 local, 3 global, 4 per node', '1'),
+        'table_link_url': ('Link template for table entries', ''),
+        'plot_left': ('left boundary of the plot', '0.01'),
+        'plot_width': ('width of the plot', '0.83'),
+        'image_height': ('heigth of the image', '7'),
+        'image_width': ('width of the image', '10'),
     }
     config_hint = ''
     
@@ -238,6 +243,9 @@ class NodeMonitoring(hf.module.ModuleBase):
                 Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
                 for k in range(len(PrimaryKeys)):
                     TotalEval += Statistics[k]
+            elif self.eval_mode == 4: # per node evaluation (individual nodes are checked for specific category and compared with all categories of the node)
+                i = AttributeValues.index(self.eval_attribute_value)
+                Statistics = [Jobs[i][k] for k in range(len(PrimaryKeys))]
             if TotalEval >= self.eval_threshold:
                 if self.eval_mode == 1: # total jobs evaluation
                     if self.eval_threshold_warning > -1:
@@ -270,6 +278,22 @@ class NodeMonitoring(hf.module.ModuleBase):
                             if 100.0 * Statistics[k] / float(TotalEval) >= float(
                                     self.eval_threshold_critical):
                                 data['status'] = 0.0
+                elif self.eval_mode == 4: # per node evaluation
+                    count = 0
+                    if self.eval_threshold_warning > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_warning):
+                                data['status'] = 0.5
+                    if self.eval_threshold_critical > -1:
+                        for k in range(len(PrimaryKeys)):
+                            if 100.0 * Statistics[k] / float(TotalJobsPerNode[k]) >= float(
+                                    self.eval_threshold_critical):
+                                count += 1
+                                if count <= 1:
+                                    data['status'] = 0.5
+                                else:
+                                    data['status'] = 0.0
 
         ################################################################
         ### Plot data
