@@ -2,5 +2,17 @@
 <%inherit file="/module_base.html" />
 <%def name="content()">
 <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+<table></table>
+<input type="button" value="Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+<table class="TableData">
+    <tr class="TableHeader">
+    <td class="TestTableFirstCol" width="33%"> Poolname </td>
+    <td class="TestTableSecondCol" width="33%"> # of Files </td>
+    <td class="TestTableThirdCol" width="33%"> Distribution Metric </td>
+    </tr>
+</table>
+
+</div>
 
 </%def>

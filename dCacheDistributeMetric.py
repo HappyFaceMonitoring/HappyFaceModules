@@ -77,7 +77,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         #find number of pools
         source_tree = parse(open(self.pool_source_xml.getTmpPath()))
         root = source_tree.getroot()
-        #find pools andcount if disk-pool
+        #find pools and count if disk-pool
         root = root.findall('.//pool')
         for pool in root:
             groups = pool.findall('.//poolgroupref')
@@ -85,15 +85,6 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
                 if 'disk-only-pools' in group.attrib['name']:
                     data['num_pools'] += 1
                     break
-        #print data['num_pools']
-        """
-        plt.plot(xlist, ylist,'x')
-        plt.plot(sorted(xlist), self.ideal_function(sorted(xlist)),'o')
-        plt.xscale('log')
-        plt.show()
-        """
-        ######################################
-        ####PLOT#####################
         
         #extract name an file distribution
         dist_file = open(self.distribute_source.getTmpPath())
@@ -110,33 +101,19 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             ylist.append(float(dist_metric))
             self.details_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
         
+        #plotting
         self.plt = plt
         fig = self.plt.figure()
         axis = fig.add_subplot(111)
-        #ind = np.arange(len(xlist))
         width = 1.0
-        """max_value = max(ylist)
-        if max_value < 4.0:
-            scale_value = 0.2
-        else:
-            scale_value = max_value // 4
-        """
         ideal_list = self.ideal_fun(xlist, data['num_pools'])
-        #para_list = np.array(np.interp(xlist, [min(xlist),max(xlist)], [0.07, 0.4])).tolist()
         p1 = axis.plot(xlist, ylist, 'bx')
-        #p2 = axis.plot(ideal_list['xlist'], ideal_list['ideal'], 'r*')
-        p3 = axis.fill_between(ideal_list['xlist'], ideal_list['ideal'], ideal_list['with_offset'], alpha=0.2, color='red')
-        #plt.fill_between(xlist, ideal_list , ideal_list, alpha = 0.2)
-        
+        p2 = axis.fill_between(ideal_list['xlist'], ideal_list['ideal'], ideal_list['with_offset'], alpha=0.2, color='red')
         axis.set_position([0.2,0.3,0.75,0.6])
         axis.set_ylabel('Usage of Pools')
         axis.set_xlabel('Number of Files')
         axis.set_title('Distribute Imbalance Metric')
-        #axis.set_xticks(ind+width/2.)
-        #axis.set_xticklabels(datetime_list, rotation='vertical')
-        #axis.set_yticks(np.arange(0, max_value + scale_value, scale_value))
         axis.set_xscale('log')
-        
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_dist_metric.png'), dpi=100)
         data['filename_plot'] = self.instance_name + '_dist_metric.png'
