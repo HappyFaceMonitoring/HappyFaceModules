@@ -55,8 +55,7 @@
 %endfor
 %for i,title in enumerate(titles):
     <a style='top:${15*i+49}px; padding-bottom:2px;' href = '${title['link']}'>${title['name']}</a>
-    <a style="top:${15*i+50}px; left:171px; width:15px; z-index:6; background-image:url('${button_pic_in}');" href='${info_link_1}${title['name']}'></a>
-    <a style="top:${15*i+50}px; left:186px; width:15px; z-index:6; background-image:url('${button_pic_out}');" href='${info_link_2}${title['name']}'></a>
+    <a style="top:${15*i+50}px; left:171px; width:15px; z-index:6; background-image:url('${button_pic}');" href='${info_link}${title['name']}'></a>
 %endfor
 <a style='top:${height-51+5}px; padding-bottom:2px;' >Summary T1</a>
 <a style='top:${height-36+5}px; padding-bottom:2px;' >Summary T2</a>
