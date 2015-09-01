@@ -6,8 +6,8 @@ import modules.feedparser
 
 class RSSFeed(hf.module.ModuleBase):
     config_keys = {
-        'source': ('URL of the RSS feed', '')
-#        'entries': ('Number of entries', '-1'),
+        'source': ('URL of the RSS feed', ''),
+        'entries': ('Number of entries', '-1'),
 #        'days': ('Show only entries from the last n days', '7'),
 #        'hide_feed_title': ('Hide feed title', '0')
     }
@@ -31,7 +31,8 @@ class RSSFeed(hf.module.ModuleBase):
         if 'source' not in self.config: raise hf.exceptions.ConfigError('source option not set!')
         self.source = hf.downloadService.addDownload(self.config['source'])
         self.source_url = self.source.getSourceUrl()
-
+        self.entries = self.config['entries']
+        #self.days = self.config['days']
         self.status = 1.0
 
         self.details_db_value_list = []
