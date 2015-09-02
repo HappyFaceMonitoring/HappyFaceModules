@@ -65,7 +65,7 @@ class RSSFeed(hf.module.ModuleBase):
             pass
         
         if int(self.days) != -1:
-            time_diff = timedelta(days=self.days).total_seconds()
+            time_diff = timedelta(days=int(self.days)).total_seconds()
             best_before_time = time()-time_diff
         else:
             best_before_time = -1
@@ -93,7 +93,7 @@ class RSSFeed(hf.module.ModuleBase):
                 entries += 1
         
         #only show n entries
-        if self.entries != '-1':
+        if int(self.entries) != '-1':
             entries = int(self.entries)
             for i in range(-int(self.entries),0):
                 self.details_db_value_list.append(detail_help_list[i])
