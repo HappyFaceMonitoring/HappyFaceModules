@@ -2,22 +2,24 @@
 <%inherit file="/module_base.html" />
 <%def name="content()">
 % if len(feed_list) == 0:
-<p>No entries to display</p>
+    <p>No entries to display</p>
 % else:
-<dl>
-% for feed in feed_list:
-<dd><a href="${feed['link']}">
-${feed['title']}</a></dd>
+    <dl>
+    % for feed in feed_list:
+        % if feed['title'] != 'hide_title':
+            <dd><a href="${feed['link']}">
+            ${feed['title']}</a></dd>
+        % endif
 <%
 # Convert published time to local time
 from time import ctime
 published = ctime(feed['published'])
 %>
-<dd>Posted on <strong>${published}</strong></dd>
-<dd>
-${feed['content']}
-</dd>
-% endfor
-</dl>
+        <dd>Posted on <strong>${published}</strong></dd>
+        <dd>
+        ${feed['content']}
+        </dd>
+    % endfor
+    </dl>
 % endif
 </%def>
