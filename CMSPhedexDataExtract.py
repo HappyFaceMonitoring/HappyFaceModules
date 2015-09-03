@@ -328,10 +328,12 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         data['titles'] = name_mapper
         data['height'] = len(y_value_map) * 15 + 100
         data['width'] = int(660/(self.dataset['time_range']+1))
-        data['button_pic_in'] = self.config['button_pic_path_in']
-        data['button_pic_out'] = self.config['button_pic_path_out']
-        data['info_link_1'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
-        data['info_link_2'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
+        if self.config['link_direction'] == 'to':
+            data['button_pic'] = self.config['button_pic_path_in']
+            data['info_link'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
+        else:
+            data['button_pic'] = self.config['button_pic_path_out']
+            data['info_link'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
         data['eval_time'] = 'last %s hrs' % self.eval_time
         data['y_summary'] = y_summary
         data['x_summary'] = x_summary

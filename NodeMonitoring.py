@@ -22,7 +22,7 @@ import StringIO
 from sqlalchemy import *
 import numpy as np 
 from numpy import array
-from datetime import datetime
+from datetime import datetime,timedelta
 import pytz
 import json
 
@@ -87,6 +87,7 @@ class NodeMonitoring(hf.module.ModuleBase):
         'plot_width': ('width of the plot', '0.83'),
         'image_height': ('heigth of the image', '7'),
         'image_width': ('width of the image', '10'),
+        'eval_time': ('time to be evaluated (in h)', '24')
     }
     config_hint = ''
     
@@ -135,6 +136,11 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.table_link_url = self.config['table_link_url']
         except KeyError, ex:
             raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+        try:
+            self.eval_time = int(self.config['eval_time'])
+        except:
+            raise hf.exceptions.ConfigError('Parameter "eval_time" not specified, set to 24 hrs' % str(e))
+            self.eval_time = int(24)
         self.use_secondary_key = self.secondary_key <> ''
         if 'source_url' not in self.config:
             raise hf.exceptions.ConfigError('No source URL specified')
@@ -174,7 +180,30 @@ class NodeMonitoring(hf.module.ModuleBase):
         
         with open(self.source.getTmpPath()) as webpage:
             rawdata = json.load(webpage)
-
+        
+        # Function to convert raw time data given in UTC to local time zone
+        def ChangeTimeZone(TimeStringIn, InFormatString, OutFormatString):
+            Date = datetime.strptime(TimeStringIn, InFormatString).replace(
+                    tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
+            return(Date.strftime(OutFormatString))
+        
+        data['IntervalEnd'] = ChangeTimeZone(rawdata['meta']['date2'][0], 
+                "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
+        IntervalEnd = datetime.strptime(data['IntervalEnd'], "%d-%b-%y %H:%M:%S")
+        IntervalStart = IntervalEnd - timedelta(hours = self.eval_time)
+        data['IntervalStart'] = IntervalStart.strftime("%d-%b-%y %H:%M:%S")
+        
+        #filter rawdata for jobs finished in eval_time or still running
+        if self.eval_time != 24:
+            for item in rawdata['jobs']:
+                try:
+                    date = datetime.strptime(item['FinishedTimeStamp'], "%Y-%m-%dT%H:%M:%S").replace(
+                            tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
+                    if date < IntervalStart:
+                        rawdata['jobs'].remove(item)
+                except:
+                    pass
+        
         # Prepare different attribute values (either use those indicated in
         # config file or loop over data and get all different categories)
         AttributeValues = []
@@ -212,17 +241,6 @@ class NodeMonitoring(hf.module.ModuleBase):
         for k in range(len(PrimaryKeys)):
             for a in range(len(AttributeValues)):
                 TotalJobsPerNode[k] += Jobs[a][k]
-                
-        # Function to convert raw time data given in UTC to local time zone
-        def ChangeTimeZone(TimeStringIn, InFormatString, OutFormatString):
-            Date = datetime.strptime(TimeStringIn, InFormatString).replace(
-                    tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
-            return(Date.strftime(OutFormatString))
-
-        data['IntervalStart'] = ChangeTimeZone(rawdata['meta']['date1'][0], 
-                "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
-        data['IntervalEnd'] = ChangeTimeZone(rawdata['meta']['date2'][0], 
-                "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
         
         # Calculate module status
         data['status'] = 1.0
@@ -417,7 +435,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             # Configure plot layout
             fontTitle = FontProperties()
             fontTitle.set_size('medium')
-            axis.set_title('24 hours from ' + data['IntervalStart'] + ' to ' \
+            axis.set_title('%s hours from ' %self.eval_time + data['IntervalStart'] + ' to ' \
                     + data['IntervalEnd'] + ' (all times are local)',
                     fontproperties=fontTitle)
             axis.set_position([self.plot_left,0.08,self.plot_width,0.86])
