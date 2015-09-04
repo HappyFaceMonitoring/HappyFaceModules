@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2012 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+# Copyright 2012 Institut fÃ¼r Experimentelle Kernphysik - Karlsruher Institut fÃ¼r Technologie
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -42,23 +42,33 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             Column('name', TEXT),
             Column('number_of_files', INT),
             Column('dist_metric', FLOAT),
-            Column('number_of_pools', INT),
+            #Column('number_of_pools', INT),
+        ], []),
+        "out_of_range": ([
+            Column('name', TEXT),
+            Column('number_of_files', INT),
+            Column('dist_metric', FLOAT),
         ], []),
     }
+    def max_value(self, val):
+        return (0.04+float(2.0*(max(0,(1.0/float(val)))))**0.5)
     
-    def ideal_fun(self, number_list, num_of_pools):
-        return_list = {'ideal': [],'with_offset': [],'xlist': []}
-        for number in number_list:
-            if float(number) not in return_list['xlist']:
-                return_list['ideal'].append(float((max(0,(1.0/float(number))-(1.0/float(num_of_pools))))**0.5))
-                return_list['xlist'].append(float(number))
-        sorted = zip(return_list['xlist'], return_list['ideal'])
-        sorted.sort()
-        return_list['xlist'], return_list['ideal']= zip(*sorted)
-        offset = np.array(np.interp(return_list['xlist'], [min(return_list['xlist']),max(return_list['xlist'])], [0.4, 0.07]))
-        return_list['with_offset'] = (np.array(return_list['ideal'])+offset).tolist()
-        return return_list
-
+    def ideal_value(self, val, num_pools):
+        return (float((max(0,(1.0/float(val))-(1.0/float(num_pools))))**0.5))
+    
+    def topfunc(self, xlist):
+            ylist = []
+            for item in xlist:
+                #ylist.append(0.04+float(2.0*(max(0,(1.0/float(item)))))**0.5)
+                ylist.append(self.max_value(item))
+            return ylist
+    
+    def lowfunc(self, xlist, num_of_pools):
+            ylist =[]
+            for item in xlist:
+                ylist.append(self.ideal_value(item, num_of_pools))
+            return ylist
+    
     def prepareAcquisition(self):
         self.lower_variance_limit = self.config['lower_variance_limit']
         self.upper_variance_limit = self.config['upper_variance_limit']
@@ -68,6 +78,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         self.distribute_source = hf.downloadService.addDownload(self.config['distribute_source'])
         self.source_url = self.distribute_source.getSourceUrl()
         self.details_db_value_list = []
+        self.out_of_range_db_value_list = []
 
     def extractData(self):
         data = {}
@@ -100,16 +111,21 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             xlist.append(int(num_of_files))
             ylist.append(float(dist_metric))
             self.details_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
+            if not((self.ideal_value(num_of_files, data['num_pools'])-0.01) <= float(dist_metric) <= self.max_value(num_of_files)):
+                self.out_of_range_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
+        single_xlist = []
+        for number in xlist:
+            if float(number) not in single_xlist:
+                single_xlist.append(float(number))
+        srtd_xlist = sorted(single_xlist)
         
         #plotting
         self.plt = plt
         fig = self.plt.figure()
         axis = fig.add_subplot(111)
         width = 1.0
-        ideal_list = self.ideal_fun(xlist, data['num_pools'])
         p1 = axis.plot(xlist, ylist, 'bx')
-        p2 = axis.fill_between(ideal_list['xlist'], ideal_list['ideal'], ideal_list['with_offset'], alpha=0.2, color='red')
-        axis.set_position([0.2,0.3,0.75,0.6])
+        p2 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='red')
         axis.set_ylabel('Usage of Pools')
         axis.set_xlabel('Number of Files')
         axis.set_title('Distribute Imbalance Metric')
@@ -122,11 +138,17 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
 
     def fillSubtables(self, parent_id):
         self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
+        self.subtables['out_of_range'].insert().execute([dict(parent_id=parent_id, **row) for row in self.out_of_range_db_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-
+        
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         details_list = map(lambda x: dict(x), details_list)
- 
+        data['details'] = sorted(details_list, key = lambda k: k['number_of_files'])
+        
+        warn_list = self.subtables['out_of_range'].select().where(self.subtables['out_of_range'].c.parent_id==self.dataset['id']).execute().fetchall()
+        warn_list = map(lambda x: dict(x), warn_list)
+        data['warn_list'] = sorted(warn_list, key = lambda k: k['number_of_files'])
+        
         return data

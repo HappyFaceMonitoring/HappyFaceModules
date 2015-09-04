@@ -1,17 +1,25 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="/module_base.html" />
 <%def name="content()">
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-<table></table>
-<input type="button" value="Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+
+<img src=${module.dataset["filename_plot"].getArchiveUrl()} /><br>
+<input type="button" value="Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_out_of_range').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_out_of_range" style="display:none;">
 <table class="TableData">
     <tr class="TableHeader">
-    <td class="TestTableFirstCol" width="33%"> Poolname </td>
-    <td class="TestTableSecondCol" width="33%"> # of Files </td>
-    <td class="TestTableThirdCol" width="33%"> Distribution Metric </td>
+    <td class="TestTableFirstCol"> Processname </td>
+    <td class="TestTableSecondCol"> # of Files </td>
+    <td class="TestTableThirdCol"> Distribution Metric </td>
     </tr>
+    %for item in warn_list:
+        <tr class="TableData">
+        <td class="TestTableFirstCol"> ${item['name']} </td>
+        <td class="TestTableSecondCol"> ${item['number_of_files']} </td>
+        <td class="TestTableThirdCol"> ${item['dist_metric']} </td>
+        </tr>
+    %endfor
 </table>
+
 
 </div>
 
