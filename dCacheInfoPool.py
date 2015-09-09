@@ -263,18 +263,25 @@ class dCacheInfoPool(hf.module.ModuleBase):
             f = pool['free']
             p = pool['precious']
 
+            try:
+                perc = 100.0 * float(t-f) / float(t)
+            except ZeroDivisionError:
+                perc = -100.
+            except:
+                perc = -200.
+
             help_appending.append(pool['poolname'])
             help_appending.append(str('%0.2f' % t))
             help_appending.append(str('%0.2f' % f))
-            help_appending.append(str('%0.2f' % (100.0*float(t-f)/float(t))))
+            help_appending.append(str('%0.2f' % perc))
             help_appending.append(str('%0.2f' % p))
             help_appending.append(str('%0.2f' % r))
             if special_details is not None:
                 for i,special in enumerate(special_details):
                     try:
                         help_appending.append(str('%0.2f' % eval(special[2])))
-                    except ValueError, TypeError:
-                        help_appending.append('matherror')
+                    except ValueError:
+                        help_appending.append('valueerror')
                     except TypeError:
                         help_appending.append('typeerror')
 
