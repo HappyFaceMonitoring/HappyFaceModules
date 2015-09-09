@@ -24,12 +24,12 @@ class HappyHealth(hf.module.ModuleBase):
         'directory':('Path of the directory to show its space', ''),
         'space_stat_warn':('Percentage of free space until status is OK', '10'),
         'space_stat_crit':('Percentage of free space when status is critical', '5'),
-        'load0_stat_warn':('load until status is OK', '2'),
-        'load0_stat_crit':('load when status is critical', '5'),
-        'load1_stat_warn':('load until status is OK', '2'),
-        'load1_stat_crit':('load when status is critical', '5'),
+        'load0_stat_warn':('load until status is OK', '4'),
+        'load0_stat_crit':('load when status is critical', '8'),
+        'load1_stat_warn':('load until status is OK', '3'),
+        'load1_stat_crit':('load when status is critical', '6'),
         'load2_stat_warn':('load until status is OK', '2'),
-        'load2_stat_crit':('load when status is critical', '5'),
+        'load2_stat_crit':('load when status is critical', '4'),
     }
     config_hint = ''
 
