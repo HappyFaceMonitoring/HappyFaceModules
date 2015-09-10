@@ -232,12 +232,12 @@ class dCacheInfoPool(hf.module.ModuleBase):
 
         help_appending = []
         help_appending.append('none')
-        help_appending.append(str("<input id='" +self.dataset['instance'] + "_toggle_button' type='button' value='Toggle Selection' onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_toggle('a')/>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('total')>Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('free')>Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('total-free')>Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('precious')>Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('removable')>Plot Col</button>"))
+        help_appending.append(str("<input id='" +self.dataset['instance'] + "_toggle_button' type='button' value='Toggle Selection' onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_toggle('a')\"/>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('total')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('free')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('total-free')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('precious')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('removable')\">Plot Col</button>"))
 
         if special_details is not None:
           for i,special in enumerate(special_details):
