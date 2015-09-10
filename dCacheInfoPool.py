@@ -193,13 +193,13 @@ class dCacheInfoPool(hf.module.ModuleBase):
         overview_list.append(['Pools', self.dataset['num_pools']])
         overview_list.append(['Pools with status warning', self.dataset['warn_pools']])
         overview_list.append(['Pools with status critical', self.dataset['crit_pools']])
-        overview_list.append(['Pools with status warning [%]', float(self.dataset['warn_pools']) / self.dataset['num_pools']*100])
-        overview_list.append(['Pools with status critical [%]', float(self.dataset['crit_pools']) / self.dataset['num_pools']*100])
-        overview_list.append(['Total Space [' + self.dataset['unit'] + ']', '%.2f' %t])
-        overview_list.append(['Free Space [' + self.dataset['unit'] + ']', '%.2f' %f])
+        overview_list.append(['Pools with status warning [%]', '%.2f' % (float(self.dataset['warn_pools']) / self.dataset['num_pools']*100)])
+        overview_list.append(['Pools with status critical [%]', '%.2f' % (float(self.dataset['crit_pools']) / self.dataset['num_pools']*100)])
+        overview_list.append(['Total Space [' + self.dataset['unit'] + ']', '%.2f' % t])
+        overview_list.append(['Free Space [' + self.dataset['unit'] + ']', '%.2f' % f])
         overview_list.append(['Used Space [%]', '%.2f' %(100.0*(t - f)/t)])
-        overview_list.append(['Precious Space [' + self.dataset['unit'] + ']', '%.2f' %p])
-        overview_list.append(['Removable Space [' + self.dataset['unit'] + ']', '%.2f' %r])
+        overview_list.append(['Precious Space [' + self.dataset['unit'] + ']', '%.2f' % p])
+        overview_list.append(['Removable Space [' + self.dataset['unit'] + ']', '%.2f' % r])
 
         if special_overview is not None:
             for i,special in enumerate(special_overview):
@@ -266,7 +266,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             try:
                 perc = 100.0 * float(t-f) / float(t)
             except ZeroDivisionError:
-                perc = -100.
+                perc = -100. * (t - f)
             except:
                 perc = -200.
 
