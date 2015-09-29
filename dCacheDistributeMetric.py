@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2012 Institut fÃ¼r Experimentelle Kernphysik - Karlsruher Institut fÃ¼r Technologie
+# Copyright 2012 Institut fÃÂ¼r Experimentelle Kernphysik - Karlsruher Institut fÃÂ¼r Technologie
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -38,13 +38,12 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
     ], ['filename_plot']
 
     subtable_columns = {
-        "details": ([
+        "too_low": ([
             Column('name', TEXT),
             Column('number_of_files', INT),
             Column('dist_metric', FLOAT),
-            #Column('number_of_pools', INT),
         ], []),
-        "out_of_range": ([
+        "too_high": ([
             Column('name', TEXT),
             Column('number_of_files', INT),
             Column('dist_metric', FLOAT),
@@ -77,8 +76,8 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         self.distribute_source_url = self.config['distribute_source']
         self.distribute_source = hf.downloadService.addDownload(self.config['distribute_source'])
         self.source_url = self.distribute_source.getSourceUrl()
-        self.details_db_value_list = []
-        self.out_of_range_db_value_list = []
+        self.too_high_value_list = []
+        self.too_low_value_list = []
 
     def extractData(self):
         data = {}
@@ -110,9 +109,10 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             namelist.append(name)
             xlist.append(int(num_of_files))
             ylist.append(float(dist_metric))
-            self.details_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
-            if not((self.ideal_value(num_of_files, data['num_pools'])-0.01) <= float(dist_metric) <= self.max_value(num_of_files)):
-                self.out_of_range_db_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
+            if (float(dist_metric) < (self.ideal_value(num_of_files, data['num_pools'])-0.01)):
+                self.too_low_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
+            elif (float(dist_metric) > self.max_value(num_of_files)):
+                self.too_high_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
         single_xlist = []
         for number in xlist:
             if float(number) not in single_xlist:
@@ -125,7 +125,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         axis = fig.add_subplot(111)
         width = 1.0
         p1 = axis.plot(xlist, ylist, 'bx')
-        p2 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='red')
+        p2 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='green')
         axis.set_ylabel('Usage of Pools')
         axis.set_xlabel('Number of Files')
         axis.set_title('Distribute Imbalance Metric')
@@ -137,18 +137,18 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         return data
 
     def fillSubtables(self, parent_id):
-        self.subtables['details'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_db_value_list])
-        self.subtables['out_of_range'].insert().execute([dict(parent_id=parent_id, **row) for row in self.out_of_range_db_value_list])
+        self.subtables['too_low'].insert().execute([dict(parent_id=parent_id, **row) for row in self.too_low_value_list])
+        self.subtables['too_high'].insert().execute([dict(parent_id=parent_id, **row) for row in self.too_high_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-        details_list = map(lambda x: dict(x), details_list)
-        data['details'] = sorted(details_list, key = lambda k: k['number_of_files'])
+        too_low_list = self.subtables['too_low'].select().where(self.subtables['too_low'].c.parent_id==self.dataset['id']).execute().fetchall()
+        too_low_list = map(lambda x: dict(x), too_low_list)
+        data['too_low'] = sorted(too_low_list, key = lambda k: k['number_of_files'])
         
-        warn_list = self.subtables['out_of_range'].select().where(self.subtables['out_of_range'].c.parent_id==self.dataset['id']).execute().fetchall()
-        warn_list = map(lambda x: dict(x), warn_list)
-        data['warn_list'] = sorted(warn_list, key = lambda k: k['number_of_files'])
+        too_high_list = self.subtables['too_high'].select().where(self.subtables['too_high'].c.parent_id==self.dataset['id']).execute().fetchall()
+        too_high_list = map(lambda x: dict(x), too_high_list)
+        data['too_high'] = sorted(too_high_list, key = lambda k: k['number_of_files'])
         
         return data
