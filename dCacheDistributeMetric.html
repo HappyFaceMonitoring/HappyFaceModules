@@ -1,0 +1,43 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+<%def name="content()">
+
+<img src=${module.dataset["filename_plot"].getArchiveUrl()} /><br>
+<input type="button" value="show low datasets" onfocus="this.blur()" onclick="$('#${module.instance_name}_too_high').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_too_high" style="display:none;">
+<table class="TableData">
+    <tr class="TableHeader">
+    <td class="TestTableFirstCol"> Dataset </td>
+    <td class="TestTableSecondCol"> # of Files </td>
+    <td class="TestTableThirdCol"> Distribution Metric </td>
+    </tr>
+    %for item in too_low:
+        <tr class="TableData">
+        <td class="TestTableFirstCol"> ${item['name']} </td>
+        <td class="TestTableSecondCol"> ${item['number_of_files']} </td>
+        <td class="TestTableThirdCol"> ${item['dist_metric']} </td>
+        </tr>
+    %endfor
+</table>
+
+</div>
+
+<input type="button" value="show high datasets" onfocus="this.blur()" onclick="$('#${module.instance_name}_too_low').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_too_low" style="display:none;">
+<table class="TableData">
+    <tr class="TableHeader">
+    <td class="TestTableFirstCol"> Dataset </td>
+    <td class="TestTableSecondCol"> # of Files </td>
+    <td class="TestTableThirdCol"> Distribution Metric </td>
+    </tr>
+    %for item in too_high:
+        <tr class="TableData">
+        <td class="TestTableFirstCol"> ${item['name']} </td>
+        <td class="TestTableSecondCol"> ${item['number_of_files']} </td>
+        <td class="TestTableThirdCol"> ${item['dist_metric']} </td>
+        </tr>
+    %endfor
+</table>
+
+</div>
+</%def>
