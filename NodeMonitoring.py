@@ -243,6 +243,7 @@ class NodeMonitoring(hf.module.ModuleBase):
                 TotalJobsPerNode[k] += Jobs[a][k]
         
         # Calculate module status
+        # a 'node' is the class of grouping, i.e. one line in the plot (a host, a workflow, ...)
         data['status'] = 1.0
         if self.eval_threshold > -1:
             TotalEval = 0
@@ -362,7 +363,7 @@ class NodeMonitoring(hf.module.ModuleBase):
                     if self.primary_key == 'WNHostName':
                         cluster = PrimaryKeys[PlotIndices[k]].upper().split('-')
                         for r in range(len(racks)):
-                            if cluster[1] in racks[r]['clusters']:
+                            if cluster[0]!='UNKNOWN' and cluster[1] in racks[r]['clusters']:
                                 SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
                                         replace('RACK', racks[r]['rack_string']).\
                                         replace('CLUSTER', cluster[0] + '-' + cluster[1]).\
