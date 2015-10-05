@@ -1,47 +1,52 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="/module_base.html" />
+
 <%def name="content()">
 <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+
 <br/>
+
 <script type="text/javascript">
 $(function() {
-function handle_ajax_response(data) {
-$('#${module.instance_name}_spinner').remove();
-if(data["status"] == "success") {
-var table = $('#${module.instance_name}_details table');
-console.log(table);
-console.log(data["data"].length);
-console.log(data["data"][0]);
-for(var i = 0; i < data["data"].length; i++) {
-var row = data["data"][i];
-var name = row["name"]
-/*table.append("<tr class=\"report\" style=\"background-color: "+row["bg_color"]+"\" ><td>"+row["name"]+"</td>"
-+ "<td>"+row["bare_total_files"]+" files<br />"+row["bare_total_size"]+" GiB</td>"
-+ "<td>"+row["bare_on_disk_files"]+" files"+row["bare_on_disk_files_rel"]+"%<br />"
-+row["bare_on_disk_size"]+" GiB "+row["bare_on_disk_size_rel"]+"%</td>"
-+ "<td>"+row["total_on_disk_files"]+"<br />"+row["total_on_disk_size"]+" GiB</td></tr>");*/
-}
-}
-else {
-// Todo: Give user some feedback
-}
-}
-downloaded_additional_data = false;
-$('#${module.instance_name}_toggle').click(function() {
-$('#${module.instance_name}_details').toggle();
-if(!downloaded_additional_data) {
-downloaded_additional_data = true;
-$.ajax("${module.ajaxUrl()}", {
-error: function(jqXHR, textStatus, errorThrown) {
-handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
-},
-success: function(data, textStatus, jqXHR) {
-handle_ajax_response(data);
-2},
-dataType: "json"
-});
-}
-});
+	function handle_ajax_response(data) {
+		$('#${module.instance_name}_spinner').remove();
+		if(data["status"] == "success") {
+			var table = $('#${module.instance_name}_details table');
+			console.log(table);
+			console.log(data["data"].length);
+			console.log(data["data"][0]);
+			for(var i = 0; i < data["data"].length; i++) {
+				var row = data["data"][i];
+				var name = row["name"]
+				/*table.append("<tr class=\"report\" style=\"background-color: "+row["bg_color"]+"\" ><td>"+row["name"]+"</td>"
+				+ "<td>"+row["bare_total_files"]+" files<br />"+row["bare_total_size"]+" GiB</td>"
+				+ "<td>"+row["bare_on_disk_files"]+" files"+row["bare_on_disk_files_rel"]+"%<br />"
+				+row["bare_on_disk_size"]+" GiB "+row["bare_on_disk_size_rel"]+"%</td>"
+				+ "<td>"+row["total_on_disk_files"]+"<br />"+row["total_on_disk_size"]+" GiB</td></tr>");*/
+			}
+			
+		}
+		else {
+			// Todo: Give user some feedback
+		}
+	}
+	downloaded_additional_data = false;
+	$('#${module.instance_name}_toggle').click(function() {
+		$('#${module.instance_name}_details').toggle();
+		if(!downloaded_additional_data) {
+			downloaded_additional_data = true;
+			$.ajax("${module.ajaxUrl()}", {
+				error: function(jqXHR, textStatus, errorThrown) {
+					handle_ajax_response({"status": "error", "code": 0, "reason": errorThrown});
+				},
+				
+				success: function(data, textStatus, jqXHR) {
+					handle_ajax_response(data);
+				2},
+				dataType: "json"
+			});
+		}
+	});
 });
 </script>
 <input type="button" value="show/hide summary" onfocus="this.blur()" id="${module.instance_name}_toggle" />
@@ -51,24 +56,25 @@ dataType: "json"
 </p>
 <br>
 <table class="TableData">
-%if module.dataset['SecondaryKey'] == '':
-<tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
-%for entry in statistics:
-%if entry['PrimaryKeyURL'] == '':
-<tr><td>${entry['PrimaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
-%else:
-<tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
-%endif
-%endfor
-%else:
-<tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['SecondaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
-%for entry in statistics:
-%if entry['PrimaryKeyURL'] == '':
-<tr><td>${entry['PrimaryKey']}</td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
-%else:
-<tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
-%endif
-%endfor
-%endif
+    %if module.dataset['SecondaryKey'] == '':
+        <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
+        %for entry in statistics:
+            %if entry['PrimaryKeyURL'] == '':
+                <tr><td>${entry['PrimaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %else:
+                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %endif
+        %endfor
+    %else:
+        <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['SecondaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
+        %for entry in statistics:
+            %if entry['PrimaryKeyURL'] == '':
+                <tr><td>${entry['PrimaryKey']}</td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %else:
+                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+            %endif
+        %endfor
+    %endif
 </table>
 </%def>
+
