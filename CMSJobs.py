@@ -121,8 +121,12 @@ class CMSJobs(hf.module.ModuleBase):
                 category_overview.setdefault(cat, {})[tp] = timeseries[tp].get(cat, 0)
 
         time_points = sorted(timeseries)
-        current_hour = time_points[-1]
-        last_hour = time_points[-2]
+        current_hour = '0 0'
+        last_hour = '0 0'
+        if len(time_points) > 1:
+            current_hour = time_points[-1]
+            last_hour = time_points[-2]
+
         for cat in self.cat_names:
             jobs_current = timeseries[current_hour].get(cat, 0)
             jobs_last = timeseries[last_hour].get(cat, 0)
@@ -149,7 +153,11 @@ class CMSJobs(hf.module.ModuleBase):
         data['LastHourEnd'] = data['CurrentHourStart']
         data['status'] = 1.0
         if self.pledge_mode == 1:
-            yhline = int(tree.find(".//{}".format(self.pledge)).text_content())
+            yhlinetext = tree.find(".//{}".format(self.pledge)).text_content()
+            try:
+                yhline = int(yhlinetext)
+            except:
+                yhline = 0
         elif self.pledge_mode == 2:
             yhline = self.pledge
 
