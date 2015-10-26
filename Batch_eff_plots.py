@@ -22,7 +22,6 @@ class Batch_eff_plots(hf.module.ModuleBase):
         self.source_url = self.jason_history.getSourceUrl()
     def extractData(self):
     	import matplotlib
-	matplotlib.use("agg")
 	import matplotlib.pyplot
 	
 	data = {}
