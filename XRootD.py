@@ -18,8 +18,6 @@ import hf
 import time
 import os
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 from sqlalchemy import *
 import json
 
@@ -50,6 +48,8 @@ class XRootD(hf.module.ModuleBase):
         self.details_list = []
 
     def extractData(self):
+	import matplotlib
+	import matplotlib.pyplot as plt
         data = {}
         list_of_details = []
         plot_date = []

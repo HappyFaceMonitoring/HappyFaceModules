@@ -15,7 +15,6 @@
 #   limitations under the License.
 
 import hf, lxml, logging, datetime
-import matplotlib.pyplot as plt
 import numpy as np
 from sqlalchemy import *
 from lxml.html import parse
@@ -120,6 +119,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         srtd_xlist = sorted(single_xlist)
         
         #plotting
+	import matplotlib.pyplot as plt
         self.plt = plt
         fig = self.plt.figure()
         axis = fig.add_subplot(111)
