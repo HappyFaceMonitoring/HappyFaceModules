@@ -23,7 +23,7 @@ class hammerCloudInterface(hf.module.ModuleBase):
 	config_keys = {
 		'source_url' : ('HammerCloud URL', 'http://hc-ai-core.cern.ch/hc/app/cms/')
 	}
-	table_colums = [], []
+	table_columns = [], []
 	subtable_columns = {
 			'running_tests' : ( [
 			Column('test_type', TEXT),
@@ -36,8 +36,9 @@ class hammerCloudInterface(hf.module.ModuleBase):
 			Column('efficiency', FLOAT),
 			Column('jobs_in_total', INT)
 		], [] )
+		}
 	def prepareAcquisition(self):
-		self.source_url = self.source.getSourceUrl()
+		self.source_url = self.config['source_url']
 		self.running_tests_db_value_list = []
 	def extractData(self):
 		# parsing html page to find ID of T1_DE_KIT tests
@@ -61,7 +62,7 @@ class hammerCloudInterface(hf.module.ModuleBase):
 			jobs_with_status_k_value = 'no information'
 			efficiency_value = 'no information'
 			jobs_in_total_value = 'no information'
-			for test in testtype.find(".//tr[@onmouseover]"):
+			for test in testtype.findall(".//tr[@onmouseover]"):
 				for td in test.findall(".//td"):
 					if td.text.find("T1_DE_KIT") > -1: # looking for T1_DE_KIT tests
 							test_type_value = testtype.find(".//h3").text
@@ -82,25 +83,25 @@ class hammerCloudInterface(hf.module.ModuleBase):
 							failed_jobs_value = gsf
 							jobs_with_status_k_value = gsk
 							efficiency_value = gsc/(1.*(gsf+gsc))
-							jobs_in_total_value = gsc+gss+gsk+sgr+gsf
+							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
 							# passing the calculated values to the list used to fill the subtables
 							cat_data = {
-								'test_type' : testtype_value,
+								'test_type' : test_type_value,
 								'test_id' : test_id_value,
 								'submitted_jobs' : submitted_jobs_value,
 								'running_jobs' : running_jobs_value,
 								'completed_jobs' : completed_jobs_value,
 								'failed_jobs' : failed_jobs_value,
-								'jobs_with_status_k': jobs_with_status_k_value
+								'jobs_with_status_k': jobs_with_status_k_value,
 								'efficiency' : efficiency_value,
 								'jobs_in_total' : jobs_in_total_value
 							}
 							self.running_tests_db_value_list.append(cat_data)
 		return data
 	def fillSubtables(self, module_entry_id):
-		self.subtables['running_jobs'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_jobs_db_value_list])
+		self.subtables['running_tests'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_tests_db_value_list])
 	def getTemplateData(self):
 		data = hf.module.ModuleBase.getTemplateData(self)
-		details_list = self.subtables['running_jobs'].select().where(self.subtables['running_jobs'].c.parent_id==self.dataset['id']).execute().fetchall()
-		data['running_jobs'] = map(dict, details_list)
+		running_tests_list = self.subtables['running_tests'].select().where(self.subtables['running_tests'].c.parent_id==self.dataset['id']).execute().fetchall()
+		data['running_tests'] = map(dict, running_tests_list)
 		return data
