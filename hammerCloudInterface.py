@@ -65,38 +65,38 @@ class hammerCloudInterface(hf.module.ModuleBase):
 			for test in testtype.findall(".//tr[@onmouseover]"):
 				for td in test.findall(".//td"):
 					if td.text.find("T1_DE_KIT") > -1: # looking for T1_DE_KIT tests
-							test_type_value = testtype.find(".//h3").text
-							test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
-							siteinfo = test.find(".//td[@style]").text
-							site = "T1_DE_KIT" if (siteinfo.find("T1_DE_KIT") > -1) else "Anysite"
-							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
-							readout = ul.urlopen(json_url).read()
-							# finding and calculating several detailed information on the jobs of the test
-							gsc = readout.count('"ganga_status": "c"')
-							gss = readout.count('"ganga_status": "s"')
-							gsk = readout.count('"ganga_status": "k"')
-							gsr = readout.count('"ganga_status": "r"')
-							gsf = readout.count('"ganga_status": "f"')
-							submitted_jobs_value = gss
-							running_jobs_value = gsr
-							completed_jobs_value = gsc
-							failed_jobs_value = gsf
-							jobs_with_status_k_value = gsk
-							efficiency_value = gsc/(1.*(gsf+gsc))
-							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
-							# passing the calculated values to the list used to fill the subtables
-							cat_data = {
-								'test_type' : test_type_value,
-								'test_id' : test_id_value,
-								'submitted_jobs' : submitted_jobs_value,
-								'running_jobs' : running_jobs_value,
-								'completed_jobs' : completed_jobs_value,
-								'failed_jobs' : failed_jobs_value,
-								'jobs_with_status_k': jobs_with_status_k_value,
-								'efficiency' : efficiency_value,
-								'jobs_in_total' : jobs_in_total_value
-							}
-							self.running_tests_db_value_list.append(cat_data)
+						test_type_value = testtype.find(".//h3").text
+						test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
+						siteinfo = test.find(".//td[@style]").text
+						site = "T1_DE_KIT" if (siteinfo.find("T1_DE_KIT") > -1) else "Anysite"
+						json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
+						readout = ul.urlopen(json_url).read()
+						# finding and calculating several detailed information on the jobs of the test
+						gsc = readout.count('"ganga_status": "c"')
+						gss = readout.count('"ganga_status": "s"')
+						gsk = readout.count('"ganga_status": "k"')
+						gsr = readout.count('"ganga_status": "r"')
+						gsf = readout.count('"ganga_status": "f"')
+						submitted_jobs_value = gss
+						running_jobs_value = gsr
+						completed_jobs_value = gsc
+						failed_jobs_value = gsf
+						jobs_with_status_k_value = gsk
+						efficiency_value = gsc/(1.*(gsf+gsc))
+						jobs_in_total_value = gsc+gss+gsk+gsr+gsf
+						# passing the calculated values to the list used to fill the subtables
+						cat_data = {
+							'test_type' : test_type_value,
+							'test_id' : test_id_value,
+							'submitted_jobs' : submitted_jobs_value,
+							'running_jobs' : running_jobs_value,
+							'completed_jobs' : completed_jobs_value,
+							'failed_jobs' : failed_jobs_value,
+							'jobs_with_status_k': jobs_with_status_k_value,
+							'efficiency' : efficiency_value,
+							'jobs_in_total' : jobs_in_total_value
+						}
+						self.running_tests_db_value_list.append(cat_data)
 		return data
 	def fillSubtables(self, module_entry_id):
 		self.subtables['running_tests'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_tests_db_value_list])
