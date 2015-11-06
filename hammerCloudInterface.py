@@ -21,11 +21,13 @@ import urllib2 as ul
 
 class hammerCloudInterface(hf.module.ModuleBase):
 	config_keys = {
-		'source_url' : ('HammerCloud URL', 'http://hc-ai-core.cern.ch/hc/app/cms/')
+		'source_url' : ('HammerCloud URL', 'http://hc-ai-core.cern.ch/hc/app/cms/'),
+		'sites_of_interest' : ('Names of the sites, for which you want to see currently running tests. Split the names by a semicolon','T1_DE_KIT')
 	}
 	table_columns = [], []
 	subtable_columns = {
 			'running_tests' : ( [
+			Column('site_name', TEXT),
 			Column('test_type', TEXT),
 			Column('test_id', INT),
 			Column('submitted_jobs', INT),
@@ -39,64 +41,67 @@ class hammerCloudInterface(hf.module.ModuleBase):
 		}
 	def prepareAcquisition(self):
 		self.source_url = self.config['source_url']
+		self.site_names = self.config['sites_of_interest'].split(";")
 		self.running_tests_db_value_list = []
 	def extractData(self):
-		# parsing html page to find ID of T1_DE_KIT tests
+		# parsing html page to find ID of tests on the site of interest
 		data = {}
 		hammercloud = lh.parse(self.source_url).getroot()
 		testtypelist = hammercloud.findall(".//div[@class='runningjobs']") # extracting test types
-		for testtype in testtypelist:
-			noentries = False
-			plist = testtype.findall(".//p[@style]")
-			for p in plist:
-				if p.text == "No entries":
-					noentries = True
-					break
-			if noentries: continue # if there are currently no tests for a certain test type, then no further search is done and the module continues with the next test type 
-			test_type_value = 'no information'
-			test_id_value = 'no information'
-			submitted_jobs_value = 'no information'
-			running_jobs_value = 'no information'
-			completed_jobs_value = 'no information'
-			failed_jobs_value = 'no information'
-			jobs_with_status_k_value = 'no information'
-			efficiency_value = 'no information'
-			jobs_in_total_value = 'no information'
-			for test in testtype.findall(".//tr[@onmouseover]"):
-				for td in test.findall(".//td"):
-					if td.text.find("T1_DE_KIT") > -1: # looking for T1_DE_KIT tests
-						test_type_value = testtype.find(".//h3").text
-						test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
-						siteinfo = test.find(".//td[@style]").text
-						site = "T1_DE_KIT" if (siteinfo.find("T1_DE_KIT") > -1) else "Anysite"
-						json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
-						readout = ul.urlopen(json_url).read()
-						# finding and calculating several detailed information on the jobs of the test
-						gsc = readout.count('"ganga_status": "c"')
-						gss = readout.count('"ganga_status": "s"')
-						gsk = readout.count('"ganga_status": "k"')
-						gsr = readout.count('"ganga_status": "r"')
-						gsf = readout.count('"ganga_status": "f"')
-						submitted_jobs_value = gss
-						running_jobs_value = gsr
-						completed_jobs_value = gsc
-						failed_jobs_value = gsf
-						jobs_with_status_k_value = gsk
-						efficiency_value = gsc/(1.*(gsf+gsc))
-						jobs_in_total_value = gsc+gss+gsk+gsr+gsf
-						# passing the calculated values to the list used to fill the subtables
-						cat_data = {
-							'test_type' : test_type_value,
-							'test_id' : test_id_value,
-							'submitted_jobs' : submitted_jobs_value,
-							'running_jobs' : running_jobs_value,
-							'completed_jobs' : completed_jobs_value,
-							'failed_jobs' : failed_jobs_value,
-							'jobs_with_status_k': jobs_with_status_k_value,
-							'efficiency' : efficiency_value,
-							'jobs_in_total' : jobs_in_total_value
-						}
-						self.running_tests_db_value_list.append(cat_data)
+		for site_name in self.site_names:
+			for testtype in testtypelist:
+				noentries = False
+				plist = testtype.findall(".//p[@style]")
+				for p in plist:
+					if p.text == "No entries":
+						noentries = True
+						break
+				if noentries: continue # if there are currently no tests for a certain test type, then no further search is done and the module continues with the next test type
+				test_type_value = 'no information'
+				test_id_value = 'no information'
+				submitted_jobs_value = 'no information'
+				running_jobs_value = 'no information'
+				completed_jobs_value = 'no information'
+				failed_jobs_value = 'no information'
+				jobs_with_status_k_value = 'no information'
+				efficiency_value = 'no information'
+				jobs_in_total_value = 'no information'
+				for test in testtype.findall(".//tr[@onmouseover]"):
+					for td in test.findall(".//td"):
+						if td.text.find(site_name) > -1: # looking for tests on the site of interest
+							test_type_value = testtype.find(".//h3").text
+							test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
+							siteinfo = test.find(".//td[@style]").text
+							site = site_name if (siteinfo.find(site_name) > -1) else "Anysite"
+							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
+							readout = ul.urlopen(json_url).read()
+							# finding and calculating several detailed information on the jobs of the test
+							gsc = readout.count('"ganga_status": "c"')
+							gss = readout.count('"ganga_status": "s"')
+							gsk = readout.count('"ganga_status": "k"')
+							gsr = readout.count('"ganga_status": "r"')
+							gsf = readout.count('"ganga_status": "f"')
+							submitted_jobs_value = gss
+							running_jobs_value = gsr
+							completed_jobs_value = gsc
+							failed_jobs_value = gsf
+							jobs_with_status_k_value = gsk
+							efficiency_value = gsc/(1.*(gsf+gsc)) if gsf > 0 or gsc > 0 else 0
+							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
+							# passing the calculated values to the list used to fill the subtables
+							cat_data = {
+								'site_name' : site_name,
+								'test_type' : test_type_value,
+								'test_id' : test_id_value,
+								'submitted_jobs' : submitted_jobs_value,
+								'running_jobs' : running_jobs_value,
+								'completed_jobs' : completed_jobs_value,
+								'failed_jobs' : failed_jobs_value,
+								'jobs_with_status_k': jobs_with_status_k_value,
+								'efficiency' : round(efficiency_value,3),
+								'jobs_in_total' : jobs_in_total_value
+							}
+							self.running_tests_db_value_list.append(cat_data)
 		return data
 	def fillSubtables(self, module_entry_id):
 		self.subtables['running_tests'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_tests_db_value_list])

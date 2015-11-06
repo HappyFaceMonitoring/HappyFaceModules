@@ -3,12 +3,13 @@
 
 <%def name="content()">
 
-<h3>Interface to HammerCloud showing running tests on T1_DE_KIT</h3>
+<h3>Interface to HammerCloud showing running tests on various sites of interest</h3>
 <div id='${module.instance_name}_running_tests'>
 	<table class='TableData'>
 	<tr class='TableHeader'>
-		<td>Test ID</td>
+		<td>Site</td>
 		<td>Test Type</td>
+		<td>Test ID</td>
 		<td>Submitted Jobs</td>
 		<td>Running Jobs</td>
 		<td>Completed Jobs</td>
@@ -19,8 +20,9 @@
 	</tr>
 	%for test in running_tests:
 		<tr>
-			<td>${test['test_id']}</td>
+			<td>${test['site_name']}</td>
 			<td>${test['test_type']}</td>
+			<td>${test['test_id']}</td>
 			<td>${test['submitted_jobs']}</td>
 			<td>${test['running_jobs']}</td>
 			<td>${test['completed_jobs']}</td>
