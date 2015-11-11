@@ -1,0 +1,37 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<h3>Interface to HammerCloud showing running tests on various sites of interest</h3>
+<div id='${module.instance_name}_running_tests'>
+	<table class='TableData'>
+	<tr class='TableHeader'>
+		<td>Site</td>
+		<td>Test Type</td>
+		<td>Test ID</td>
+		<td>Submitted Jobs</td>
+		<td>Running Jobs</td>
+		<td>Completed Jobs</td>
+		<td>Failed Jobs</td>
+		<td>Jobs with Status 'k'</td>
+		<td>Efficiency</td>
+		<td>Jobs in Total</td>
+	</tr>
+	%for test in running_tests:
+		<tr>
+			<td>${test['site_name']}</td>
+			<td>${test['test_type']}</td>
+			<td>${test['test_id']}</td>
+			<td>${test['submitted_jobs']}</td>
+			<td>${test['running_jobs']}</td>
+			<td>${test['completed_jobs']}</td>
+			<td>${test['failed_jobs']}</td>
+			<td>${test['jobs_with_status_k']}</td>
+			<td>${test['efficiency']}</td>
+			<td>${test['jobs_in_total']}</td>
+		</tr>
+	%endfor
+	</table>
+</div>
+</%def>
