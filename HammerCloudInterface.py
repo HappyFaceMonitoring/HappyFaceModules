@@ -19,7 +19,7 @@ from sqlalchemy import *
 import lxml.html as lh
 import urllib2 as ul
 
-class hammerCloudInterface(hf.module.ModuleBase):
+class HammerCloudInterface(hf.module.ModuleBase):
 	config_keys = {
 		'source_url' : ('HammerCloud URL', 'http://hc-ai-core.cern.ch/hc/app/cms/'),
 		'sites_of_interest' : ('Names of the sites, for which you want to see currently running tests. Split the names by a semicolon','T1_DE_KIT')
