@@ -22,7 +22,9 @@ import urllib2 as ul
 class HammerCloudInterface(hf.module.ModuleBase):
 	config_keys = {
 		'source_url' : ('HammerCloud URL', 'http://hc-ai-core.cern.ch/hc/app/cms/'),
-		'sites_of_interest' : ('Names of the sites, for which you want to see currently running tests. Split the names by a semicolon','T1_DE_KIT')
+		'sites_of_interest' : ('Names of the sites, for which you want to see currently running tests. Split the names by a semicolon','T1_DE_KIT'),
+		'warning_threshold' : ('Percentage of efficiency, at which the module should have a warning status', '0.98'),
+		'critical_threshold' : ('Percentage of efficiency, at which the module should have a critical status', '0.8')
 	}
 	table_columns = [], []
 	subtable_columns = {
@@ -66,6 +68,7 @@ class HammerCloudInterface(hf.module.ModuleBase):
 				jobs_with_status_k_value = 'no information'
 				efficiency_value = 'no information'
 				jobs_in_total_value = 'no information'
+				efficiency_status_list = []
 				for test in testtype.findall(".//tr[@onmouseover]"):
 					for td in test.findall(".//td"):
 						if td.text.find(site_name) > -1: # looking for tests on the site of interest
@@ -88,6 +91,12 @@ class HammerCloudInterface(hf.module.ModuleBase):
 							jobs_with_status_k_value = gsk
 							efficiency_value = gsc/(1.*(gsf+gsc)) if gsf > 0 or gsc > 0 else 0
 							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
+
+							if efficiency_value < float(self.config['critical_threshold']): efficiency_status_list.append(0.0)
+							elif efficiency_value >= float(self.config['critical_threshold']) and efficiency_value < float(self.config['warning_threshold']): efficiency_status_list.append(0.5)
+							else: efficiency_status_list.append(1.0)
+
+
 							# passing the calculated values to the list used to fill the subtables
 							cat_data = {
 								'site_name' : site_name,
@@ -102,6 +111,7 @@ class HammerCloudInterface(hf.module.ModuleBase):
 								'jobs_in_total' : jobs_in_total_value
 							}
 							self.running_tests_db_value_list.append(cat_data)
+		data['status'] = min(efficiency_status_list)
 		return data
 	def fillSubtables(self, module_entry_id):
 		self.subtables['running_tests'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_tests_db_value_list])

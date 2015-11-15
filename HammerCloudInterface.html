@@ -28,7 +28,14 @@
 			<td>${test['completed_jobs']}</td>
 			<td>${test['failed_jobs']}</td>
 			<td>${test['jobs_with_status_k']}</td>
-			<td>${test['efficiency']}</td>
+			%if test['efficiency'] < float(module.config['critical_threshold']):
+				<td class='critical'>
+			%elif test['efficiency'] >= float(module.config['critical_threshold']) and test['efficiency'] < float(module.config['warning_threshold']):
+				<td class='warning'>
+			%else:
+				<td class='ok'>
+			%endif
+				${test['efficiency']}</td>
 			<td>${test['jobs_in_total']}</td>
 		</tr>
 	%endfor
