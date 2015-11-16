@@ -48,8 +48,14 @@
 </tr>
 </table>
 
-<input type="button" value="Pool2Pool" onfocus="this.blur()" onclick="$('#${module.instance_name}_Pool2Pool_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Pool2Pool_details" style="display:none;">
+<%
+status_list = [Pool2Pool, Staging, Waiting, Suspended, Unknown, Expired, Tried]
+statusstring_list = ["Pool2Pool", "Staging", "Waiting", "Suspended", "Unknown", "Expired", "Tried"]
+%>
+
+% for status, string in zip(status_list, statusstring_list):
+<input type=button" value="${string}" onfocus="this.blur()" onclick="$('#${module.instance_name}_${string}_details').slideToggle()" style="height:15px; width:70px; text-align:center"/>
+<div class="DetailedInfo" id="${module.instance_name}_${string}_details" style="display:none;">
 <table class="TableDetails dCacheDatarestoreLazyTableDetails">
 <tr class="TableHeader">
 <td>pnfsID</td>
@@ -57,198 +63,19 @@
 <td>Retries</td>
 <td>Status</td>
 </tr>
-% for info in Pool2Pool:
+
+% for info in status:
 <tr>
 <td>${info['pnfs']}</td>
 <td>${info['started_full']}</td>
 <td>${info['retries']}</td>
 <td>${info['status_short']}</td>
 </tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
 % endfor
 
 </table>
 </div>
 
-<input type="button" value="Staging" onfocus="this.blur()" onclick="$('#${module.instance_name}_Staging_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Staging_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Staging:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
 % endfor
-
-</table>
-</div>
-
-<input type="button" value="Waiting" onfocus="this.blur()" onclick="$('#${module.instance_name}_Waiting_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Waiting_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Waiting:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
-% endfor
-
-</table>
-</div>
-
-<input type="button" value="Suspended" onfocus="this.blur()" onclick="$('#${module.instance_name}_Suspended_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Suspended_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Suspended:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
-% endfor
-
-</table>
-</div>
-
-<input type="button" value="Unknown" onfocus="this.blur()" onclick="$('#${module.instance_name}_Unkown_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Unknown_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Unknown:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
-% endfor
-
-</table>
-</div>
-
-<input type="button" value="Expired" onfocus="this.blur()" onclick="$('#${module.instance_name}_Expired_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Expired_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Expired:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
-% endfor
-
-</table>
-</div>
-
-<input type="button" value="Tried" onfocus="this.blur()" onclick="$('#${module.instance_name}_Tried_details').slideToggle()" />
-<div class="DetailedInfo" id="${module.instance_name}_Tried_details" style="display:none;">
-<table class="TableDetails dCacheDatarestoreLazyTableDetails">
-<tr class="TableHeader">
-<td>pnfsID</td>
-<td>Start</td>
-<td>Retries</td>
-<td>Status</td>
-</tr>
-% for info in Tried:
-<tr>
-<td>${info['pnfs']}</td>
-<td>${info['started_full']}</td>
-<td>${info['retries']}</td>
-<td>${info['status_short']}</td>
-</tr>
-
-<!--<tr>
-<td colspan="4">${info['path']}</td>
-</tr>
-
-<tr>
-<td class="dCacheDatarestoreLazyRowSeparator" colspan="4"></td>
-</tr>-->
-% endfor
-
-</table>
-</div>
 
 </%def>
