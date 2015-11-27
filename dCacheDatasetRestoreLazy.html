@@ -54,7 +54,7 @@ statusstring_list = ["Pool2Pool", "Staging", "Waiting", "Suspended", "Unknown", 
 %>
 
 % for status, string in zip(status_list, statusstring_list):
-<input type="button" value="${string}" onfocus="this.blur()" onclick="$('#${module.instance_name}_${string}_details').slideToggle()" style="height:15px; width:70px; text-align:center"/>
+<input type="button" value="${string}" onfocus="this.blur()" onclick="$('#${module.instance_name}_${string}_details').slideToggle()" style="width:70px; text-align:center"/>
 <div class="DetailedInfo" id="${module.instance_name}_${string}_details" style="display:none;">
 <table class="TableDetails dCacheDatarestoreLazyTableDetails">
 <tr class="TableHeader">
