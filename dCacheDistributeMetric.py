@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2012 Institut fÃÂ¼r Experimentelle Kernphysik - Karlsruher Institut fÃÂ¼r Technologie
+# Copyright 2012 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
