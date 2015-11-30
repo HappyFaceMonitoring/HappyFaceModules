@@ -115,7 +115,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         for number in xlist:
             if float(number) not in single_xlist:
                 single_xlist.append(float(number))
-        srtd_xlist = sorted(single_xlist)
+        srtd_xlist = sorted(single_xlist + [1e5])
         
         #plotting
 	import matplotlib.pyplot as plt
@@ -123,12 +123,19 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         fig = self.plt.figure()
         axis = fig.add_subplot(111)
         width = 1.0
-        p1 = axis.plot(xlist, ylist, 'bx')
-        p2 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='green')
-        axis.set_ylabel('Usage of Pools')
+        p1 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='green')
+        p2 = axis.plot(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), 'g-', label="optimal")
+        p3 = axis.plot(srtd_xlist, self.topfunc(srtd_xlist), '-', color='red', label="warning")
+        p4 = axis.axhline(0.997, color="DarkRed")  # 0.997 instead of 1.0 to make it visible below 1.0 axis limit
+        p5 = axis.plot(xlist, ylist, 'bx')
+        axis.set_ylabel('Imbalance Metric $m$')
         axis.set_xlabel('Number of Files')
         axis.set_title('Distribute Imbalance Metric')
         axis.set_xscale('log')
+        axis.set_ylim(0, 1.0)
+        axis.text(25, 0.9, r"$m(ds) = \sqrt{\sum_{p=0..N_\mathrm{pools}} "\
+            r"\left[ (size(ds,p) - size_\mathrm{opt}(ds,p)) / size(ds) \right]^2}}$")
+        axis.text(25, 0.8, r"$size_\mathrm{opt}(ds, p) = size(ds) \cdot size(p) / size(all pools)$")
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_dist_metric.png'), dpi=100)
         data['filename_plot'] = self.instance_name + '_dist_metric.png'
