@@ -49,15 +49,14 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         ], []),
     }
     def max_value(self, val):
-        return (0.04+float(2.0*(max(0,(1.0/float(val)))))**0.5)
+        return min(1.0, 0.04 + (2.0 * max(0, 1.0 / val))**0.5)
     
     def ideal_value(self, val, num_pools):
-        return (float((max(0,(1.0/float(val))-(1.0/float(num_pools))))**0.5))
+        return max(0.0, 1.0 / val - 1.0 / num_pools)**0.5
     
     def topfunc(self, xlist):
             ylist = []
             for item in xlist:
-                #ylist.append(0.04+float(2.0*(max(0,(1.0/float(item)))))**0.5)
                 ylist.append(self.max_value(item))
             return ylist
     
@@ -102,9 +101,9 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         ylist = []
         for line in dist_file:
             line = line.split()
-            name = line[0]
-            num_of_files = line[-1]
-            dist_metric = line[1]
+            name = str(line[0])
+            num_of_files = int(line[-1])
+            dist_metric = float(line[1])
             namelist.append(name)
             xlist.append(int(num_of_files))
             ylist.append(float(dist_metric))
