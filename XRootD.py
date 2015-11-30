@@ -103,7 +103,7 @@ class XRootD(hf.module.ModuleBase):
         axis = fig.add_subplot(111)
         ind = np.arange(len(data_list))
         width = 1.0
-        max_value = max(data_list)
+        max_value = max([0] + data_list)
         if max_value < 4.0:
             scale_value = 0.2
         else:
