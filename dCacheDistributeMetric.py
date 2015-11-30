@@ -61,7 +61,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             return ylist
     
     def lowfunc(self, xlist, num_of_pools):
-            ylist =[]
+            ylist = []
             for item in xlist:
                 ylist.append(self.ideal_value(item, num_of_pools))
             return ylist
@@ -105,9 +105,9 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             num_of_files = int(line[-1])
             dist_metric = float(line[1])
             namelist.append(name)
-            xlist.append(int(num_of_files))
-            ylist.append(float(dist_metric))
-            if (float(dist_metric) < (self.ideal_value(num_of_files, data['num_pools'])-0.01)):
+            xlist.append(num_of_files)
+            ylist.append(dist_metric)
+            if (float(dist_metric) < (self.ideal_value(num_of_files, data['num_pools']) - 0.01)):
                 self.too_low_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
             elif (float(dist_metric) > self.max_value(num_of_files)):
                 self.too_high_value_list.append({'name': name, 'number_of_files': num_of_files, 'dist_metric': dist_metric})
