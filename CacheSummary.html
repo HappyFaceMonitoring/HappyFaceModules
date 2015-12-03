@@ -1,0 +1,33 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+% if module.dataset['error'] == 4:
+<table>
+  <tr>
+    <td class="critical"> ${module.dataset['error_msg']}</td>
+  </tr>
+</table>
+% else:
+<table class="TableData">
+<tr class="TableHeader">
+<th width="15%"> Number of Files</th>
+<th width="15%"> Total Size </th>
+<th width="15%"> Available </th>
+<th width="15%"> Used </th>
+<th width="15%"> Average Score </th>
+<th width="15%"> Caches unavailable </th>
+</tr>
+
+<tr>
+<td width="15%">${module.dataset['total_files']}</td>
+<td width="15%">${module.dataset['size']} GiB</td>
+<td width="15%">${module.dataset['avail']} GiB</td>
+<td width="15%">${module.dataset['used']} GiB</td>
+<td width="15%">${module.dataset['score']}</td>
+<td width="15%">${module.dataset['error']}</td>
+
+</table>
+% endif
+</%def>
