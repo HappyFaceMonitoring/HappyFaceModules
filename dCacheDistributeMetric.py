@@ -134,8 +134,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         axis.set_xscale('log')
         axis.set_ylim(0, 1.0)
         axis.text(25, 0.9, r"$m(ds) = \sqrt{\sum_{p=0..N_\mathrm{pools}} "\
-            r"\left[ (size(ds,p) - size_\mathrm{opt}(ds,p)) / size(ds) \right]^2}}$")
-        axis.text(25, 0.8, r"$size_\mathrm{opt}(ds, p) = size(ds) \cdot size(p) / size(all pools)$")
+            r"\left( \frac{size(ds,p)}{size(ds)} - \frac{size(p)}{size(all\, pools)} \right)^2 }$")
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_dist_metric.png'), dpi=100)
         data['filename_plot'] = self.instance_name + '_dist_metric.png'
