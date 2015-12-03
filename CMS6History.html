@@ -1,0 +1,15 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+% if module.dataset['error_msg'] != "0":
+<table>
+  <tr>
+    <td class="warning"> ${module.dataset['error_msg']}</td>
+  </tr>
+</table>
+% else:
+<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+% endif
+
+</%def>#
