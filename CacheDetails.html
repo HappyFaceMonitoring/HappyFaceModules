@@ -2,66 +2,57 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-
-
-<div>
-  <table class="TableData">
-  <tr class="TableHeader">
-  <th > Machine Name</th>
-  <th > Total Files </th>
-  <th>  Failed files </th>
-  <th > Status </th>
-
-  </tr>
-  % for entry in statistics:
-    <tr>
-      <td >${entry['machine']}</td>
-      <td >${entry['files']}</td>
-      <td>${entry['error_count']}</td>
-      % if "failed" in entry['status']:
-        <td class="critical">
-      % else:
-        <td class='ok'>
-      % endif
-      ${entry['status']}</td>
-    </tr>
-  % endfor
-  </table>
-</div>
-<div>
-<input type="button" value="show files over score" onfocus="this.blur()" onclick="$('#${module.instance_name}_overscore').toggle()" />
-</div>
-<div class="DetailedInfo" id="${module.instance_name}_overscore" style="display:none;">
-<table class="TableData">
-<tr class="TableHeader">
-<th width="15%"> Filename </th>
-<th width="10%"> Score </th>
-<th width="10%"> Size </th>
-<th width="10%"> Machine </th>
-</tr>
-%for entry in overscore:
-      <tr>
-      <td width="70%">${entry['filename']}</td>
-      <td width="10%">${entry['score']}</td>
-      <td width ="10%">${entry['size']} MiB</td>
-      <td width ="10%">${entry['machine']}</td>
-
-
+  <div>
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th > Machine Name</th>
+        <th > Total Files </th>
+        <th>  Failed files </th>
+        <th > Status </th>
       </tr>
-%endfor
-</table>
-</div>
-% if module.dataset['error_msg'] != "":
-<table>
-  <tr>
-    <td class="critical"> ${module.dataset['error_msg']}</td>
-  </tr>
-</table>
-
-% else:
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-% endif
-
-
-
+      % for entry in statistics:
+        <tr>
+          <td >${entry['machine']}</td>
+          <td >${entry['files']}</td>
+          <td>${entry['error_count']}</td>
+          % if "failed" in entry['status']:
+            <td class="critical">
+          % else:
+            <td class='ok'>
+          % endif
+          ${entry['status']}</td>
+        </tr>
+      % endfor
+    </table>
+  </div>
+  <div>
+    <input type="button" value="show files over score" onfocus="this.blur()" onclick="$('#${module.instance_name}_overscore').toggle()" />
+  </div>
+  <div class="DetailedInfo" id="${module.instance_name}_overscore" style="display:none;">
+    <table class="TableData">
+    <tr class="TableHeader">
+      <th width="15%"> Filename </th>
+      <th width="10%"> Score </th>
+      <th width="10%"> Size </th>
+      <th width="10%"> Machine </th>
+    </tr>
+    %for entry in overscore:
+      <tr>
+        <td width="70%">${entry['filename']}</td>
+        <td width="10%">${entry['score']}</td>
+        <td width ="10%">${entry['size']} MiB</td>
+        <td width ="10%">${entry['machine']}</td>
+      </tr>
+    %endfor
+    </table>
+  </div>
+  % if module.dataset['error_msg'] != "":
+  <table>
+    <tr>
+      <td class="critical"> ${module.dataset['error_msg']}</td>
+    </tr>
+  </table>
+  % else:
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+  % endif
 </%def>
