@@ -1,5 +1,18 @@
-# Module for Status of CMS6 via condor_q
-
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 import hf
 from sqlalchemy import *
 import json
@@ -11,16 +24,16 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                    'plotsize_x': ('Size of the plot in x', '10'),
                    'plotsize_y': ('Size of the plot in y', '3.6'),
                    'plot_width': ('width of the bars in plot', '0.38'),
-                   'log_limit': ('x-Value, when to use a log Scale in Plot', '500'),
-                   'plot_right_margin': ('distance between biggest bar and right and of the plot in %', '0.1'),
+                   'log_limit': ('x-Value, when to use a log scale', '500'),
+                   'plot_right_margin': ('white space between biggest bar and right side of the plot in %', '0.1'),
                    'weak_threshold': ('Weak Slots have a load below this value', '0.5'),
                    'min_plotsize': ('how much bars the plots shows at least before scaling bigger', '3'),
                    'sites': ('differnet sites - input a python list with strings', '["gridka", "ekpcms6", "ekp-cloud", "ekpsg", "ekpsm","bwforcluster"]'),
-                   'machine_slot_min': ('how many slots per machine should be running', '2'),
-                   'claimed_unclaimed_ratio': ('limit for claimed_unclaimed_ratio', '0.3'),
-                   'weak_slots_limit':('how many slots can be weak in %', '0.1'),
-                   'slots_min': ('how many slots must be running to determine status', '20'),
-                   'weak_threshold': ('Weak Slots have a load below this value', '0.5')
+                   'machine_slot_min': ('min many slots per machine', '2'),
+                   'claimed_unclaimed_ratio': ('min limit for claimed_unclaimed_ratio', '0.3'),
+                   'weak_slots_limit': ('max weak slots in %', '0.1'),
+                   'slots_min': ('min slots to determine status', '20'),
+                   'weak_threshold': ('weak Slots have a avgload below this value', '0.5')
                    }
     table_columns = [
         Column('claimedslots_loadavg', INT),
@@ -89,9 +102,8 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib.font_manager import FontProperties
-        # function to find site for machine_name
 
-        def sitescan(machine_name, sites):
+        def sitescan(machine_name, sites):  # function to find site for machine_name
             i = 0
             while sites[i] not in machine_name and i + 1 < len(sites):
                 i += 1
@@ -104,7 +116,6 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         sites = self.sites  # list of all available sites
         details_data = {}
         path = self.source.getTmpPath()
-        #########################################################################################
         # open file
         with open(path, 'r') as f:
             # fix the JSON-File, so the file is valid
@@ -121,8 +132,6 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         condor_load_list = list(float(services[id]['TotalCondorLoadAvg'])for id in slot_id_list)
         disk_list = list(round(float(services[id]['Disk'])/(1024*1024), 2)for id in slot_id_list)
         total_slot_list = list(int(services[id]['TotalSlots'])for id in slot_id_list)
-        # identity_list = list(services[id]['AuthenticatedIdentity']for id in slot_id_list)
-        # keyboard_idle_list = list(int(services[id]['KeyboardIdle'])for id in slot_id_list)
         slot_count = len(slot_id_list)
         condor_version_list = list(condor_version_list[i].replace(
             "$", "")for i in xrange(slot_count))
@@ -136,8 +145,8 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         for k in xrange(len(machine_names)):  # get machine_names reduced to name of different sites
             machine_names[k] = sitescan(machine_names[k], sites)
         site_names = list(set(machine_names))
-        # create Arrays for plot and additional ones for Plot Details Subtable:
 
+        # create Arrays for plot and additional ones for Plot Details Subtable:
         plot_claimed = np.zeros(len(site_names))
         plot_unclaimed = np.zeros(len(site_names))
         plot_machines_per_site = np.zeros(len(site_names))
@@ -160,23 +169,19 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                         plot_unclaimed[j] += 1
                         plot_avg_load_unclaimed[j] += load_list[i]
 
-        for j in xrange(len(site_names)):
+        for j in xrange(len(site_names)):  # calculate the average load per site
             plot_machines_per_site[j] = machine_names.count(site_names[j])
             try:
                 plot_avg_load_claimed[j] = round(
                     float(plot_avg_load_claimed[j]) / float(plot_claimed[j]), 2)
-            except ValueError:
-                plot_avg_load_claimed[j] = 0
-            except ZeroDivisionError:
+            except (ValueError, ZeroDivisionError):
                 plot_avg_load_claimed[j] = 0
             try:
                 plot_avg_load_unclaimed[j] = round(
                     float(plot_avg_load_unclaimed[j]) / float(plot_unclaimed[j]), 2)
-            except ValueError:
+            except (ValueError, ZeroDivisionError):
                 plot_avg_load_unclaimed[j] = 0
-            except ZeroDivisionError:
-                plot_avg_load_unclaimed[j] = 0
-        for j in xrange(len(sites)):
+        for j in xrange(len(sites)):  # count different condor versions
             temp = {}
             for k in xrange(len(condor_versions)):  # check different condor_versions per site
                 temp[condor_versions[k]] = 0
@@ -184,7 +189,9 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         for i in xrange(slot_count):
             condor_version_per_site[sitescan(machine_name_list[i], sites)][
                 condor_version_list[i]] += 1
-        # make a plot
+        ###############
+        # Make   plot #
+        ###############
         plot_color = {
             'queued':   '#5CADFF',
             'idle':     '#9D5CDE',
@@ -192,6 +199,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             'finished': '#009933',
             'removed':  '#CC6060',
         }
+        # set plot size according to config and data size
         if len(site_names) <= self.min_plotsize:
             y = self.plotsize_y
         else:
@@ -237,7 +245,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         fontLeg = FontProperties()
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0]), ('unclaimed slots', 'claimed slots',),
-                    loc=6, bbox_to_anchor=(0.68, 0.95), borderaxespad=0., prop = fontLeg)
+                    loc=6, bbox_to_anchor=(0.8, 0.95), borderaxespad=0., prop = fontLeg)
         plt.grid(axis=y)
 
         # save data as Output
@@ -272,10 +280,10 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         data['unclaimedslots_loadavg'] = unclaimed_avg
         data['condor_load'] = round(sum(condor_load_list)/len(condor_load_list), 2)
 
-        # Fill Subtables
+        # Fill Subtables condor_version_per_site
         for i in xrange(len(sites)):
             for j in xrange(len(condor_versions)):
-                if sites[i] in condor_version_per_site.keys():  # dont try to save subtable if site is offline
+                if sites[i] in condor_version_per_site.keys():  # dont save subtable if site offline
                     if condor_version_per_site[sites[i]][condor_versions[j]] != 0:
                         details_data = {
                             'site': sites[i],
@@ -283,6 +291,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                             'value': condor_version_per_site[sites[i]][condor_versions[j]]
                         }
                         self.condor_db_value_list.append(details_data)
+        # Fill Subtable statistics
         for i in xrange(slot_count):
             details_data = {
                 'mid':      slot_id_list[i],
@@ -292,6 +301,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             }
             self.statistics_db_value_list.append(details_data)
 
+        # Fill Subtable plot
         for i in xrange(len(site_names)):
             details_data = {
                 'site':           site_names[i],
@@ -303,8 +313,9 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                 'disk': plot_disk[i]
             }
             self.plot_db_value_list.append(details_data)
-
-        # calculate the status of the module
+        #########################
+        # calculation of Status #
+        #########################
         if slot_count < self.slots_min:
             data['status'] = 0.5
             data['error_msg'] = "Only " + str(slot_count) + " slots online"
@@ -336,7 +347,6 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                 data['error_msg'] = data['error_msg'] + \
                     "More than " + str(self.weak_slots_limit*100) + " % of working slots have a load below " + \
                     str(self.weak_threshold) + ". <br>"
-
         print data
         return data
 

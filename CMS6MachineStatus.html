@@ -2,123 +2,112 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
+  <table class="TableData">
+    <tr class="TableHeader">
+      <th width = "16%" > Slots Claimed / Unclaimed </th>
+      <th width = "16%">Total Slots </th>
+      <th width = "16%">Machines running </th>
+      <th width = "16%">Slot Load claimed / unclaimed</th>
+      <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
+      <th width = "16%">Avg Condor Load </th>
+    </tr>
+    <tr>
+      <td width = "16%" >${module.dataset['claimed_slots']} / ${module.dataset['unclaimed_slots']} </td>
+      <td width = "16%" >${module.dataset['slots']}    </td>
+      <td width = "16% ">${module.dataset['machines']}    </td>
+      <td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>
+      % if "of working slots have a load below" in module.dataset['error_msg']:
+        <td class=critical
+      % else:
+        <td class=ok
+      % endif
+      <td width = "16%" >${module.dataset['weak_slots']}  </td>
+      <td width = "16%" >${module.dataset['condor_load']} % </td>
+    </tr>
+  </table>
+  <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+  <div>
+    <input type="button" value="Show Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
+    <input type="button" value="show all Slots" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
+    <input type="button" value="Error Message" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
+    <input type="button" value="Condor Versions" onfocus="this.blur()" onclick="$('#${module.instance_name}_condor').toggle()" />
+  </div>
+  % if dataset['error_msg'] != '':
+    <div id="${module.instance_name}_error" style="display:none;">
+      <h3>Error Message:</h3>
+      % if dataset['status'] == 0.5:
+        <p class=warning
+      % else:
+        <p class=critical
+      % endif
+      style="position: relative; margin-right: 240px">${module.dataset['error_msg']}</p>
+    </div>
+  % endif
 
-<table class="TableData">
-  <tr class="TableHeader">
-    <th width = "16%" > Slots Claimed / Unclaimed </th>
-    <th width = "16%">Total Slots </th>
-    <th width = "16%">Machines running </th>
-    <th width = "16%">Slot Load claimed / unclaimed</th>
-    <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
-    <th width = "16%">Avg Condor Load </th>
-  </tr>
-  <tr>
-    <td width = "16%" >${module.dataset['claimed_slots']} / ${module.dataset['unclaimed_slots']} </td>
-    <td width = "16%" >${module.dataset['slots']}    </td>
-    <td width = "16% ">${module.dataset['machines']}    </td>
-    <td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>
-    % if "of working slots have a load below" in module.dataset['error_msg']:
-      <td class=critical
-    % else:
-      <td class=ok
-    % endif
-    <td width = "16%" >${module.dataset['weak_slots']}  </td>
-    <td width = "16%" >${module.dataset['condor_load']} % </td>
-  </tr>
-</table>
-
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-
-<p>
-
-</p>
-
-</div>
-
-<div>
-  <input type="button" value="Show Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
-  <input type="button" value="show all Slots" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
-  <input type="button" value="Error Message" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
-  <input type="button" value="Condor Versions" onfocus="this.blur()" onclick="$('#${module.instance_name}_condor').toggle()" />
-</div>
-
-% if dataset['error_msg'] != '':
-<div id="${module.instance_name}_error" style="display:none;">
-<h3>Error Message:</h3>
-% if dataset['status'] == 0.5:
-<p class=warning
-% else:
-<p class=critical
-% endif
-style="position: relative; margin-right: 240px">${module.dataset['error_msg']}</p>
-</div>
-% endif
-
-<div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
-<table class="TableData">
-<tr class="TableHeader">
-<th class="TableFirstCol" width="20%"> Site </th>
-<th class="TableThirdCol" width="10%"> Machines running</th>
-<th class="TableSecondCol" width="10%"> claimed Slots</th>
-<th class="TableThirdCol" width="10%"> unclaimed Slots</th>
-<th class="TableThirdCol" width="15%"> Average Load claimed Slots</th>
-<th class="TableThirdCol" width="15%"> Average Load unclaimed Slots</th>
-</tr>
-%for entry in plot:
-    % if float(entry['claimed_avg']) < float(module.config['weak_threshold']) and int(entry['claimed']) > 0:
-      <tr class=critical>
-    % elif float(entry['unclaimed_avg']) > float(module.config['weak_threshold'])and int(entry['unclaimed']) > 0:
-      <tr class=critical>
-    % else:
-      <tr class=ok>
-    % endif
-      <td class="TableFirstCol" width="20%">${entry['site']}</td>
-      <td class="TableThirdCol" width="10%">${entry['machines']}</td>
-      <td class="TableSecondCol" width="10%">${entry['claimed']}</td>
-      <td class="TableThirdCol" width="10%">${entry['unclaimed']}</td>
-      <td class="TableThirdCol" width="15%">${entry['claimed_avg']}</td>
-      <td class="TableThirdCol" width="15%">${entry['unclaimed_avg']}</td>
+  <div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th class="TableFirstCol" width="20%"> Site </th>
+        <th class="TableThirdCol" width="10%"> Machines running</th>
+        <th class="TableSecondCol" width="10%"> claimed Slots</th>
+        <th class="TableThirdCol" width="10%"> unclaimed Slots</th>
+        <th class="TableThirdCol" width="15%"> Average Load claimed Slots</th>
+        <th class="TableThirdCol" width="15%"> Average Load unclaimed Slots</th>
       </tr>
-%endfor
-</table>
-</div>
-
-<div id="${module.instance_name}_condor" style="display:none;">
-<table class="TableData">
-  <tr class="TableHeader">
-    <th > Site </th>
-    <th > Version </th>
-    <th > Value </th>
-  </tr>
-   % for entry in condor:
-   <tr>
-     <td>${entry['site']}</td>
-     <td>${entry['condor_version']}</td>
-     <td>${entry['value']} </td>
-   </tr>
-   % endfor
-</table>
-</div>
-
-<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
-<table class="TableData">
-<tr class="TableHeader">
-<th class="TableFirstCol" width="60%"> SlotID </th>
-<th class="TableSecondCol" width="15%"> Status</th>
-<th class="TableForthCol" width="10%"> LoadAvg </th>
-</tr>
-%for entry in statistics:
-    % if "Claimed" in entry['status'] and float(entry['LoadAvg']) < float(module.config['weak_threshold']):
-      <tr class=critical>
-    % elif "Unclaimed" in entry['status'] and float(entry['LoadAvg']) > float(module.config['weak_threshold']):
-      <tr class=critical>
-    % else:
-      <tr class=ok>
-    % endif
-      <td class="TableFirstCol" width="60%">${entry['mid']}</td>
-      <td class="TableSecondCol" width="15%">${entry['status']}</td>
-      <td class="TableForthCol" width="10%">${entry['LoadAvg']}</td>
+      %for entry in plot:
+        % if float(entry['claimed_avg']) < float(module.config['weak_threshold']) and int(entry['claimed']) > 0:
+          <tr class=critical>
+        % elif float(entry['unclaimed_avg']) > float(module.config['weak_threshold'])and int(entry['unclaimed']) > 0:
+          <tr class=critical>
+        % else:
+          <tr class=ok>
+        % endif
+          <td class="TableFirstCol" width="20%">${entry['site']}</td>
+          <td class="TableThirdCol" width="10%">${entry['machines']}</td>
+          <td class="TableSecondCol" width="10%">${entry['claimed']}</td>
+          <td class="TableThirdCol" width="10%">${entry['unclaimed']}</td>
+          <td class="TableThirdCol" width="15%">${entry['claimed_avg']}</td>
+          <td class="TableThirdCol" width="15%">${entry['unclaimed_avg']}</td>
+        </tr>
+      %endfor
+    </table>
+  </div>
+  <div id="${module.instance_name}_condor" style="display:none;">
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th > Site </th>
+        <th > Version </th>
+        <th > Value </th>
       </tr>
-%endfor
-</table>
+       % for entry in condor:
+       <tr>
+         <td>${entry['site']}</td>
+         <td>${entry['condor_version']}</td>
+         <td>${entry['value']} </td>
+       </tr>
+       % endfor
+    </table>
+  </div>
+  <div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th class="TableFirstCol" width="60%"> SlotID </th>
+        <th class="TableSecondCol" width="15%"> Status</th>
+        <th class="TableForthCol" width="10%"> LoadAvg </th>
+      </tr>
+      %for entry in statistics:
+        % if "Claimed" in entry['status'] and float(entry['LoadAvg']) < float(module.config['weak_threshold']):
+          <tr class=critical>
+        % elif "Unclaimed" in entry['status'] and float(entry['LoadAvg']) > float(module.config['weak_threshold']):
+          <tr class=critical>
+        % else:
+          <tr class=ok>
+        % endif
+          <td class="TableFirstCol" width="60%">${entry['mid']}</td>
+          <td class="TableSecondCol" width="15%">${entry['status']}</td>
+          <td class="TableForthCol" width="10%">${entry['LoadAvg']}</td>
+        </tr>
+      %endfor
+    </table>
+  </div>
 </%def>
