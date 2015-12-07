@@ -1,4 +1,18 @@
-# Module for Status of CMS6 via condor_q
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
 import hf
 from sqlalchemy import *
@@ -9,18 +23,19 @@ import ast
 
 
 class V2CMS6Status(hf.module.ModuleBase):
+    ''' define condig values to be used later'''
     config_keys = {'sourceurl': ('Source Url', ''),
                    'plotsize_x': ('Size of the plot in x', '10'),
                    'plotsize_y': ('Size of the plot in y', '5.8'),
                    'plot_width': ('width of the bars in plot', '0.6'),
-                   'plot_right_margin': ('distance between biggest bar and right and of the plot in %', '0.1'),
+                   'plot_right_margin': ('white space between biggest bar and right side of the plot in %', '0.1'),
                    'min_plotsize': ('how much bars the plots shows at least before scaling bigger', '3'),
-                   'log_limit': ('x-Value, when to use a log Scale in Plot', '500'),
-                   'jobs_min': ('how many jobs must be in condor to determine status', '50'),
-                   'qtime_max': ('how long jobs stay queued at max in hours for status', '24'),
-                   'qtime_max_jobs': ('how many long jobs for status', '20'),
-                   'running_idle_ratio': ('ratio between running and idle jobs for status', '0.2'),
-                   'min_efficiency': ('minimal efficiency for status', '0.8'),
+                   'log_limit': ('x-Value, when to use a log scale', '500'),
+                   'jobs_min': ('min jobs to determine status', '50'),
+                   'qtime_max': ('maximal queue time for jobs', '24'),
+                   'qtime_max_jobs': ('max how many jobs can have a longer qtime', '20'),
+                   'running_idle_ratio': ('min ratio between running and idle jobs', '0.2'),
+                   'min_efficiency': ('min efficiency', '0.8'),
                    'sites': ('differnet sites - input a python list with strings', '["gridka", "ekpcms6", "ekp-cloud", "ekpsg", "ekpsm","bwforcluster"]')
                    }
 
@@ -72,7 +87,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         self.min_efficiency = float(self.config['min_efficiency'])
         self.qtime_max_jobs = int(self.config['qtime_max_jobs'])
         temp = self.config['sites']
-        self.sites = ast.literal_eval(temp)
+        self.sites = ast.literal_eval(temp) # fix fromat so sites is a list of strings
         self.source = hf.downloadService.addDownload(link)  # Download the file
         self.source_url = self.source.getSourceUrl()  # Get URL
         # Set up Container for subtable data
@@ -83,6 +98,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         import matplotlib.pyplot as plt
         import numpy as np
         from matplotlib.font_manager import FontProperties
+        #  define default values
         data = {}
         details_data = {}
         data["filename_plot"] = ''
@@ -101,7 +117,6 @@ class V2CMS6Status(hf.module.ModuleBase):
 
         # open file
         with open(path, 'r') as f:
-            # fix the JSON-File, so the file is valid
             content = f.read()
         if '{ }' in content:  # if no jobs in condor_q, stop script and display error_msg inst.
             data['status'] = 1
@@ -160,7 +175,6 @@ class V2CMS6Status(hf.module.ModuleBase):
                 qtime_list.append(int(jobstart_list[i]) - int(qdate_list[i]))
             except ValueError:
                 qtime_list.append("Undefined")
-        # now create Lists that count how many jobs are running/idle per user identification via List Index
         for k in xrange(len(host_list)):  # shorten host_list to site name only
             if host_list[k] != "undefined":
                 for i in xrange(len(sites)):
@@ -171,6 +185,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 ram_list[i] = round(float(ram_list[i]) / (1024 * 1024), 2)
             except ValueError:
                 pass
+            # generate the array used in plot later to show data per user
             for k in xrange(len(plot_names)):  # sort jobs via user to get data for plot
                 if user_list[i] == plot_names[k]:
                     if status_list[i] == 1 and last_status_list[i] == 2:
@@ -195,7 +210,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                         else:
                             plot_sites[k] += ", " + host_list[i]
 
-        # fill subtable with data from JSON
+        # fill subtable statistics
         for i in xrange(len(plot_names)):
             if plot_efficiency_count[i] == 0.0:  # Calculation of efficiency
                 eff = 'Undefined'
@@ -216,7 +231,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 'ram':       round(plot_ram[i], 1),
                 'efficiency': eff}
             self.statistics_db_value_list.append(details_data)
-
+        # fill subtable jobs
         for i in xrange(job_count):
             details_data = {
                 'jobid':  job_id_list[i],
@@ -228,7 +243,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             self.jobs_db_value_list.append(details_data)
 
         ###############
-        # Make a plot #
+        # Make   plot #
         ###############
         # A Plot that shows Jobs per User and status of the jobs
         plot_color = {  # define colors to be used
@@ -369,7 +384,6 @@ class V2CMS6Status(hf.module.ModuleBase):
                         str(self.running_idle_ratio) + ". <br>"
             except ZeroDivisionError:
                 pass
-
         print data
         return data
 
@@ -380,7 +394,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         self.subtables['jobs'].insert().execute(
             [dict(parent_id=parent_id, **row) for row in self.jobs_db_value_list])
 
-  # Making Subtable Data available to the html-output
+    # Making Subtable Data available to the html-output
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
         details_list = self.subtables['statistics'].select().where(

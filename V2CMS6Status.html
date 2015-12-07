@@ -4,137 +4,126 @@
 <%def name="content()">
 
 % if module.dataset['error'] == 1:
-<table>
-  <tr>
-    <td class="warning"> ${module.dataset['error_msg']}</td>
+  <table>
+    <tr>
+      <td class="warning"> ${module.dataset['error_msg']}</td>
+    </tr>
+  </table>
+% else:
+  <table class="TableData">
+  <tr class="TableHeader">
+    <th width="15%"> Jobs running </th>
+    <th width="15%"> Jobs Queued</th>
+    <th width="20%"> Average Efficiency </th>
+    <th width="15%"> Cores Used </th>
+    <th width="15%"> RAM Used </th>
+    <th width="20%"> Average Queue time </th>
   </tr>
-</table>
-
-
-% else:
-<table class="TableData">
-<tr class="TableHeader">
-<th width="15%"> Jobs running </th>
-<th width="15%"> Jobs Queued</th>
-<th width="20%"> Average Efficiency </th>
-<th width="15%"> Cores Used </th>
-<th width="15%"> RAM Used </th>
-<th width="20%"> Average Queue time </th>
-</tr>
-
-<tr>
-<td width="15%">${module.dataset['running_jobs']}</td>
-<td width="15%">${module.dataset['queued_jobs']}</td>
-% if float(dataset['efficiency']) < float(module.config['min_efficiency']):
-  <td class=critical
-% else:
-  <td class=ok
-% endif
-width="20%"> ${module.dataset['efficiency']} </td>
-<td width="15%" >${module.dataset['cores']}</td>
-<td width="15%">${module.dataset['ram']} GB</td>
-% if "hours in the queue" in module.dataset['error_msg']:
-  <td class=critical
-% else:
-  <td class=ok
-% endif
-width="20%">${module.dataset['qtime']}</td>
-</table>
-
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-
-<div>
-  <input type="button" value="show details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
-  <input type="button" value="show all jobs" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
-  <input type="button" value="Error Messages" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
-  <br>
-</div>
-
-% if dataset['error_msg'] != '':
-<div id="${module.instance_name}_error"style="display:none;">
-<h3>Error Message:</h3>
-% if dataset['status'] == 0.5:
-<p class=warning
-% else:
-<p class=critical
-% endif
-style="position: relative; margin-right: 240px">${module.dataset['error_msg']}</p>
-</div>
-% endif
-
-<div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
-<table class="TableData">
-<tr class="TableHeader">
-<th width="15%"> User </th>
-<th width="10%"> Host </th>
-<th width="10%"> Queued Jobs </th>
-<th width="10%"> Idle Jobs </th>
-<th width="10%"> Running Jobs </th>
-<th width="10%"> Removed Jobs</th>
-<!-- <th width="10%"> Jobs finished </th> -->
-<th width="10%"> Cores used </th>
-<th width="10%"> RAM used </th>
-<th width="5%"> Efficiency </th>
-
-</tr>
-%for entry in statistics:
-  % if float(entry['efficiency']) < module.config['min_efficiency'] and int(entry['running']) > 0:
-    <tr class=critical>
-  % else:
-    <tr class=ok>
+  <tr>
+    <td width="15%">${module.dataset['running_jobs']}</td>
+    <td width="15%">${module.dataset['queued_jobs']}</td>
+    % if float(dataset['efficiency']) < float(module.config['min_efficiency']):
+      <td class=critical
+    % else:
+      <td class=ok
+    % endif
+      width="20%"> ${module.dataset['efficiency']} </td>
+    <td width="15%" >${module.dataset['cores']}</td>
+    <td width="15%">${module.dataset['ram']} GB</td>
+    % if "hours in the queue" in module.dataset['error_msg']:
+      <td class=critical
+    % else:
+      <td class=ok
+    % endif
+      width="20%">${module.dataset['qtime']}</td>
+    </tr>
+  </table>
+  <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+  <div>
+    <input type="button" value="show details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
+    <input type="button" value="show all jobs" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
+    <input type="button" value="Error Messages" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
+  </div>
+  % if dataset['error_msg'] != '':
+    <div id="${module.instance_name}_error"style="display:none;">
+    <h3>Error Message:</h3>
+    % if dataset['status'] == 0.5:
+      <p class=warning
+    % else:
+      <p class=critical
+    % endif
+      style="position: relative; margin-right: 240px">${module.dataset['error_msg']}</p>
+    </div>
   % endif
-      <td width="15%">${entry['user']}</td>
-      <td width="10%">${entry['sites']}</td>
-      <td width ="10%">${entry['queued']}</td>
-      <td width ="10%">${entry['idle']}</td>
-      <td width ="10%">${entry['running']}</td>
-      <td width="10%">${entry['removed']}</td>
-<!--      <td width="10%">${entry['finished']}</td> -->
-      <td width="10%">${entry['core']}</td>
-      <td width="10%">${entry['ram']} GB</td>
-      <td width="5%">${entry['efficiency']}</td>
-
+  <div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
+  <table class="TableData">
+    <tr class="TableHeader">
+      <th width="15%"> User </th>
+      <th width="10%"> Host </th>
+      <th width="10%"> Queued Jobs </th>
+      <th width="10%"> Idle Jobs </th>
+      <th width="10%"> Running Jobs </th>
+      <th width="10%"> Removed Jobs</th>
+      <!-- <th width="10%"> Jobs finished </th> -->
+      <th width="10%"> Cores used </th>
+      <th width="10%"> RAM used </th>
+      <th width="5%"> Efficiency </th>
+    </tr>
+    %for entry in statistics:
+        % if float(entry['efficiency']) < float(module.config['min_efficiency']) and int(entry['running']) > 0:
+          <tr class=critical>
+        % else:
+          <tr class=ok>
+        % endif
+            <td width="15%">${entry['user']}</td>
+            <td width="10%">${entry['sites']}</td>
+            <td width ="10%">${entry['queued']}</td>
+            <td width ="10%">${entry['idle']}</td>
+            <td width ="10%">${entry['running']}</td>
+            <td width="10%">${entry['removed']}</td>
+         <!-- <td width="10%">${entry['finished']}</td> -->
+            <td width="10%">${entry['core']}</td>
+            <td width="10%">${entry['ram']} GB</td>
+            <td width="5%">${entry['efficiency']}</td>
+          </tr>
+    %endfor
+  </table>
+  </div>
+  <div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th width="20%"> JobID </th>
+        <th width="20%"> User </th>
+        <th width="20%"> Host </th>
+        <th width="15%"> RAM</th>
+        <th width="15%"> CPU Time </th>
+        <th width="10%"> Status </th>
       </tr>
-%endfor
-</table>
-</div>
-
-<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
-<table class="TableData">
-<tr class="TableHeader">
-<th width="20%"> JobID </th>
-<th width="20%"> User </th>
-<th width="20%"> Host </th>
-<th width="15%"> RAM</th>
-<th width="15%"> CPU Time </th>
-<th width="10%"> Status </th>
-</tr>
-%for entry in jobs:
-      <tr>
-      <td width="20%">${entry['jobid']}</td>
-      <td width ="20%"> ${entry['user']}</td>
-      <td width ="20%"> ${entry['host']}</td>
-      %if entry['ram'] =='undefined':
-	       <td width="15%"> Undefined </td>
-      %else:
-	       <td width="15%">${entry['ram']} GB</td>
-      %endif
-         <td width="15%">${entry['cpu']}</td>
-      %if int(entry['status']) == 1:
-	       <td width="10%">Idle</td>
-      %elif int(entry['status']) == 2:
-	       <td  width="10%">Running</td>
-      %elif int(entry['status']) == 3:
-	       <td width="10%">Removed</td>
-      %elif int(entry['status']) == 4:
-	       <td width="10%">finished</td>
-      %else:
-	       <td width="10%">${entry['status']}</td>
-      %endif
-      </tr>
-%endfor
-</table>
-</div>
-
+      %for entry in jobs:
+        <tr>
+          <td width="20%">${entry['jobid']}</td>
+          <td width ="20%"> ${entry['user']}</td>
+          <td width ="20%"> ${entry['host']}</td>
+          %if entry['ram'] =='undefined':
+    	       <td width="15%"> Undefined </td>
+          %else:
+    	       <td width="15%">${entry['ram']} GB</td>
+          %endif
+             <td width="15%">${entry['cpu']}</td>
+          %if int(entry['status']) == 1:
+    	       <td width="10%">Idle</td>
+          %elif int(entry['status']) == 2:
+    	       <td  width="10%">Running</td>
+          %elif int(entry['status']) == 3:
+    	       <td width="10%">Removed</td>
+          %elif int(entry['status']) == 4:
+    	       <td width="10%">finished</td>
+          %else:
+    	       <td width="10%">${entry['status']}</td>
+          %endif
+        </tr>
+      %endfor
+    </table>
+  </div>
 % endif
 </%def>
