@@ -1,5 +1,18 @@
-# Module for history of the batch system
-
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 import hf
 from sqlalchemy import *
 import json
@@ -7,14 +20,14 @@ import time
 import datetime
 import ast
 
+
 class CMS6History(hf.module.ModuleBase):
     config_keys = {'sourceurl': ('Source Url', ''),
-                   'plotrange': ('number of hours in plot (maximum is 24, given by the constraint on the condor_history command)', '24'),
+                   'plotrange': ('number of hours in plot (maximum is 24)', '24'),
                    'plotsize_x': ('size of the plot in x', '10'),
                    'sites': ('differnet sites - input a python list with strings', '["gridka", "ekpcms6", "ekp-cloud", "ekpsg", "ekpsm","bwforcluster"]'),
                    'plotsize_y': ('size of plot in y', '5.8'),
                    'plot_width': ('width of bars in plot', '1'),
-
                    }
 
     table_columns = [
@@ -38,7 +51,6 @@ class CMS6History(hf.module.ModuleBase):
         self.statistics_db_value_list = []
 
     def extractData(self):
-        import matplotlib
         import matplotlib.gridspec as gridspec
         import matplotlib.pyplot as plt
         import numpy as np
@@ -48,13 +60,6 @@ class CMS6History(hf.module.ModuleBase):
         data['error_msg'] = "0"
         current_time = time.time()
         path = self.source.getTmpPath()
-        # Function to convert seconds to readable time format
-
-        def seconds_to_time(seconds):
-            m, s = divmod(float(seconds), 60)
-            h, m = divmod(m, 60)
-            return "%d:%02d:%02d" % (h, m, s)
-
         # open file
         with open(path, 'r') as f:
             # fix the JSON-File, so the file is valid
@@ -74,17 +79,15 @@ class CMS6History(hf.module.ModuleBase):
         last_status_list = list(int(services[id]['LastJobStatus'])for id in job_id_list)
         final_status_date_list = list(
             int(services[id]['EnteredCurrentStatus'])for id in job_id_list)
-        user_list = list(services[id]['User']for id in job_id_list)
         qdate_list = list(int(services[id]['QueueDate'])for id in job_id_list)
-
         total_jobs = len(job_id_list)
-        yesterday = current_time - (self.plotrange * 60 * 60)
-        qdate_list = list(map(lambda x: x - yesterday, qdate_list))
+        starttime = current_time - (self.plotrange * 60 * 60)
+        qdate_list = list(map(lambda x: x - starttime, qdate_list))
         qdate_list = list(map(lambda x: round(float(x) / (60 * 60), 0), qdate_list))
-        final_status_date_list = list(map(lambda x: x - yesterday, final_status_date_list))
+        final_status_date_list = list(map(lambda x: x - starttime, final_status_date_list))
         final_status_date_list = list(
             map(lambda x: round(float(x) / (60 * 60), 0), final_status_date_list))
-
+        # define lists for plot
         plot_data_running = np.zeros(self.plotrange + 1)
         plot_data_idle = np.zeros(self.plotrange + 1)
         plot_data_queued = np.zeros(self.plotrange + 1)
@@ -99,20 +102,19 @@ class CMS6History(hf.module.ModuleBase):
             # some jobs have no start_date_list value
             if start_date_list[i] != "undefined":
                 start_date_list[i] = round(
-                    float(int(start_date_list[i]) - yesterday) / (60 * 60), 0)
-            # completion_date_list is special - running jobs have a completion_date_list value of zero
+                    float(int(start_date_list[i]) - starttime) / (60 * 60), 0)
+            # running jobs have a completion_date_list value of zero
             if completion_date_list[i] > 0:
                 completion_date_list[i] = round(
-                    float(completion_date_list[i] - yesterday) / (60 * 60), 0)
+                    float(completion_date_list[i] - starttime) / (60 * 60), 0)
             for k in xrange(len(self.sites)):
                 if self.sites[k] in host:
                     plot_data_hosts[k] += 1
 
+        ########################################
         # create Lists for barPlot, sorted by time
         ########################################
-        #### two funktions to shorten code  ####
-        ########################################
-        # Function for handling of the time in queue, same for every job ################
+        # Function for handling of the time in queue, same for every job #
         def qtime_handling(qdate, startdate, plot_data_queued):
             k = round(qdate, 0)
             # if time when job was queued and starting time are older than plotrange,
@@ -156,25 +158,19 @@ class CMS6History(hf.module.ModuleBase):
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(completion_date_list[i], k,
                                    plot_data_finished, plot_data_running)
-        # jobs that completed but were removed after that
+                # jobs that completed but were removed after that
                 elif final_status_list[i] == 3 and last_status_list[i] == 4:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(completion_date_list[i], k, plot_data_removed, plot_data_running)
+                # jobs that were running and then went on hold
                 elif final_status_list[i] == 5 and last_status_list[i] == 2:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(completion_date_list[i], k,
                                    plot_data_finished, plot_data_running)
+                # jobs that were idle and then finished
                 elif final_status_list[i] == 4 and last_status_list[i] == 1:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(completion_date_list[i], k, plot_data_finished, plot_data_queued)
-                else:
-                    print final_status_list[i]
-                    print last_status_list[i]
-                    print i
-                    print "noch was oben"
-                    # print final_status_list[i]
-                    # print  last_status_list[i]
-                    # print user_list[i]
         # jobs that dont have an CompletionDate
             else:
                 # jobs that started, queued and finished plotrange hours ago
@@ -235,20 +231,10 @@ class CMS6History(hf.module.ModuleBase):
                 elif final_status_list[i] == 5 and last_status_list[i] == 2:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(final_status_date_list[i], k, plot_data_removed, plot_data_running)
-                else:
-                    print "noch was "
-                    print final_status_list[i]
-                    print last_status_list[i]
-                    # print user_list[i]
 
-        ##############################
-        ######## create Plot #########
-        ##############################
-        # print finished arrays
-        # print plot_data_running
-        # print plot_data_queued
-        # print plot_data_removed
-        # print plot_data_finished
+        ###############
+        # Make   plot #
+        ###############
         plot_color = {
             'queued':   '#5CADFF',
             'idle':     '#9D5CDE',
@@ -256,6 +242,7 @@ class CMS6History(hf.module.ModuleBase):
             'finished': '#009933',
             'removed':  '#CC6060',
         }
+        # define size according to config
         fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y*2))
         gs = gridspec.GridSpec(2, 1)
         axis = plt.subplot(gs[0, 0])
@@ -277,16 +264,16 @@ class CMS6History(hf.module.ModuleBase):
         xlabels = []
         for i in xrange(self.plotrange + 1):
             if i % 2 == 0:
-                time_tick = yesterday + i * 60 * 60
+                time_tick = starttime + i * 60 * 60
                 xlabels.append(datetime.datetime.fromtimestamp(
                     float(time_tick)).strftime('%d.%m \n %H:%M'))
             else:
                 xlabels.append("")
         today_readable = datetime.datetime.fromtimestamp(
             float(current_time)).strftime('%Y-%m-%d %H:%M:%S')
-        yesterday_readable = datetime.datetime.fromtimestamp(
-            float(yesterday)).strftime('%Y-%m-%d %H:%M:%S')
-        axis.set_title("Job Distribution from " + str(yesterday_readable) +
+        starttime_readable = datetime.datetime.fromtimestamp(
+            float(starttime)).strftime('%Y-%m-%d %H:%M:%S')
+        axis.set_title("Job Distribution from " + str(starttime_readable) +
                        " CET to " + str(today_readable) + " CET")
         axis.set_xticks(ind)
         axis.set_xticklabels(xlabels, rotation='vertical')
@@ -296,7 +283,7 @@ class CMS6History(hf.module.ModuleBase):
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]),
                     ("runnings jobs", "queued jobs", "idle jobs", "removed jobs", "finished jobs"),
                     loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
-
+        # plot that shows site usage
         bar_21 = axis_2.bar(ind_2, plot_data_hosts, width*0.5, align='center', color=plot_color['finished'])
         for rect in bar_21:
             height = rect.get_height()
@@ -308,7 +295,7 @@ class CMS6History(hf.module.ModuleBase):
         axis_2.set_ylim(0, max_height*1.2)
         axis_2.set_xlim(-0.5, len(self.sites)-0.5)
         axis_2.set_xticklabels(self.sites)
-        axis_2.set_title("Site Distribution from " + str(yesterday_readable) +
+        axis_2.set_title("Site Distribution from " + str(starttime_readable) +
                          " CET to " + str(today_readable) + " CET")
         axis_2.set_ylabel("finished Jobs")
         axis_2.set_xlabel("Sites")
@@ -316,6 +303,5 @@ class CMS6History(hf.module.ModuleBase):
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + "_history.png"), dpi=91)
         data["filename_plot"] = self.instance_name + "_history.png"
-        # self.statistics_db_value_list.append(details_data)
         print data
         return data
