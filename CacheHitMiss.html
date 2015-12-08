@@ -2,19 +2,13 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-
-% if module.dataset['error_msg'] != "" and module.dataset['status']==0:
-<table>
-  <tr>
-    <td class="critical"> ${module.dataset['error_msg']}</td>
-  </tr>
-</table>
-
-% else:
-
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-
-% endif
-
-
+  % if module.dataset['error_msg'] != "" and module.dataset['status']==0:
+    <table>
+      <tr>
+        <td class="critical"> ${module.dataset['error_msg']}</td>
+      </tr>
+    </table>
+  % else:
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+  % endif
 </%def>

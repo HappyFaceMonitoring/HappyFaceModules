@@ -1,4 +1,18 @@
-# Module for Status of CMS6 via condor_q
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
 import hf
 from sqlalchemy import *
@@ -19,7 +33,6 @@ class CacheHitMiss(hf.module.ModuleBase):
         Column('error_msg', TEXT)
     ], ['filename_plot']
 
-
     def prepareAcquisition(self):
         link = self.config['sourceurl']
         self.plotsize_x = float(self.config['plotsize_x'])
@@ -31,17 +44,14 @@ class CacheHitMiss(hf.module.ModuleBase):
         self.source = hf.downloadService.addDownload(link)
         # Get URL
         self.source_url = self.source.getSourceUrl()
-        # Set up Container for subtable data
 
     def extractData(self):
         import matplotlib.pyplot as plt
-        from matplotlib.font_manager import FontProperties
         import numpy as np
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
         path = self.source.getTmpPath()
-        # Function to convert seconds to readable time format
         # open file
         with open(path, 'r') as f:
             # fix the JSON-File, so the file is valid
@@ -55,7 +65,7 @@ class CacheHitMiss(hf.module.ModuleBase):
         hit_list = []
         local_list = []
         for id in id_list:
-            if services['jobs'][id]['creation_time']> self.time_limits:
+            if services['jobs'][id]['creation_time'] > self.time_limits:
                 hit_list.append(float(services['jobs'][id]['cachehit_rate']))
                 local_list.append(float(services['jobs'][id]['locality_rate']))
         # generate 2d histogram
@@ -70,8 +80,6 @@ class CacheHitMiss(hf.module.ModuleBase):
         cbar.ax.set_ylabel('Jobs')
         plt.ylabel('locality rate')
         plt.xlabel('cachehit rate')
-        time_readable = datetime.datetime.fromtimestamp(
-            float(self.time_limit)).strftime('%Y-%m-%d %H:%M:%S')
         plt.title('Cache Hit Distribution for the last ' + str(self.time_limit) + " days")
         plt.tight_layout()
         fig.savefig(hf.downloadService.getArchivePath(
