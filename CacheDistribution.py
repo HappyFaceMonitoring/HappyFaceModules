@@ -1,4 +1,18 @@
-# Module for Status of CMS6 via condor_q
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
 import hf
 from sqlalchemy import *
@@ -21,8 +35,8 @@ class CacheDistribution(hf.module.ModuleBase):
                    'plotsize_y': ('size of plot in y', '5'),
                    'x_min': ('minimum for x ', '1'),
                    'x_max': ('maximum for x', '10000'),
-                   'nbinsx': ('number of bins in x in histogram', '10'),
-                   'nbinsy': ('number of bins in y in histogram', '10')
+                   'nbinsx': ('number of bins in x', '10'),
+                   'nbinsy': ('number of bins in y', '10')
                    }
     table_columns = [
         Column('filename_plot', TEXT),
@@ -31,7 +45,6 @@ class CacheDistribution(hf.module.ModuleBase):
         Column('failed_datasets', INT),
         Column('failed_machines', TEXT)
     ], ['filename_plot']
-
 
     def prepareAcquisition(self):
         link = self.config['sourceurl']
@@ -45,19 +58,15 @@ class CacheDistribution(hf.module.ModuleBase):
         self.source = hf.downloadService.addDownload(link)
         # Get URL
         self.source_url = self.source.getSourceUrl()
-        # Set up Container for subtable data
 
     def extractData(self):
         import matplotlib.pyplot as plt
-        from matplotlib.font_manager import FontProperties
         import numpy as np
-        from matplotlib.colors import LogNorm
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
         data['failed_machines'] = ""
         path = self.source.getTmpPath()
-        # Function to convert seconds to readable time format
         # open file
         dataset = AutoVivification()
         with open(path, 'r') as f:
@@ -87,7 +96,8 @@ class CacheDistribution(hf.module.ModuleBase):
                 data['failed_machines'] += machines[k] + " "
         for machine in removals:  # remove empty machines from dataset
             machines.remove(machine)
-        ''' Plot generation '''
+        """ calculate the metric of the Dataset
+            sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)"""
         metric = []
         file_count = []
         norm = np.sqrt(1-1.0/len(machines))
@@ -121,8 +131,10 @@ class CacheDistribution(hf.module.ModuleBase):
             data['error_msg'] = "No files on caches found"
             print data
             return data
-        # create plot
-        # calculte the binning for log Plot
+        ###############
+        # Make   plot #
+        ###############
+        ''' calculate bin size so bins have equal size in log-Plot '''
         self.x_max = np.log10(self.x_max)
         self.x_min = np.log10(self.x_min)
         width = (self.x_max-self.x_min)/self.nbinsx
@@ -130,7 +142,6 @@ class CacheDistribution(hf.module.ModuleBase):
         for k in xrange(self.nbinsx+1):
             xbins.append(pow(10, float(self.x_min + k*width)))
         ybins = np.arange(0.0, 1.001, 1.0/self.nbinsy)
-
         nbins = [xbins, ybins]
         H, xedges, yedges = np.histogram2d(file_count, metric, bins=nbins)
         fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
@@ -138,6 +149,7 @@ class CacheDistribution(hf.module.ModuleBase):
         H = np.flipud(H)
         plt.pcolor(xedges, yedges, H, cmap='Blues')
         cbar = plt.colorbar(ticks=np.arange(0, np.amax(H), 1))
+        # cuten plot
         cbar.ax.set_ylabel('Counts')
         plt.ylabel('Metric')
         plt.xlabel('Number of Files')
@@ -151,6 +163,5 @@ class CacheDistribution(hf.module.ModuleBase):
         data["filename_plot"] = self.instance_name + "_filesize.png"
         data['datasets'] = len(file_count)
         data['failed_datasets'] = sum(error_count)
-        # fill subtables
         print data
         return data

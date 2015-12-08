@@ -2,41 +2,36 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-
-% if module.dataset['error_msg'] != "" and module.dataset['status']==0:
-<table>
-  <tr>
-    <td class="critical"> ${module.dataset['error_msg']}</td>
-  </tr>
-</table>
-
-% else:
-<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-
-<div>
-<input type="button" value="show details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
-</div>
-<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
-  <table  class="TableData">
-    <tr>
-      <td> datasets total </td>
-      <td> ${module.dataset['datasets']} </td>
-    </tr>
-    <tr>
-      <td> dataset acquire failed</td>
-      <td> ${module.dataset['failed_datasets']}  </td>
-    </tr>
-    <tr>
-      <td> machines data acquire failed </td>
-      <td> ${module.dataset['failed_machines']}  </td>
-    </tr>
-    <tr>
-      <td> warning </td>
-      <td> ${module.dataset['error_msg']}  </td>
-    </tr>
-  </table>
-</div>
-% endif
-
-
+  % if module.dataset['error_msg'] != "" and module.dataset['status']==0:
+    <table>
+      <tr>
+        <td class="critical"> ${module.dataset['error_msg']}</td>
+      </tr>
+    </table>
+    % else:
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+    <div>
+      <input type="button" value="show details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
+    </div>
+    <div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+      <table  class="TableData">
+        <tr>
+          <td> datasets total </td>
+          <td> ${module.dataset['datasets']} </td>
+        </tr>
+        <tr>
+          <td> dataset acquire failed</td>
+          <td> ${module.dataset['failed_datasets']}  </td>
+        </tr>
+        <tr>
+          <td> machines data acquire failed </td>
+          <td> ${module.dataset['failed_machines']}  </td>
+        </tr>
+        <tr>
+          <td> warning </td>
+          <td> ${module.dataset['error_msg']}  </td>
+        </tr>
+      </table>
+    </div>
+  % endif
 </%def>
