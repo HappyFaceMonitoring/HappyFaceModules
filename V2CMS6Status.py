@@ -209,16 +209,18 @@ class V2CMS6Status(hf.module.ModuleBase):
                             plot_sites[k] = host_list[i]
                         else:
                             plot_sites[k] += ", " + host_list[i]
-
+            for k in xrange(len(plot_names)):
+                if plot_sites[k] == "":
+                    plot_sites[k] = "Undefined"
         # fill subtable statistics
         for i in xrange(len(plot_names)):
             if plot_efficiency_count[i] == 0.0:  # Calculation of efficiency
-                eff = 'Undefined'
+                eff = 0.0
             else:
                 try:
                     eff = round(float(plot_efficiency[i]) / plot_efficiency_count[i], 2)
                 except (ZeroDivisionError, ValueError):
-                    eff = "Undefined"
+                    eff = 0.0
             details_data = {
                 'user':      plot_names[i],
                 'queued':    int(plot_data_queued[i]),
@@ -280,7 +282,6 @@ class V2CMS6Status(hf.module.ModuleBase):
         if max_width <= 10:  # set xlim for 10 jobs or less
             axis.set_xlim(0, 10)
         # use log scale if max_width gets bigger than 1000
-        print plot_data_queued
         if max_width >= self.log_limit and len(plot_names) >= 3:
             print len(plot_names)
             bar_1 = axis.barh(
@@ -335,7 +336,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         try:
             eff_count = round(float(sum(efficiency_list) / len(efficiency_list)), 2)
         except ZeroDivisionError:
-            eff_count = 0
+            eff_count = 0.0
         data['efficiency'] = eff_count
         # fix RAM - List so only values
         for ram in ram_list:
