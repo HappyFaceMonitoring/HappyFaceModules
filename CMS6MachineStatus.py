@@ -43,6 +43,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         Column('slots', INT),
         Column('claimed_slots', FLOAT),
         Column('filename_plot', TEXT),
+        Column('error', INT),
         Column('error_msg', TEXT),
         Column('condor_load', FLOAT),
         Column('unclaimed_slots', FLOAT),
@@ -120,6 +121,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         with open(path, 'r') as f:
             # fix the JSON-File, so the file is valid
             content = f.read()
+            if '{ }' in content:  # if no jobs in condor_q, stop script and display error_msg inst.
+                data['status'] = 1
+                data['error'] = 1
+                data['error_msg'] = "No Slots running"
+                return data
             content_fixed = content.replace("}, }", "} }")
             services = json.loads(content_fixed)
             slot_id_list = list(services.keys())

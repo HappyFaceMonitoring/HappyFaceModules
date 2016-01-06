@@ -2,6 +2,13 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
+% if module.dataset['error'] == 1:
+  <table>
+    <tr>
+      <td class="warning"> ${module.dataset['error_msg']}</td>
+    </tr>
+  </table>
+% else:
   <table class="TableData">
     <tr class="TableHeader">
       <th width = "16%" > Slots Claimed / Unclaimed </th>
@@ -110,4 +117,5 @@
       %endfor
     </table>
   </div>
+% endif
 </%def>
