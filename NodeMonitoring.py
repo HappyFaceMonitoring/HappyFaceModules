@@ -464,5 +464,35 @@ class NodeMonitoring(hf.module.ModuleBase):
         details_list = self.subtables['statistics'].select().where(
                 self.subtables['statistics'].c.parent_id==self.dataset['id']
                 ).execute().fetchall()
-        data['statistics'] = map(dict, details_list)
+
+        current_entry = {}
+        restructured_details_list = []
+        attribute_values_list = []
+        current_primary_key = ""
+        statistics_dict = map(dict, details_list)
+
+        for i in range(len(statistics_dict)):
+            entry = statistics_dict[i]
+            if current_primary_key != entry['PrimaryKey']:
+                current_primary_key = entry['PrimaryKey']
+                current_entry = entry.copy()
+                av = current_entry.pop('AttributeValue').upper()
+                if attribute_values_list.count(av) == 0: attribute_values_list.append(av)
+                ad = current_entry.pop('AttributeData')
+                current_entry[av] = ad
+            else:
+                av = entry['AttributeValue'].upper()
+                if attribute_values_list.count(av) == 0: attribute_values_list.append(av)
+                ad = entry['AttributeData']
+                current_entry[av] = ad
+
+            # When a new or no primary key follows, the finished restructured entry is appended to the list
+            try:
+                if entry['PrimaryKey'] != statistics_dict[i+1]['PrimaryKey']:
+                    restructured_details_list.append(current_entry)
+            except:
+                restructured_details_list.append(current_entry)
+
+        data['statistics'] = restructured_details_list
+        data['attribute_values'] = attribute_values_list
         return data

@@ -57,24 +57,80 @@ $(function() {
 <br>
 <table class="TableData">
     %if module.dataset['SecondaryKey'] == '':
-        <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
+        <tr>
+        <td>${module.dataset['PrimaryKey']}</td>
+        %for value in attribute_values:
+        <td>${value}</td>
+        %endfor
+        </tr>
         %for entry in statistics:
             %if entry['PrimaryKeyURL'] == '':
-                <tr><td>${entry['PrimaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+                <tr>
+                <td>${entry['PrimaryKey']}</td>
+                %for value in attribute_values:
+                <td>
+                    %if value in entry:
+                        ${entry[value]}
+                    %else:
+                        -
+                    %endif
+                </td>
+                %endfor
+                </tr>
             %else:
-                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+                <tr>
+                <td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td>
+                %for value in attribute_values:
+                <td>
+                    %if value in entry:
+                        ${entry[value]}
+                    %else:
+                        -
+                    %endif
+                </td>
+                %endfor
+                </tr>
             %endif
         %endfor
     %else:
-        <tr><td>${module.dataset['PrimaryKey']}</td><td>${module.dataset['SecondaryKey']}</td><td>${module.dataset['Attribute']}</td><td>Number of Jobs</td></tr>
+        <tr>
+        <td>${module.dataset['PrimaryKey']}</td>
+        <td>${module.dataset['SecondaryKey']}</td>
+        %for value in attribute_values:
+        <td>${value}</td>
+        %endfor
+        </tr>
         %for entry in statistics:
             %if entry['PrimaryKeyURL'] == '':
-                <tr><td>${entry['PrimaryKey']}</td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+                <tr>
+                <td>${entry['PrimaryKey']}</td>
+                <td>${entry['SecondaryKey']}</td>
+                %for value in attribute_values:
+                <td>
+                    %if value in entry:
+                        ${entry[value]}
+                    %else:
+                        -
+                    %endif
+                </td>
+                %endfor
+                </tr>
             %else:
-                <tr><td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td><td>${entry['SecondaryKey']}</td><td>${entry['AttributeValue']}</td><td>${entry['AttributeData']}</td></tr>
+                <tr>
+                <td><a href="${entry['PrimaryKeyURL']}">${entry['PrimaryKey']}</a></td>
+                <td>${entry['SecondaryKey']}</td>
+                %for value in attribute_values:
+                <td>
+                    %if value in entry:
+                        ${entry[value]}
+                    %else:
+                        -
+                    %endif
+                </td>
+                %endfor
+                </tr>
             %endif
         %endfor
     %endif
 </table>
 </%def>
-
