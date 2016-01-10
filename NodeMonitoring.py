@@ -469,12 +469,11 @@ class NodeMonitoring(hf.module.ModuleBase):
         restructured_details_list = []
         attribute_values_list = []
         current_primary_key = ""
-        current_primary_url = ""
         statistics_dict = map(dict, details_list)
 
-        for entry in statistics_dict:
+        for i in range(len(statistics_dict)):
+            entry = statistics_dict[i]
             if current_primary_key != entry['PrimaryKey']:
-                if current_entry != {}: restructured_details_list.append(current_entry)
                 current_primary_key = entry['PrimaryKey']
                 current_entry = entry.copy()
                 av = current_entry.pop('AttributeValue').upper()
@@ -486,6 +485,13 @@ class NodeMonitoring(hf.module.ModuleBase):
                 if attribute_values_list.count(av) == 0: attribute_values_list.append(av)
                 ad = entry['AttributeData']
                 current_entry[av] = ad
+
+            # When a new or no primary key follows, the finished restructured entry is appended to the list
+            try:
+                if entry['PrimaryKey'] != statistics_dict[i+1]['PrimaryKey']:
+                    restructured_details_list.append(current_entry)
+            except:
+                restructured_details_list.append(current_entry)
 
         data['statistics'] = restructured_details_list
         data['attribute_values'] = attribute_values_list
