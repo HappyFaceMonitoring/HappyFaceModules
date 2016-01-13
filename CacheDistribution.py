@@ -17,7 +17,7 @@
 import hf
 from sqlalchemy import *
 import json
-
+import numpy as np
 
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature."""
@@ -30,6 +30,7 @@ class AutoVivification(dict):
 
 
 class CacheDistribution(hf.module.ModuleBase):
+
     config_keys = {'sourceurl': ('Source Url', ''),
                    'plotsize_x': ('size of the plot in x', '10'),
                    'plotsize_y': ('size of plot in y', '5'),
@@ -46,6 +47,9 @@ class CacheDistribution(hf.module.ModuleBase):
         Column('failed_machines', TEXT)
     ], ['filename_plot']
 
+    def ideal_dist(self, x, n):
+        return np.sqrt(max(0.0, 1.0/x-1.0/n))
+
     def prepareAcquisition(self):
         link = self.config['sourceurl']
         self.plotsize_x = float(self.config['plotsize_x'])
@@ -61,7 +65,6 @@ class CacheDistribution(hf.module.ModuleBase):
 
     def extractData(self):
         import matplotlib.pyplot as plt
-        import numpy as np
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
@@ -149,13 +152,17 @@ class CacheDistribution(hf.module.ModuleBase):
         H = np.flipud(H)
         plt.pcolor(xedges, yedges, H, cmap='Blues')
         cbar = plt.colorbar(ticks=np.arange(0, np.amax(H), 1))
+        x = np.linspace(0, len(machines), 20*len(machines))
+        y = map(lambda x: self.ideal_dist(x, len(machines)), x)
+        plt.plot(x, y)
         # cuten plot
         cbar.ax.set_ylabel('Counts')
         plt.ylabel('Metric')
         plt.xlabel('Number of Files')
         plt.title('Dataset Distribution')
         plt.xscale('log')
-        plt.xlim(0.0, max(xedges))
+        plt.xlim(0.99, max(xedges))
+        plt.ylim(0, 1)
         plt.yticks(yedges)
         plt.tight_layout()
         fig.savefig(hf.downloadService.getArchivePath(
