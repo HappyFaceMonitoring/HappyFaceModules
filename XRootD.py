@@ -106,6 +106,11 @@ class XRootD(hf.module.ModuleBase):
         ax1.set_title(self.config['tier_name'])
         ax1.set_xticks(index_list+0.5)
         ax1.set_xticklabels(datetime_list, rotation='vertical')
+        pos1_old = ax1.get_position()
+        ax1.set_position([pos1_old.x0,pos1_old.y0+0.2,pos1_old.width,pos1_old.height-0.2])
+        ax2 = ax1.twinx()
+        pos2_old = ax2.get_position()
+        ax2.set_position([pos2_old.x0,pos2_old.y0+0.2,pos2_old.width,pos2_old.height-0.2])
 
         ax1.bar(index_list, finished_list, 1.0, color='mediumslateblue', label='finished')
         ax1.bar(index_list, running_list, 1.0, color='cornflowerblue',bottom=finished_list, label='running')
@@ -115,7 +120,6 @@ class XRootD(hf.module.ModuleBase):
         for tl in ax1.get_yticklabels():
             tl.set_color('darkslateblue')
         ax1.legend(loc='upper left')
-        ax2 = ax1.twinx()
         
         smooth_index_list = np.linspace(index_list.min(),index_list.max(),300)
         smooth_rate_list = spline(index_list,rate_list,smooth_index_list)
