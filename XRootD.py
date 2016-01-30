@@ -93,7 +93,7 @@ class XRootD(hf.module.ModuleBase):
             datetime_list.append(job['date'])
         
         
-        # Needed to avoid problems with legend and interpolation, if there is to few data.
+        # Needed to avoid problems with legend and interpolation, if there is too few data.
         if len(datetime_list) in [0,1,2]:
             for i in range(3-len(datetime_list)):
                 rate_list.append(0);
