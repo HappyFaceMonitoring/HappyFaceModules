@@ -91,20 +91,31 @@ class XRootD(hf.module.ModuleBase):
             finished_list.append(job['plot_data_finished'])
             running_list.append(job['plot_data_active'] - job['plot_data_finished'])
             datetime_list.append(job['date'])
+        
+        
+        # Needed to avoid problems with legend and interpolation, if there is to few data.
+        if len(datetime_list) in [0,1,2]:
+            for i in range(3-len(datetime_list)):
+                rate_list.append(0);
+                finished_list.append(0);
+                running_list.append(0);
+                datetime_list.append("N/A");
 
         fig, ax1 = plt.subplots()
         index_list = np.arange(len(rate_list))
         ax1.set_title(self.config['tier_name'])
         ax1.set_xticks(index_list+0.5)
         ax1.set_xticklabels(datetime_list, rotation='vertical')
-        ax2 = ax1.twinx()
-        
+
         ax1.bar(index_list, finished_list, 1.0, color='mediumslateblue', label='finished')
         ax1.bar(index_list, running_list, 1.0, color='cornflowerblue',bottom=finished_list, label='running')
         ax1.set_ylabel('active = finished + running transfers', color='darkslateblue')
+        y1_min, y1_max = ax1.get_ylim()
+        ax1.set_ylim(y1_min*1.2, y1_max*1.2) # Avoids the problem of histogram overlapping with legend. If data there, y1_min = 0.
         for tl in ax1.get_yticklabels():
             tl.set_color('darkslateblue')
         ax1.legend(loc='upper left')
+        ax2 = ax1.twinx()
         
         smooth_index_list = np.linspace(index_list.min(),index_list.max(),300)
         smooth_rate_list = spline(index_list,rate_list,smooth_index_list)
@@ -112,7 +123,6 @@ class XRootD(hf.module.ModuleBase):
         for tl in ax2.get_yticklabels():
             tl.set_color('r')
         ax2.set_ylabel('Average transfer rate per file (MB/s)', color='r')
-        
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_xrootd.png'), dpi=60)
         data['filename_plot'] = self.instance_name + '_xrootd.png'
