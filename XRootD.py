@@ -20,7 +20,6 @@ import os
 import numpy as np
 from sqlalchemy import *
 import json
-from scipy.interpolate import spline
 
 class XRootD(hf.module.ModuleBase):
     config_keys = {
@@ -49,8 +48,12 @@ class XRootD(hf.module.ModuleBase):
         self.details_list = []
 
     def extractData(self):
-	import matplotlib
-	import matplotlib.pyplot as plt
+        #Imports for matplotlib & scipy must be made here, otherwise the module wouldn't be threadsafe.
+        #This would lead to server problems.
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from scipy.interpolate import spline
+        
         data = {}
         list_of_details = []
         plot_date = []
@@ -92,15 +95,6 @@ class XRootD(hf.module.ModuleBase):
             running_list.append(job['plot_data_active'] - job['plot_data_finished'])
             datetime_list.append(job['date'])
         
-        
-        # Needed to avoid problems with legend and interpolation, if there is too few data.
-        if len(datetime_list) in [0,1,2]:
-            for i in range(3-len(datetime_list)):
-                rate_list.append(0);
-                finished_list.append(0);
-                running_list.append(0);
-                datetime_list.append("N/A");
-
         fig, ax1 = plt.subplots()
         index_list = np.arange(len(rate_list))
         ax1.set_title(self.config['tier_name'])
@@ -116,14 +110,30 @@ class XRootD(hf.module.ModuleBase):
         ax1.bar(index_list, running_list, 1.0, color='cornflowerblue',bottom=finished_list, label='running')
         ax1.set_ylabel('active = finished + running transfers', color='darkslateblue')
         y1_min, y1_max = ax1.get_ylim()
-        ax1.set_ylim(y1_min*1.2, y1_max*1.2) # Avoids the problem of histogram overlapping with legend. If data there, y1_min = 0.
+        ax1.set_ylim(0., y1_max*1.25) #Try to avoid histogram overlapping with legend.
         for tl in ax1.get_yticklabels():
             tl.set_color('darkslateblue')
-        ax1.legend(loc='upper left')
+        # Legend for histograms only when data available
+        if len(datetime_list) > 0:
+            ax1.legend(loc='upper left')
+        else:
+            ax1.set_xlabel('NO DATA AVAILABLE')
         
-        smooth_index_list = np.linspace(index_list.min(),index_list.max(),300)
-        smooth_rate_list = spline(index_list,rate_list,smooth_index_list)
-        ax2.plot(smooth_index_list+0.5, smooth_rate_list, 'r-')
+        # Only interpolate when enough datapoints there
+        if len(datetime_list) > 2:
+            smooth_index_list = np.linspace(index_list.min(),index_list.max(),300)
+            smooth_rate_list = spline(index_list,rate_list,smooth_index_list)
+            
+            #Sorting out negative rate values due to bad interpolation
+            smooth_rate_list = [x if x >= 0. else 0. for x in smooth_rate_list]
+            
+            ax2.plot(smooth_index_list+0.5, smooth_rate_list, 'r-',label="interpolated rate")
+            ax2.legend(loc='upper right')
+        else:
+            ax2.plot(index_list+0.5,rate_list, 'r-')
+        
+        y2_min, y2_max = ax2.get_ylim()
+        ax2.set_ylim(0., y2_max*1.25) #Try to avoid curve overlapping with legend.
         for tl in ax2.get_yticklabels():
             tl.set_color('r')
         ax2.set_ylabel('Average transfer rate per file (MB/s)', color='r')
