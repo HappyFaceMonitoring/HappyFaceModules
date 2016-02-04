@@ -99,6 +99,25 @@ class CacheDistribution(hf.module.ModuleBase):
                 data['failed_machines'] += machines[k] + " "
         for machine in removals:  # remove empty machines from dataset
             machines.remove(machine)
+        for i in xrange(len(machines)):
+            failed = 0
+            if "failed" in status[i]:
+                failed += 1
+                print failed
+        if len(machines) == 0:
+            data['status'] = 0
+            data['error_msg'] = "No Cache available"
+            return data
+        if failed == len(machines):
+            data['status'] = 0
+            data['error_msg'] = "No data to display!"
+            print data
+            return data
+        if sum(file_count) == 0:
+            data['status'] = 0.5
+            data['error_msg'] = "No files on caches found"
+            print data
+            return data
         """ calculate the metric of the Dataset
             sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)"""
         metric = []
@@ -120,20 +139,6 @@ class CacheDistribution(hf.module.ModuleBase):
                 temp_2 += pow((float(opt - size)/ds_total_size), 2)
             metric.append(round((np.sqrt(temp_2)/norm), 3))
             file_count.append(temp)
-        for i in xrange(len(machines)):
-            failed = 0
-            if "failed" in status[i]:
-                failed += 1
-        if failed == len(machines):
-            data['status'] = 0
-            data['error_msg'] = "No data to display!"
-            print data
-            return data
-        if sum(file_count) == 0:
-            data['status'] = 0.5
-            data['error_msg'] = "No files on caches found"
-            print data
-            return data
         ###############
         # Make   plot #
         ###############

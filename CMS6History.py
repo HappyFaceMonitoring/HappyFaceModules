@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+-# -*- coding: utf-8 -*-
 #
 # Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
 #
@@ -227,6 +227,10 @@ class CMS6History(hf.module.ModuleBase):
                 elif final_status_list[i] == 1 and last_status_list[i] == 2:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     final_handling(final_status_date_list[i], k, plot_data_idle, plot_data_running)
+                    k += 1
+                    while k < self.plotrange + 1:
+                        plot_data_idle[k] += 1
+                        k += 1
         # job that went from running to removed
                 elif final_status_list[i] == 5 and last_status_list[i] == 2:
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
