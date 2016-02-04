@@ -21,12 +21,10 @@ import numpy as np
 from sqlalchemy import *
 import json
 
-
 class XRootD(hf.module.ModuleBase):
     config_keys = {
         'source_url': ('Source File', ''),
-        'tier_name': ('Tier to be monitored', ''),
-        'attribute': ('Attribute to be plotted (active, finished, avg_trans_rate_p_file)', '')
+        'tier_name': ('Tier to be monitored', '')
     }
     config_hint = ''
 
@@ -38,7 +36,9 @@ class XRootD(hf.module.ModuleBase):
     subtable_columns = {
         'details': ([
             Column("date", TEXT),
-            Column("plot_data", FLOAT)
+            Column("plot_data", FLOAT), # used for rate
+            Column("plot_data_active", FLOAT),
+            Column("plot_data_finished", FLOAT)
         ], [])
     }
 
@@ -48,41 +48,34 @@ class XRootD(hf.module.ModuleBase):
         self.details_list = []
 
     def extractData(self):
-	import matplotlib
-	import matplotlib.pyplot as plt
+        #Imports for matplotlib & scipy must be made here, otherwise the module wouldn't be threadsafe.
+        #This would lead to server problems.
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from scipy.interpolate import spline
+        
         data = {}
         list_of_details = []
         plot_date = []
         plot_attribute = []
         with open(self.source.getTmpPath(), 'r') as f:
             data_object = json.loads(f.read())
-        
-        if str(self.config['attribute']) == 'avg_trans_rate_p_file':
-            for group in data_object['transfers']:
-                if str(group['name']) == self.config['tier_name']:
-                    for jobs in group['bins']:
-                        details = {}
-                        struct_time = time.strptime(jobs['start_time'], "%Y-%m-%dT%H:%M:%S")
-                        details['date'] = time.strftime("%Y-%m-%d %H:%M", struct_time)
-                        details['plot_data'] = (float(jobs['finished']))/(
-                                                    float(jobs['active']))*float(
-                                                        jobs['bytes'])/float(
-                                                            jobs['active_time'])/1000000.0
-                        list_of_details.append(details)
-                    break
-            data['attribute'] = 'Average transfer rate per file (MB/s)'
-        else:    
-            for group in data_object['transfers']:
-                if str(group['name']) == self.config['tier_name']:
-                    for jobs in group['bins']:
-                        details = {}
-                        struct_time = time.strptime(jobs['start_time'], "%Y-%m-%dT%H:%M:%S")
-                        details['date'] = time.strftime("%Y-%m-%d %H:%M", struct_time)
-                        details['plot_data'] = float(jobs[self.config['attribute']])
-                        list_of_details.append(details)
-                    break
-            data['attribute'] = '%s transfers' % self.config['attribute']
-        
+
+        for group in data_object['transfers']:
+            if str(group['name']) == self.config['tier_name']:
+                for jobs in group['bins']:
+                    details = {}
+                    struct_time = time.strptime(jobs['start_time'], "%Y-%m-%dT%H:%M:%S")
+                    details['date'] = time.strftime("%Y-%m-%d %H:%M", struct_time)
+                    details['plot_data'] = (float(jobs['finished'])/float(jobs['active'])*
+                                           float(jobs['bytes'])/float(jobs['active_time'])/
+                                           1000000.0)
+                    details['plot_data_active'] = float(jobs['active'])
+                    details['plot_data_finished'] = float(jobs['finished'])
+                    list_of_details.append(details)
+                break
+        data['attribute'] = "all information"
+
         list_of_details = sorted(list_of_details, key = lambda k: k['date'])
         self.details_list = list_of_details
         data['tier_name'] = self.config['tier_name']
@@ -91,37 +84,62 @@ class XRootD(hf.module.ModuleBase):
         ####PLOT#####################
         
         #Plot-lists
-        data_list = []
         datetime_list = []
-        
+        rate_list = []
+        finished_list = []
+        running_list = []
+
         for job in list_of_details:
-            data_list.append(job['plot_data'])
+            rate_list.append(job['plot_data'])
+            finished_list.append(job['plot_data_finished'])
+            running_list.append(job['plot_data_active'] - job['plot_data_finished'])
             datetime_list.append(job['date'])
         
-        self.plt = plt
-        fig = self.plt.figure()
-        axis = fig.add_subplot(111)
-        ind = np.arange(len(data_list))
-        width = 1.0
-        max_value = max([0] + data_list)
-        if max_value < 4.0:
-            scale_value = 0.2
+        fig, ax1 = plt.subplots()
+        index_list = np.arange(len(rate_list))
+        ax1.set_title(self.config['tier_name'])
+        ax1.set_xticks(index_list+0.5)
+        ax1.set_xticklabels(datetime_list, rotation='vertical')
+        pos1_old = ax1.get_position()
+        ax1.set_position([pos1_old.x0,pos1_old.y0+0.2,pos1_old.width,pos1_old.height-0.2])
+        ax2 = ax1.twinx()
+        pos2_old = ax2.get_position()
+        ax2.set_position([pos2_old.x0,pos2_old.y0+0.2,pos2_old.width,pos2_old.height-0.2])
+
+        ax1.bar(index_list, finished_list, 1.0, color='mediumslateblue', label='finished')
+        ax1.bar(index_list, running_list, 1.0, color='cornflowerblue',bottom=finished_list, label='running')
+        ax1.set_ylabel('active = finished + running transfers', color='darkslateblue')
+        y1_min, y1_max = ax1.get_ylim()
+        ax1.set_ylim(0., y1_max*1.25) #Try to avoid histogram overlapping with legend.
+        for tl in ax1.get_yticklabels():
+            tl.set_color('darkslateblue')
+        # Legend for histograms only when data available
+        if len(datetime_list) > 0:
+            ax1.legend(loc='upper left')
         else:
-            scale_value = max_value // 4
+            ax1.set_xlabel('NO DATA AVAILABLE')
         
-        p1 = axis.bar(ind, data_list, width, color='blue')
+        # Only interpolate when enough datapoints there
+        if len(datetime_list) > 2:
+            smooth_index_list = np.linspace(index_list.min(),index_list.max(),300)
+            smooth_rate_list = spline(index_list,rate_list,smooth_index_list)
+            
+            #Sorting out negative rate values due to bad interpolation
+            smooth_rate_list = [x if x >= 0. else 0. for x in smooth_rate_list]
+            
+            ax2.plot(smooth_index_list+0.5, smooth_rate_list, 'r-',label="interpolated rate")
+            ax2.legend(loc='upper right')
+        else:
+            ax2.plot(index_list+0.5,rate_list, 'r-')
         
-        axis.set_position([0.2,0.3,0.75,0.6])
-        axis.set_ylabel(data['attribute'])
-        axis.set_title(self.config['tier_name'])
-        axis.set_xticks(ind+width/2.)
-        axis.set_xticklabels(datetime_list, rotation='vertical')
-        axis.set_yticks(np.arange(0, max_value + scale_value, scale_value))
-        
+        y2_min, y2_max = ax2.get_ylim()
+        ax2.set_ylim(0., y2_max*1.25) #Try to avoid curve overlapping with legend.
+        for tl in ax2.get_yticklabels():
+            tl.set_color('r')
+        ax2.set_ylabel('Average transfer rate per file (MB/s)', color='r')
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_xrootd.png'), dpi=60)
         data['filename_plot'] = self.instance_name + '_xrootd.png'
-        
         
         return data
         
