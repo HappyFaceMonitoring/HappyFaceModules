@@ -1,4 +1,4 @@
--# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright 2015 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
 #
