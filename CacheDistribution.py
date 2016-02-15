@@ -113,11 +113,6 @@ class CacheDistribution(hf.module.ModuleBase):
             data['error_msg'] = "No data to display!"
             print data
             return data
-        if sum(file_count) == 0:
-            data['status'] = 0.5
-            data['error_msg'] = "No files on caches found"
-            print data
-            return data
         """ calculate the metric of the Dataset
             sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)"""
         metric = []
@@ -139,6 +134,11 @@ class CacheDistribution(hf.module.ModuleBase):
                 temp_2 += pow((float(opt - size)/ds_total_size), 2)
             metric.append(round((np.sqrt(temp_2)/norm), 3))
             file_count.append(temp)
+        if sum(file_count) == 0:
+            data['status'] = 0.5
+            data['error_msg'] = "No files on caches found"
+            print data
+            return data
         ###############
         # Make   plot #
         ###############
@@ -159,7 +159,7 @@ class CacheDistribution(hf.module.ModuleBase):
         cbar = plt.colorbar(ticks=np.arange(0, np.amax(H), 1))
         x = np.linspace(0, len(machines), 20*len(machines))
         y = map(lambda x: self.ideal_dist(x, len(machines)), x)
-        plt.plot(x, y)
+        plt.plot(x, y, linestyle='dotted')
         # cuten plot
         cbar.ax.set_ylabel('Counts')
         plt.ylabel('Metric')
