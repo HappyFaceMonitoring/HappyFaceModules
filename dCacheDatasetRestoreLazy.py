@@ -40,6 +40,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         Column('status_waiting', INT),
         Column('status_suspended', INT),
         Column('status_unknown', INT),
+        Column('status_idle', INT),
         Column('time_limit', INT),
         Column('retry_limit', INT),
         Column('hit_retry', INT),
@@ -69,7 +70,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         except hf.ConfigError:
             self.details_cutoff = 0
 
-        self.statusTagsOK = ['Pool2Pool','Staging']
+        self.statusTagsOK = ['Pool2Pool','Staging','Idle']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
 
         self.total = 0
@@ -102,13 +103,16 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
         # parse html
         for tr in root:
-	  tds = tr.findall('.//td')
+          tds = tr.findall('.//td')
           pnfs = tds[0].findall('.//span')[0].text
           started = tds[3].findall('.//span')[0].text
           retries = int(tds[5].findall('.//span')[0].text)
           status = tds[6].findall('.//span')[0].text
           stat_name = [ x for x in (self.statusTagsOK + self.statusTagsFail) if x in status]
-          stat_name = stat_name[0]
+          
+          # hotfix due to some entries with status [<idle>]. Later extension of DB needed.
+          if len(stat_name) > 0: stat_name = stat_name[0]
+          else: stat_name = 'Idle'
           count[stat_name] += 1
           started = map(strip, started.split())
           month_day = map(int, map(strip, started[0].split('.')))
@@ -127,6 +131,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 	  if True in bools:
 	    critical += 1
 	  info = {'pnfs': pnfs, 'started_full': job_time.isoformat(' '), 'status_short': stat_name, 'retries':retries, 'path': 'empty'}
+	  print info
 	  self.details_db_value_list.append(info)
 	
 	
@@ -151,7 +156,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
         info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         all_requests_list = map(dict, info_list)
-	self.statusTagsOK = ['Pool2Pool','Staging']
+	self.statusTagsOK = ['Pool2Pool','Staging','Idle']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
         for x in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
 	  data[x] = []

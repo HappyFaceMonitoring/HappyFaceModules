@@ -18,11 +18,17 @@
 <tr>
 <td class="dCacheDatarestoreLazyFirstCol"> ...  with status Suspended:</td>
 <td>${module.dataset["status_suspended"]}</td>
-<tr>
+</tr>
 <tr>
 <td class="dCacheDatarestoreLazyFirstCol"> ...  with status Waiting:</td>
 <td>${module.dataset["status_waiting"]}</td>
 </tr>
+<tr>
+<tr>
+<td class="dCacheDatarestoreLazyFirstCol"> ...  with status Idle:</td>
+<td>${module.dataset["status_idle"]}</td>
+</tr>
+<tr>
 <td class="dCacheDatarestoreLazyFirstCol">Stage request with problems</td>
 <td>${module.dataset["total_problem"]}</td>
 </tr>
@@ -49,10 +55,9 @@
 </table>
 
 <%
-status_list = [Pool2Pool, Staging, Waiting, Suspended, Unknown, Expired, Tried]
-statusstring_list = ["Pool2Pool", "Staging", "Waiting", "Suspended", "Unknown", "Expired", "Tried"]
+status_list = [Pool2Pool, Staging, Waiting, Suspended, Unknown, Expired, Tried, Idle]
+statusstring_list = ["Pool2Pool", "Staging", "Waiting", "Suspended", "Unknown", "Expired", "Tried", "Idle"]
 %>
-
 % for status, string in zip(status_list, statusstring_list):
 <input type="button" value="${string}" onfocus="this.blur()" onclick="$('#${module.instance_name}_${string}_details').slideToggle()" style="width:80px; text-align:center"/>
 <div class="DetailedInfo" id="${module.instance_name}_${string}_details" style="display:none;">
