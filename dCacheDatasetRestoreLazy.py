@@ -131,7 +131,6 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 	  if True in bools:
 	    critical += 1
 	  info = {'pnfs': pnfs, 'started_full': job_time.isoformat(' '), 'status_short': stat_name, 'retries':retries, 'path': 'empty'}
-	  print info
 	  self.details_db_value_list.append(info)
 	
 	
