@@ -1,0 +1,44 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<div id='${module.instance_name}_latest_data'>
+	<h3>Note: Currently used view option for dashboard metrics: "${view_option}"</h3>
+	<table class='TableData'>
+	<tr>
+	<td>Status color coding used here:</td>
+	<td class='ok'>OK</td>
+	<td class='warning'>Warning</td>
+	<td class='critical'>Error</td>
+	<td class='undefined'>Other</td>
+	</tr>
+	<tr class='TableHeader'>
+		<td>Metric name</td>
+		<td colspan=2>UTC time of latest status</td>
+		<td colspan=2>Plot last 24 hours</td>
+	</tr>
+	<%!
+		import time
+	%>
+	%for entry in latest_data:
+		%if entry['latest_status'] == 3:
+			<tr class='critical'>
+		%elif entry['latest_status'] == 4:
+			<tr class='warning'>
+		%elif entry['latest_status'] == 5:
+			<tr class='ok'>
+		%elif entry['latest_status'] == -1:
+			<% continue %>
+		%else:
+			<tr class='undefined'>
+		%endif
+		<td>${entry['metric_name']}</td>
+		<td colspan=2>${time.asctime(time.gmtime(entry['latest_time']))}</td>
+		<td colspan=2>Plot Button</td>
+		</tr>
+	%endfor
+	</table>
+</div>
+
+</%def>
