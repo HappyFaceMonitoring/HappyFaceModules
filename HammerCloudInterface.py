@@ -89,7 +89,7 @@ class HammerCloudInterface(hf.module.ModuleBase):
 							completed_jobs_value = gsc
 							failed_jobs_value = gsf
 							jobs_with_status_k_value = gsk
-							efficiency_value = gsc/(1.*(gsf+gsc)) if gsf > 0 or gsc > 0 else 0
+							efficiency_value = gsc/(1.*(gsf+gsc)) if gsf > 0 or gsc > 0 else 1
 							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
 
 							if efficiency_value < float(self.config['critical_threshold']): efficiency_status_list.append(0.0)
