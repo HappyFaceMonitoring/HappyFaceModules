@@ -2,6 +2,12 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
+<script type="text/javascript">
+function ${module.instance_name}_plot_metric(metric_path){
+plot_window = window.open(metric_path, "_blank", "width=800,height=600");
+plot_window.focus();
+}
+</script>
 
 <div id='${module.instance_name}_latest_data'>
 	<h3>Note: Currently used view option for dashboard metrics: "${view_option}"</h3>
@@ -19,9 +25,12 @@
 		<td colspan=2>Plot last 24 hours</td>
 	</tr>
 	<%!
-		import time
+	import time
 	%>
-	%for entry in latest_data:
+	%for entry,plot in zip(latest_data,plots):
+		<%
+			plot_name = module.dataset['filename_plot'].getArchiveUrl().replace("dashboard_summary",plot["filename_plot"])
+		%>
 		%if entry['latest_status'] == 3:
 			<tr class='critical'>
 		%elif entry['latest_status'] == 4:
@@ -35,10 +44,9 @@
 		%endif
 		<td>${entry['metric_name']}</td>
 		<td colspan=2>${time.asctime(time.gmtime(entry['latest_time']))}</td>
-		<td colspan=2>Plot Button</td>
+   	<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_metric('${plot_name}')"value="Plot Metric" name="Plot Metric" /></center></td>
 		</tr>
 	%endfor
 	</table>
 </div>
-
 </%def>
