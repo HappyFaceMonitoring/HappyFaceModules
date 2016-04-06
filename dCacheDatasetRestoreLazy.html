@@ -68,13 +68,19 @@ statusstring_list = ["Pool2Pool", "Staging", "Waiting", "Suspended", "Unknown", 
 <td>Status</td>
 </tr>
 
-% for info in status:
+% for index, info in enumerate(status):
 <tr>
 <td>${info['pnfs']}</td>
 <td>${info['started_full']}</td>
 <td>${info['retries']}</td>
 <td>${info['status_short']}</td>
 </tr>
+
+<% 
+if index == details_cutoff and index != -1:
+   break
+%>
+
 % endfor
 
 </table>

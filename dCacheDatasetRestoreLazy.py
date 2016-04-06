@@ -26,7 +26,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         'source': ('URL of the dCache Dataset Restore Monitor (Lazy)', ''),
         'stage_max_retry': ('Retry limit', '2'),
         'stage_max_time': ('Time limit (in hours)', '48'),
-#       'details_cutoff': ('Max. number of details', '100'),
+        'details_cutoff': ('Max. number of details. Use -1 for unlimited number.', '100'),
         'limit_warning': ('Warning limit', '5'),
         'limit_critical': ('Critical limit', '10')
     }
@@ -52,7 +52,7 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         Column('path', TEXT),
         Column('started_full', TEXT),
         Column('retries', INT),
-        Column('status_short', TEXT),
+        Column('status_short', TEXT)
     ], [])}
 
 
@@ -64,12 +64,6 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         self.stage_max_time = int(self.config['stage_max_time'])
         self.limit_warning = int(self.config['limit_warning'])
         self.limit_critical = int(self.config['limit_critical'])
-
-        try:
-            self.details_cutoff = int(self.config['details_cutoff'])
-        except hf.ConfigError:
-            self.details_cutoff = 0
-
         self.statusTagsOK = ['Pool2Pool','Staging','Idle']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
 
@@ -159,7 +153,12 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
         for x in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
 	  data[x] = []
-	  
+	  details_cutoff = -1 # for this value, no limit is set. Also used if fall into exception.
+	  try:
+	     details_cutoff = int(self.config['details_cutoff'])
+	  except:
+	     pass
+	  data['details_cutoff'] = details_cutoff
 	for request in all_requests_list:
 	  for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
 	    if tag in request['status_short']:
