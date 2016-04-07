@@ -24,6 +24,22 @@ from numpy import array
 from datetime import datetime
 import pytz
 
+state_colors = {
+	'cleanup': '#909090',
+	'production':   '#009933',
+	'logcollect':   '#9D5CDE',
+	'merge':      '#AA0000',
+	'processing': '#5CADFF'
+}
+
+def getcolor(label):
+	for k in state_colors.keys():
+		if k in label.lower():
+			return state_colors[k]
+	return None  # None makes way for the Colors defined during plotting
+
+
+
 class CMSJobs(hf.module.ModuleBase):
     config_keys = {
         'source_url': ('URL to XML data source', ''),
@@ -163,17 +179,7 @@ class CMSJobs(hf.module.ModuleBase):
 
         ################################################################
         ### Plot data
-
-        Colors = []
-        for i in range(len(self.cat_names)):
-            # for list of colormaps see http://wiki.scipy.org/Cookbook/Matplotlib/Show_colormaps
-            Colors.append(cm.Spectral(1.0 - i/max(float(len(self.cat_names)),1.0), 1))
-            # Colors.append(cm.spectral((i+1)/float(len(self.cat_names)-0), 1))
-            # Colors.append(cm.jet(i/float(len(self.cat_names)-2), 1))
-            # Colors.append(cm.gist_earth((i+1)/float(len(self.cat_names)-1), 1))
-            # Colors.append(cm.RdBu(1.0 - i/float(len(self.cat_names)-2), 1))
-            # Colors.append(cm.YlGnBu(1.0 - i/float(len(self.cat_names)-2), 1))
-
+        
         nbins = len(time_points)
         if nbins == 0:
             # break image creation if there are no jobs
@@ -186,10 +192,9 @@ class CMSJobs(hf.module.ModuleBase):
             xlabels = [0]*nbins
             for i in range(0, nbins):
                 if i % 2 == 0:
-                    DateLabel = time_points[i].split(' ')[0].split('-')
+                    DateLabel = time_points[i].split(' ')[0]
                     TimeLabel = time_points[i].split(' ')[1].split(':')
-                    xlabels[i] = DateLabel[0] + '-' + DateLabel[1] + '\n' + \
-                            TimeLabel[0] + ':' + TimeLabel[1]
+                    xlabels[i] = DateLabel + '\n' + TimeLabel[0] + ':' + TimeLabel[1]
                 else:
                     xlabels[i] = ''
 
@@ -210,10 +215,10 @@ class CMSJobs(hf.module.ModuleBase):
                 for tp in time_points:
                     values.append(category_overview[cat][tp])
                 if cat_idx > 0:
-                    p.append(axis.bar(ind, values, width, color=Colors[cat_idx],
+                    p.append(axis.bar(ind, values, width, color=getcolor(cat),
                         bottom=cat_bottoms[cat_idx - 1]))
                 else:
-                    p.append(axis.bar(ind, values, width, color=Colors[cat_idx]))
+                    p.append(axis.bar(ind, values, width, color=getcolor(cat)))
             if self.pledge_mode > 0:
                 l = axis.axhline(y=yhline, linewidth=3.0, color='Black')
             else:
@@ -235,9 +240,9 @@ class CMSJobs(hf.module.ModuleBase):
             axis.set_title('24 hours from ' + data['IntervalStart'] + ' to ' \
                     + data['IntervalEnd'] + ' (all times are local)',
                     fontproperties=fontTitle)
-            axis.set_position([0.10,0.12,0.68,0.82])
+            axis.set_position([0.10,0.20,0.68,0.72])
             axis.set_ylabel('Number of Jobs')
-            axis.set_xticks(ind + 0.0 * width / 2.0)
+            axis.set_xticks(ind + width / 2.0)
             axis.set_xticklabels(xlabels, rotation='vertical')
             axis.set_autoscaley_on(False)
             axis.set_ylim([0,(max(max_val, yhline)+1.0)*1.05])
