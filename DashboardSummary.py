@@ -46,13 +46,15 @@ class DashboardSummary(hf.module.ModuleBase):
 	}
 	
 	def prepareAcquisition(self):
-		# Updating the url for a chosen view option. Possible options:
-		# default, maint, storage, test, transfers
-		# Further possiblities see on http://dashb-ssb.cern.ch/dashboard/request.py/sitehistory?site=T1_DE_KIT
+		# Updating the url for a chosen view option and tier site. Possible view options:
+		# default, maint, storage, test, transfers, Good links, Active Links, 
+		# Further possiblities see for example on http://dashb-ssb.cern.ch/dashboard/request.py/sitehistory?site=T1_DE_KIT
 		url = self.config['source_url']
 		old_view_option = url[url.find("view"):url.find("time")-1]
+		old_tier_name = url[url.find("site"):url.find("view")-1]
 		view_option_string = "view=" + self.config['view_option']
-		self.config['source_url'] = self.config['source_url'].replace(old_view_option,view_option_string)
+		tier_name_string = "site=" + self.config['tier_name']
+		self.config['source_url'] = self.config['source_url'].replace(old_view_option,view_option_string).replace(old_tier_name, tier_name_string)
 		try:
 			self.source = hf.downloadService.addDownload(self.config['source_url'])
 			self.source_url = self.source.getSourceUrl()
