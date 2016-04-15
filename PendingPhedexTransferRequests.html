@@ -1,0 +1,32 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<div>
+<table class='TableData'>
+
+
+<tr class='TableHeader'>
+
+<td>Site name</td>
+<td>Number of pending requests</td>
+<td>Longest request time period in hours</td>
+
+</tr>
+
+%if module.dataset['status'] == 0.0:
+	<tr class='critical'>
+%elif module.dataset['status'] == 0.5:
+	<tr class='warning'>
+%elif module.dataset['status'] == 1.0:
+	<tr class='ok'>
+%endif
+	
+	<td>${module.dataset['tier_name']}</td>
+	<td>${module.dataset['pending_transfer_requests']}</td>
+	<td>${module.dataset['max_request_time']}</td>
+	
+	</tr>
+</table>
+</div>
+</%def>
