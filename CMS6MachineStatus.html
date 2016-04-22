@@ -62,9 +62,9 @@
         <th class="TableThirdCol" width="15%"> Average Load unclaimed Slots</th>
       </tr>
       %for entry in plot:
-        % if float(entry['claimed_avg']) < float(module.config['weak_threshold']) and int(entry['claimed']) > 0:
+        % if float(entry['claimed_avg']) < float(module.config['weak_threshold']) and float(entry['claimed']) > 0.0:
           <tr class=critical>
-        % elif float(entry['unclaimed_avg']) > float(module.config['weak_threshold'])and int(entry['unclaimed']) > 0:
+        % elif float(entry['unclaimed_avg']) > float(module.config['weak_threshold'])and float(entry['unclaimed']) > 0.0:
           <tr class=critical>
         % else:
           <tr class=ok>
