@@ -136,7 +136,13 @@ class V2CMS6Status(hf.module.ModuleBase):
         qdate_list = list(services[id]['QueueDate'] for id in job_id_list)
         host_list = list(services[id]['HostName'] for id in job_id_list)
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
-        last_status_list = list(int(services[id]['LastJobStatus']) for id in job_id_list)
+        last_status_list = []
+        for id in job_id_list:
+            try:
+                last_status_list.append(int(services[id]['LastJobStatus']))
+            except KeyError:
+                last_status_list.append(0)
+
         # calculate runtime from cpu_1 and cpu_2
         cpu_time_list = map(add, map(float, cpu1_list), map(float, cpu2_list))  #total cpu_time is cpu1+cpu2
         job_count = len(job_id_list)
