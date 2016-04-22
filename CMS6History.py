@@ -76,7 +76,14 @@ class CMS6History(hf.module.ModuleBase):
         completion_date_list = list(int(services[id]['CompletionDate'])for id in job_id_list)
         start_date_list = list(services[id]['JobStartDate']for id in job_id_list)
         final_status_list = list(int(services[id]['JobStatus'])for id in job_id_list)
-        last_status_list = list(int(services[id]['LastJobStatus'])for id in job_id_list)
+        last_status_list = []
+        for id in job_id_list:
+            try:
+                last_status_list.append(int(services[id]['LastJobStatus']))
+            except KeyError:
+                last_status_list.append(0)
+            except ValueError:
+                last_status_list.append(0)
         final_status_date_list = list(
             int(services[id]['EnteredCurrentStatus'])for id in job_id_list)
         qdate_list = list(int(services[id]['QueueDate'])for id in job_id_list)

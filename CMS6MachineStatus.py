@@ -65,9 +65,9 @@ class CMS6MachineStatus(hf.module.ModuleBase):
 
         'plot': ([
             Column('site', TEXT),
-            Column('claimed', TEXT),
-            Column('unclaimed', TEXT),
-            Column('machines', TEXT),
+            Column('claimed', FLOAT),
+            Column('unclaimed', FLOAT),
+            Column('machines', FLOAT),
             Column('claimed_avg', TEXT),
             Column('disk', TEXT),
             Column('unclaimed_avg', TEXT)
@@ -162,16 +162,18 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         plot_weak = np.zeros(len(site_names))
         condor_version_per_site = {}
 
+        '''Checking how many machines and how many slots are available per site and fill lists to
+         shorten the information '''
         for i in xrange(len(machine_name_list)):
             for j in xrange(len(site_names)):
                 if site_names[j] in machine_name_list[i]:  # how much machines are running per site
                     plot_disk[j] += disk_list[i]
-                    if state_list[i] == "Claimed" and activity_list[i] == "Busy":  # how much slots are claimed
+                    if state_list[i] == "Claimed":  # how much slots are claimed or set on Owner -> not available for new jobs
                         plot_claimed[j] += 1
                         plot_avg_load_claimed[j] += load_list[i]
                         if load_list[i] <= self.weak_threshold:
                             plot_weak[j] += 1
-                    elif activity_list[i] == "Idle" and state_list[i] == 'Unclaimed':  # how much slots are idle
+                    elif activity_list[i] == "Idle" or state_list[i] == "Owner":  # how much slots are idle
                         plot_unclaimed[j] += 1
                         plot_avg_load_unclaimed[j] += load_list[i]
 
@@ -253,8 +255,12 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         axis.legend((bar_1[0], bar_2[0]), ('unclaimed slots', 'claimed slots',),
                     loc=6, bbox_to_anchor=(0.8, 0.95), borderaxespad=0., prop = fontLeg)
         plt.grid(axis=y)
-
-        # save data as Output
+        ##########
+        # Output #
+        ##########
+        '''This module contains one plot, one summary subtable,
+        one subtable with every information and one subtable to determine the
+        different condor versions running on the different sites.'''
         plt.tight_layout()
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + "_sites.png"), dpi=91)
