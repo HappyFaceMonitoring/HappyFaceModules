@@ -64,13 +64,13 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         ], []),
 
         'plot': ([
-            Column('site', TEXT),
-            Column('claimed', FLOAT),
-            Column('unclaimed', FLOAT),
-            Column('machines', FLOAT),
-            Column('claimed_avg', TEXT),
-            Column('disk', TEXT),
-            Column('unclaimed_avg', TEXT)
+            Column('site', TEXT, index = True),
+            Column('claimed', INT),
+            Column('unclaimed', INT),
+            Column('machines', INT),
+            Column('claimed_avg', FLOAT),
+            Column('disk', FLOAT),
+            Column('unclaimed_avg', FLOAT)
         ], [])
     }
 
@@ -340,10 +340,15 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                 data['error_msg'] = "Only " + \
                     str(round(float(slot_count) / len(machine_names), 1)) + \
                     " slots per machine are active. <br> "
-            if float(state_list.count("Claimed")) / float(state_list.count("Unclaimed")) < self.claimed_unclaimed_ratio and state_list.count("Claimed") > 0:
+            try:
+                temp = float(state_list.count("Claimed")) / float(state_list.count("Unclaimed"))
+            except ZeroDivisionError:
+                temp = 0
+            if temp < self.claimed_unclaimed_ratio and state_list.count("Claimed") > 0:
                 data['status'] = 0
                 data['error_msg'] = data['error_msg'] + "The ratio of claimed and unclaimed slots is below " + \
                     str(self.claimed_unclaimed_ratio) + ". <br>"
+
             if claimed_avg < self.weak_threshold and state_list.count("Claimed") > 0:
                 data['status'] = 0
                 data['error_msg'] = data['error_msg'] + \
