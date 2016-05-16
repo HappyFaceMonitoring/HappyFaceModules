@@ -7,7 +7,7 @@ function ${module.instance_name}_row_button(name) {
     $('#${module.instance_name}_plot_form :hidden').remove();
     counter = 1;
     $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="site,'+name+'" />');
-    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="0" />');
     $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value='+name+' />');
     $('input[id*="${module.instance_name}_variable"]').each(function(idx, item){
         if(item.checked){
@@ -19,7 +19,7 @@ function ${module.instance_name}_row_button(name) {
 function ${module.instance_name}_col_button(name) {
     $('#${module.instance_name}_plot_form :hidden').remove();
     counter = 1;
-    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="0" />');
     $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value='+name+' />');
     $('input[id*="${module.instance_name}_entry_"]').each(function(idx, item){
         if(item.checked){
@@ -40,18 +40,20 @@ function ${module.instance_name}_col_button(name) {
   % else:
     <table class="TableData">
       <tr class="TableHeader">
-        <th width = "16%" > Slots Claimed / Unclaimed </th>
         <th width = "16%">Total Slots </th>
         <th width = "16%">Machines running </th>
-        <th width = "16%">Slot Load claimed / unclaimed</th>
+        <th width = "16%"> Claimed Slots</th>
+        <th width = "16%"> Unclaimed Slots</th>
+        <!--<th width = "16%">Slot Load claimed / unclaimed</th>-->
         <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
         <th width = "16%">Avg Condor Load </th>
       </tr>
       <tr>
-        <td width = "16%" >${module.dataset['claimed_slots']} / ${module.dataset['unclaimed_slots']} </td>
         <td width = "16%" >${module.dataset['slots']}    </td>
         <td width = "16% ">${module.dataset['machines']}    </td>
-        <td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>
+        <td width = "16%" >${module.dataset['claimed_slots']} </td>
+        <td width = "16%" >${module.dataset['unclaimed_slots']} </td>
+        <!--<td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>-->
         % if "of working slots have a load below" in module.dataset['error_msg']:
           <td class=critical
         % else:
@@ -69,9 +71,27 @@ function ${module.instance_name}_col_button(name) {
       <input type="button" value="Condor Versions" onfocus="this.blur()" onclick="$('#${module.instance_name}_condor').toggle()" />
     </div>
     <div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
+      <table style="font: bold 0.7em sans-serif; font-color: #ddd; width:800px; background-color: #ddd; border: 1px #ddd;">
+       <tr>
+        <td>Start:</td>
+        <td>
+         <%
+         import datetime
+         backintime = run['time']-datetime.timedelta(days=2)
+         %>
+         <input name="start_date" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+         <input name="start_time" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
+        </td>
+        <td>End:</td>
+        <td>
+         <input name="end_date" type="text" id="datepicker" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+         <input name="end_time" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
+        </td>
+       </tr>
+      </table>
       <table class="TableData">
         <tr class="TableHeader">
-           <td>Site</td>
+           <td width = "25%">Site</td>
           <!--
            <td><input type="checkbox" id="${module.instance_name}_variable_0" value="machines" checked="checked" />Machines running</td>
            <td><input type="checkbox" id="${module.instance_name}_variable_1" value="claimed" checked="checked" />Claimed Slots</td>
@@ -115,11 +135,11 @@ function ${module.instance_name}_col_button(name) {
             <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
           -->
             <td><input type="checkbox" id="${'%s_entry_%i' %(module.instance_name, i)}" value="${entry['site']}" checked="checked" />${entry['site']}</td>
-            <td class="TableThirdCol" width="10%">${entry['machines']}</td>
-            <td class="TableSecondCol" width="10%">${entry['idle']}</td>
-            <td class="TableThirdCol" width="10%">${entry['busy']}</td>
-            <td class="TableThirdCol" width="15%">${entry['suspended']}</td>
-            <td class="TableThirdCol" width="15%">${entry['retiring']}</td>
+            <td >${entry['machines']}</td>
+            <td >${entry['idle']}</td>
+            <td >${entry['busy']}</td>
+            <td >${entry['suspended']}</td>
+            <td >${entry['retiring']}</td>
             <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
           </tr>
           <% i += 1 %>
@@ -158,7 +178,7 @@ function ${module.instance_name}_col_button(name) {
     <table class="TableData">
       <tr class="TableHeader">
         <th class="TableFirstCol" width="60%"> SlotID </th>
-        <th class="TableSecondCol" width="15%"> Status</th>
+        <th class="TableSecondCol" width="15%"> Activity</th>
         <th class="TableForthCol" width="10%"> LoadAvg </th>
       </tr>
       %for entry in statistics:
@@ -170,7 +190,7 @@ function ${module.instance_name}_col_button(name) {
           <tr class=ok>
         % endif
           <td class="TableFirstCol" width="60%">${entry['mid']}</td>
-          <td class="TableSecondCol" width="15%">${entry['status']}</td>
+          <td class="TableSecondCol" width="15%">${entry['activity']}</td>
           <td class="TableForthCol" width="10%">${entry['LoadAvg']}</td>
         </tr>
       %endfor
