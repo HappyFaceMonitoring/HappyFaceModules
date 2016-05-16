@@ -72,19 +72,27 @@ function ${module.instance_name}_col_button(name) {
       <table class="TableData">
         <tr class="TableHeader">
            <td>Site</td>
+          <!--
            <td><input type="checkbox" id="${module.instance_name}_variable_0" value="machines" checked="checked" />Machines running</td>
            <td><input type="checkbox" id="${module.instance_name}_variable_1" value="claimed" checked="checked" />Claimed Slots</td>
            <td><input type="checkbox" id="${module.instance_name}_variable_2" value="unclaimed" checked="checked" />Unclaimed Slots</td>
            <td><input type="checkbox" id="${module.instance_name}_variable_3" value="claimed_avg" checked="unchecked" />Average Load claimed Slots</td>
            <td><input type="checkbox" id="${module.instance_name}_variable_4" value="unclaimed_avg" checked="unchecked" />Average Load unclaimed Slots</td>
            <td>Plot jobs</td>
+          -->
+            <td><input type="checkbox" id="${module.instance_name}_variable_0" value="machines" checked="checked" />Machines running</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_1" value="idle" checked="checked" />Idle Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_2" value="busy" checked="checked" />Busy Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_3" value="suspended" checked="unchecked" />Suspended Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_4" value="retiring" checked="unchecked" />Retiring Slots</td>
+            <td>Plot jobs</td>
            <tr class="TableHeader">
             <td>  </td>
             <td><button onfocus="this.blur()" group="total" onclick="${module.instance_name}_col_button('machines')">Plot Col</button></td>
-            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('claimed')">Plot Col</button></td>
-            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('unclaimed')">Plot Col</button></td>
-            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('claimed_avg')">Plot Col</button></td>
-            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('unclaimed_avg')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('idle')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('busy')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('suspended')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('retiring')">Plot Col</button></td>
             <td> </td>
            </tr>
         </tr>
@@ -97,12 +105,21 @@ function ${module.instance_name}_col_button(name) {
           % else:
             <tr class=ok>
           % endif
+          <!--
             <td><input type="checkbox" id="${'%s_entry_%i' %(module.instance_name, i)}" value="${entry['site']}" checked="checked" />${entry['site']}</td>
             <td class="TableThirdCol" width="10%">${entry['machines']}</td>
             <td class="TableSecondCol" width="10%">${entry['claimed']}</td>
             <td class="TableThirdCol" width="10%">${entry['unclaimed']}</td>
             <td class="TableThirdCol" width="15%">${entry['claimed_avg']}</td>
             <td class="TableThirdCol" width="15%">${entry['unclaimed_avg']}</td>
+            <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
+          -->
+            <td><input type="checkbox" id="${'%s_entry_%i' %(module.instance_name, i)}" value="${entry['site']}" checked="checked" />${entry['site']}</td>
+            <td class="TableThirdCol" width="10%">${entry['machines']}</td>
+            <td class="TableSecondCol" width="10%">${entry['idle']}</td>
+            <td class="TableThirdCol" width="10%">${entry['busy']}</td>
+            <td class="TableThirdCol" width="15%">${entry['suspended']}</td>
+            <td class="TableThirdCol" width="15%">${entry['retiring']}</td>
             <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
           </tr>
           <% i += 1 %>

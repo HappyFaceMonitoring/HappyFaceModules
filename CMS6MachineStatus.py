@@ -68,6 +68,10 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             Column('claimed', INT),
             Column('unclaimed', INT),
             Column('machines', INT),
+            Column('idle', INT),
+            Column('busy', INT),
+            Column('suspended', INT),
+            Column('retiring', INT),
             Column('claimed_avg', FLOAT),
             Column('disk', FLOAT),
             Column('unclaimed_avg', FLOAT)
@@ -114,6 +118,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         data["error_msg"] = ''
         data['unclaimedslots_loadavg'] = 0
         data['claimedslots_loadavg'] = 0
+        act_states = ["Idle", "Busy", "Suspended", "Retiring"]
         sites = self.sites  # list of all available sites
         details_data = {}
         path = self.source.getTmpPath()
@@ -160,6 +165,13 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         plot_avg_load_unclaimed = np.zeros(len(site_names))
         plot_disk = np.zeros(len(site_names))
         plot_weak = np.zeros(len(site_names))
+        # lists for different possilble activities
+        plot_activity = {
+            "Idle": np.zeros(len(site_names)),
+            "Busy": np.zeros(len(site_names)),
+            "Suspended": np.zeros(len(site_names)),
+            "Retiring": np.zeros(len(site_names))
+        }
         condor_version_per_site = {}
 
         '''Checking how many machines and how many slots are available per site and fill lists to
@@ -176,7 +188,10 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                     elif activity_list[i] == "Idle" or state_list[i] == "Owner":  # how much slots are idle
                         plot_unclaimed[j] += 1
                         plot_avg_load_unclaimed[j] += load_list[i]
-
+                    # filter by activity for the plot since activity is more interesting
+                    for activity in act_states:
+                        if activity_list[i] == activity:
+                            plot_activity[activity][j] += 1
         for j in xrange(len(site_names)):  # calculate the average load per site
             plot_machines_per_site[j] = machine_names.count(site_names[j])
             try:
@@ -217,16 +232,23 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         ind = np.arange(len(site_names))
         width = self.plot_width
         # create stacked horizontal bars
-        bar_1 = axis.barh(ind, plot_unclaimed, width, color=plot_color['idle'], align='center')
-        bar_2 = axis.barh(ind, plot_claimed, width, color=plot_color[
-                          'running'], align='center', left=plot_unclaimed)
+        bar_1 = axis.barh(ind, plot_activity["Idle"], width, color=plot_color['idle'], align='center')
+        bar_2 = axis.barh(ind, plot_activity["Busy"], width, color=plot_color[
+                          'running'], align='center', left=plot_activity["Idle"])
+        bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
+                          'queued'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"])
+        bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
+                          'finished'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"])
         max_width = axis.get_xlim()[1]
         # use log scale if max_width gets bigger than 1000
         if max_width >= self.log_limit:
-            bar_1 = axis.barh(ind, plot_unclaimed, width, color=plot_color[
-                              'idle'], align='center', log=True)
-            bar_2 = axis.barh(ind, plot_claimed, width, color=plot_color[
-                              'running'], align='center', left=plot_unclaimed, log=True)
+            bar_1 = axis.barh(ind, plot_activity["Idle"], width, color=plot_color['idle'], align='center', log=True)
+            bar_2 = axis.barh(ind, plot_activity["Busy"], width, color=plot_color[
+                              'running'], align='center', left=plot_activity["Idle"], log=True)
+            bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
+                              'queued'], align='center', left=plot_activity["queued"] + plot_activity["Busy"], log=True)
+            bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
+                              'finished'], align='center', left=plot_activity["finished"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
             for i in xrange(len(site_names)):
                 temp = site_names[i] + " - " + \
                     str(int(plot_unclaimed[i] + plot_claimed[i])) + " Slots"
@@ -252,7 +274,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         axis.set_yticklabels('')
         fontLeg = FontProperties()
         fontLeg.set_size('small')
-        axis.legend((bar_1[0], bar_2[0]), ('unclaimed slots', 'claimed slots',),
+        axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0]), ('idle slots', 'busy slots','suspended slots', 'retiring slots'),
                     loc=6, bbox_to_anchor=(0.8, 0.95), borderaxespad=0., prop = fontLeg)
         plt.grid(axis=y)
         ##########
@@ -322,7 +344,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                 'machines':       int(plot_machines_per_site[i]),
                 'claimed_avg':    plot_avg_load_claimed[i],
                 'unclaimed_avg':    plot_avg_load_unclaimed[i],
-                'disk': plot_disk[i]
+                'disk': plot_disk[i],
+                'idle': plot_activity["Idle"][i],
+                'busy': plot_activity["Busy"][i],
+                'suspended': plot_activity["Suspended"][i],
+                'retiring': plot_activity["Retiring"][i]
             }
             self.plot_db_value_list.append(details_data)
         #########################
