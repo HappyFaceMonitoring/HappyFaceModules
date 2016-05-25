@@ -220,11 +220,15 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         # Make   plot #
         ###############
         plot_color = {
-            'queued':   '#5CADFF',
-            'idle':     '#9D5CDE',
-            'running':  '#85CE9D',
-            'finished': '#009933',
-            'removed':  '#CC6060',
+            # 'queued':   '#5CADFF',
+            # 'idle':     '#9D5CDE',
+            # 'running':  '#85CE9D',
+            # 'finished': '#009933',
+            # 'removed':  '#CC6060',
+            'suspended':  '#CFF09E',
+            'busy':    '#79BD9A',
+            'retiring':     '#3B8686',
+            'idle':       '#0B486B',
         }
         # set plot size according to config and data size
         if len(sites) <= self.min_plotsize:
@@ -238,21 +242,21 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         # create stacked horizontal bars
         bar_1 = axis.barh(ind, plot_activity["Idle"], width, color=plot_color['idle'], align='center')
         bar_2 = axis.barh(ind, plot_activity["Busy"], width, color=plot_color[
-                          'running'], align='center', left=plot_activity["Idle"])
+                          'busy'], align='center', left=plot_activity["Idle"])
         bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
-                          'queued'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"])
+                          'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"])
         bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                          'finished'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"])
+                          'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"])
         max_width = axis.get_xlim()[1]
         # use log scale if max_width gets bigger than 1000
         if max_width >= self.log_limit:
             bar_1 = axis.barh(ind, plot_activity["Idle"], width, color=plot_color['idle'], align='center', log=True)
             bar_2 = axis.barh(ind, plot_activity["Busy"], width, color=plot_color[
-                              'running'], align='center', left=plot_activity["Idle"], log=True)
+                              'busy'], align='center', left=plot_activity["Idle"], log=True)
             bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
-                              'queued'], align='center', left=plot_activity["queued"] + plot_activity["Busy"], log=True)
+                              'suspended'], align='center', left=plot_activity["queued"] + plot_activity["Busy"], log=True)
             bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                              'finished'], align='center', left=plot_activity["finished"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
+                              'retiring'], align='center', left=plot_activity["finished"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
             for i in xrange(len(sites)):
                 temp = sites[i] + " - " + \
                     str(int(plot_unclaimed[i] + plot_claimed[i])) + " Slots"
@@ -278,7 +282,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         axis.set_yticklabels('')
         fontLeg = FontProperties()
         fontLeg.set_size('small')
-        axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0]), ('idle slots', 'busy slots','suspended slots', 'retiring slots'),
+        axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0]), ('idle slots', 'busy slots', 'suspended slots', 'retiring slots'),
                     loc=6, bbox_to_anchor=(0.8, 0.95), borderaxespad=0., prop = fontLeg)
         plt.grid(axis=y)
         ##########

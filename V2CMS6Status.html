@@ -22,7 +22,7 @@
   <tr>
     <td width="15%">${module.dataset['running_jobs']}</td>
     <td width="15%">${module.dataset['queued_jobs']}</td>
-    % if float(dataset['efficiency']) < float(module.config['min_efficiency']):
+    % if float(dataset['efficiency']) < float(module.config['min_efficiency']) and dataset['running_jobs'] != 0:
       <td class=critical
     % else:
       <td class=ok
@@ -63,8 +63,8 @@
       <th width="10%"> Queued Jobs </th>
       <th width="10%"> Idle Jobs </th>
       <th width="10%"> Running Jobs </th>
-      <th width="10%"> Removed Jobs</th>
-      <!-- <th width="10%"> Jobs finished </th> -->
+      <th width="10%"> Held Jobs</th>
+      <th width="10%"> Suspended Jobs </th>
       <th width="10%"> Cores used </th>
       <th width="10%"> RAM used </th>
       <th width="5%"> Efficiency </th>
@@ -80,8 +80,8 @@
             <td width ="10%">${entry['queued']}</td>
             <td width ="10%">${entry['idle']}</td>
             <td width ="10%">${entry['running']}</td>
-            <td width="10%">${entry['removed']}</td>
-         <!-- <td width="10%">${entry['finished']}</td> -->
+            <td width="10%">${entry['held']}</td>
+            <td width="10%">${entry['suspended']}</td>
             <td width="10%">${entry['core']}</td>
             <td width="10%">${entry['ram']} GB</td>
             <td width="5%">${entry['efficiency']}</td>

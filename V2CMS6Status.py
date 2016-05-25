@@ -59,6 +59,8 @@ class V2CMS6Status(hf.module.ModuleBase):
             Column("running", TEXT),
             Column("removed", TEXT),
             Column("finished", TEXT),
+            Column("held", INT),
+            Column("suspended", INT),
             Column("core", TEXT),
             Column("efficiency", TEXT),
             Column("sites", TEXT),
@@ -109,10 +111,10 @@ class V2CMS6Status(hf.module.ModuleBase):
             Value 	Status
             1   	Idle
             2   	Running
-            3   	Removed
-            4   	Completed
+            3   	Removed (not plotted)
+            4   	Completed (not plotted)
             5   	Held
-            6   	Transferring Output
+            6   	Transferring Output (not plotted)
             7   	Suspended
             '''
         status_codes = [2, 3, 4, 5, 6, 7]
@@ -246,7 +248,9 @@ class V2CMS6Status(hf.module.ModuleBase):
                 'idle':      int(plot_status["idle"][i]),
                 'running':   int(plot_status[2][i]),
                 'removed':   int(plot_status[3][i]),
-                'finished': int(plot_status[4][i]),
+                'finished':  int(plot_status[4][i]),
+                'held':      int(plot_status[5][i]),
+                'suspended': int(plot_status[7][i]),
                 'core':      int(plot_cores[i]),
                 'sites':     plot_sites[i],
                 'ram':       round(plot_ram[i], 1),
@@ -268,12 +272,18 @@ class V2CMS6Status(hf.module.ModuleBase):
         ###############
         # A Plot that shows Jobs per User and status of the jobs
         plot_color = {  # define colors to be used
-            'queued':   '#5CADFF',
-            'idle':     '#9D5CDE',
-            'running':  '#85CE9D',
-            'finished': '#009933',
-            'removed':  '#CC6060',
+            # 'queued':     '#44a4df',
+            # 'idle':       '#14e2e7',
+            # 'running':    '#59ff8e',
+            # 'held':       '#a7f06e',
+            # 'suspended':  '#cbf064',
+            'suspended':  '#CFF09E',
+            'held':       '#A8DBA8',
+            'running':    '#79BD9A',
+            'queued':     '#3B8686',
+            'idle':       '#0B486B',
         }
+
         if len(plot_names) <= self.min_plotsize:  # set plot size depending on how much users are working
             y = self.plotsize_y
         else:
@@ -286,17 +296,17 @@ class V2CMS6Status(hf.module.ModuleBase):
         bar_1 = axis.barh(
             ind, plot_status["queued"], width, color=plot_color['queued'], align='center')
         bar_2 = axis.barh(
-            ind, plot_status["idle"], width, color=plot_color['idle'], align='center',
+            ind, plot_status[2], width, color=plot_color['running'], align='center',
             left=plot_status["queued"])
         bar_3 = axis.barh(
-            ind, plot_status[2], width, color=plot_color['running'], align='center',
-            left=plot_status["idle"] + plot_status["queued"])
+            ind, plot_status["idle"], width, color=plot_color['idle'], align='center',
+            left=plot_status["queued"] + plot_status[2])
         bar_4 = axis.barh(
-            ind, plot_status[3], width, color=plot_color['removed'], align='center',
+            ind, plot_status[5], width, color=plot_color['held'], align='center',
             left=plot_status[2] + plot_status["idle"] + plot_status["queued"])
         bar_5 = axis.barh(
-            ind, plot_status[4], width, color=plot_color['finished'], align='center',
-            left=plot_status[3] + plot_status[2] + plot_status["idle"] + plot_status["queued"])
+            ind, plot_status[7], width, color=plot_color['suspended'], align='center',
+            left=plot_status[5] + plot_status[2] + plot_status["idle"] + plot_status["queued"])
         max_width = axis.get_xlim()[1]
         if max_width <= 10:  # set xlim for 10 jobs or less
             axis.set_xlim(0, 10)
@@ -306,25 +316,25 @@ class V2CMS6Status(hf.module.ModuleBase):
             bar_1 = axis.barh(
                 ind, plot_status["queued"], width, color=plot_color['queued'], align='center', log=True)
             bar_2 = axis.barh(
-                ind, plot_status["idle"], width, color=plot_color['idle'], align='center', log=True,
+                ind, plot_status[2], width, color=plot_color['running'], align='center', log=True,
                 left=plot_status["queued"])
             bar_3 = axis.barh(
-                ind, plot_status[2], width, color=plot_color['running'], align='center',
-                left=plot_status["idle"] + plot_status["queued"], log=True)
+                ind, plot_status["idle"], width, color=plot_color['idle'], align='center',
+                left=plot_status["idle"] + plot_status["2"], log=True)
             bar_4 = axis.barh(
-                ind, plot_status[3], width, color=plot_color['removed'], align='center',
+                ind, plot_status[5], width, color=plot_color['held'], align='center',
                 left=plot_status[2] + plot_status["idle"] + plot_status["queued"], log=True)
             bar_5 = axis.barh(
-                ind, plot_status[4], width, color=plot_color['finished'], align='center',
-                left=plot_status[3] + plot_status[2] + plot_status["idle"] + plot_status["queued"], log=True)
+                ind, plot_status[7], width, color=plot_color['suspended'], align='center',
+                left=plot_status[5] + plot_status[2] + plot_status["idle"] + plot_status["queued"], log=True)
             for i in xrange(len(plot_names)):  # position name tags for log plot
-                temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[3][i] + plot_status[2][
-                                                    i] + plot_status[4][i] + plot_status["queued"][i])) + " Jobs"
+                temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[7][i] + plot_status[2][
+                                                    i] + plot_status[5][i] + plot_status["queued"][i])) + " Jobs"
                 axis.text(axis.get_xlim()[0] + 0.5, i + 0.37, temp, ha='left', va="center")
         else:  # position name tags for normal plot
             for i in xrange(len(plot_names)):
-                temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[3][i] + plot_status[2][
-                                                   i] + plot_status[4][i] + plot_status["queued"][i])) + " Jobs"
+                temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[7][i] + plot_status[2][
+                                                   i] + plot_status[5][i] + plot_status["queued"][i])) + " Jobs"
                 axis.text(1, i + 0.37, temp, ha='left', va="center")
         if len(plot_names) < self.min_plotsize:   # set ylimit so fix look of plots with few users
             axis.set_ylim(-0.5, self.min_plotsize - 0.5)
@@ -342,7 +352,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         fontLeg = FontProperties()
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]), (
-            'queued jobs', 'idle jobs', 'running jobs', 'removed jobs', 'finished jobs'),
+            'queued jobs', 'running jobs', 'idle jobs', 'held jobs', 'suspended jobs'),
             loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
         plt.tight_layout()
         # save data as Output
@@ -392,7 +402,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 data['error_msg'] = data['error_msg'] + \
                     str(temp) + " jobs are longer than " + \
                     str(self.qtime_max) + " hours in the queue. <br>"
-            if eff_count < self.min_efficiency:
+            if eff_count < self.min_efficiency and data['running_jobs'] != 0:
                 data['status'] = 0
                 data['error_msg'] = data['error_msg'] + \
                     " The efficiency is below " + str(self.min_efficiency) + ".<br>"
