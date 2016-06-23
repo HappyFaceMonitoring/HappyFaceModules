@@ -7,6 +7,10 @@ function ${module.instance_name}_plot_metric(metric_path){
 plot_window = window.open(metric_path, "_blank", "width=800,height=600");
 plot_window.focus();
 }
+
+function ${module.instance_name}_plot_test(){
+$('#${module.instance_name}_plot_form').submit();
+}
 </script>
 
 <div id='${module.instance_name}_latest_data'>
@@ -49,4 +53,8 @@ plot_window.focus();
 	%endfor
 	</table>
 </div>
+
+<form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getCustomPlotUrl()}" target="_blank">
+<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test()"value="Plot Metric" name="Plot Metric" /></center></td>
+</form>
 </%def>
