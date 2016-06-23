@@ -69,6 +69,7 @@ class DashboardSummary(hf.module.ModuleBase):
 		import matplotlib.pyplot as plt
 		data = {}
 		status_list = []
+		latest_status_list =[]
 		with open(self.source.getTmpPath(), 'r') as f:
 			data_object = json.loads(f.read())
 		
@@ -145,7 +146,6 @@ class DashboardSummary(hf.module.ModuleBase):
 			self.plots_list.append({"filename_plot": self.instance_name + 'plot' + str(index) + '.png'})
 			
 			# prepare lists to determine status
-			latest_status_list =[]
 			if info_latest['latest_status'] == 3: latest_status_list.append(0.0)
 			elif info_latest['latest_status'] == 4: latest_status_list.append(0.5)
 			elif info_latest['latest_status'] == 5: latest_status_list.append(1.0)
