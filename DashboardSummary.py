@@ -94,7 +94,7 @@ class DashboardSummary(hf.module.ModuleBase):
 			
 			### Creating plots
 			#prepare data
-			time_list = [info['time'] for info in info_allday_list]
+			time_list = [information['time'] for information in info_allday_list]
 			status_list = []
 			for info in info_allday_list:
 				if info['status'] == 5: status_list.append(4)
@@ -145,12 +145,13 @@ class DashboardSummary(hf.module.ModuleBase):
 			self.plots_list.append({"filename_plot": self.instance_name + 'plot' + str(index) + '.png'})
 			
 			# prepare lists to determine status
-			if info_latest['latest_status'] == 3: status_list.append(0.0)
-			elif info_latest['latest_status'] == 4: status_list.append(0.5)
-			elif info_latest['latest_status'] == 5: status_list.append(1.0)
+			latest_status_list =[]
+			if info_latest['latest_status'] == 3: latest_status_list.append(0.0)
+			elif info_latest['latest_status'] == 4: latest_status_list.append(0.5)
+			elif info_latest['latest_status'] == 5: latest_status_list.append(1.0)
 		
 		# Save determined status
-		data['status'] = min(status_list)
+		data['status'] = min(latest_status_list)
 		
 		# Save plot directory
 		data['filename_plot'] = hf.downloadService.getArchivePath(self.run, self.instance_name)
