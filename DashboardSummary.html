@@ -55,6 +55,11 @@ $('#${module.instance_name}_plot_form').submit();
 </div>
 
 <form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getCustomPlotUrl()}" target="_blank">
-<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test()"value="Plot Metric" name="Plot Metric" /></center></td>
+<input name="module_instance_name" type="hidden" value="${module.instance_name}" />
+<table class='TableData'>
+<tr>
+<td colplan=2><center>${module.instance_name}</td> 
+<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test()"value="Plot Metric" name="Plot Metric" /></center></td></tr>
+</table>
 </form>
 </%def>
