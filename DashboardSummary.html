@@ -56,6 +56,11 @@ $('#${module.instance_name}_plot_form').submit();
 
 <form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getCustomPlotUrl()}" target="_blank">
 <input name="module_instance_name" type="hidden" value="${module.instance_name}" />
+<input name="subtable_name" type="hidden" value="allday_data" />
+<input name="x_name" type="hidden" value="time" />
+<input name="y_name" type="hidden" value="status" />
+<input name="quantity_column_name" type="hidden" value="metric_name" />
+<input name="chosen_quantity_name" type="hidden" value="AAA Federations">
 <table class='TableData'>
 <tr>
 <td colplan=2><center>${module.instance_name}</td> 
