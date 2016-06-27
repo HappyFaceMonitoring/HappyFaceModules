@@ -4,7 +4,8 @@
 <%def name="content()">
 <script type="text/javascript">
 function ${module.instance_name}_plot_test(metric_name){
-$('#${module.instance_name}_data').append('<input type="hidden" name="filter" value="'+metric_name+'" />');
+$('[name=chosen_quantity_name]').remove();
+$('#${module.instance_name}_data').append('<input type="hidden" name="chosen_quantity_name" value="'+metric_name+'" />');
 $('#${module.instance_name}_data').submit();
 }
 </script>
@@ -51,7 +52,7 @@ $('#${module.instance_name}_data').submit();
 		%endif
 		<td>${entry['metric_name']}</td>
 		<td colspan=2>${time.asctime(time.gmtime(entry['latest_time']))}</td>
-		<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test(#${entry['metric_name']})" value="Plot Metric" name="Plot Metric" /></center></td>
+		<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test('${entry['metric_name']}')" value="Plot Metric" name="Plot Metric" /></center></td>
 		</tr>
 	%endfor
 	</table>
