@@ -3,17 +3,20 @@
 
 <%def name="content()">
 <script type="text/javascript">
-function ${module.instance_name}_plot_metric(metric_path){
-plot_window = window.open(metric_path, "_blank", "width=800,height=600");
-plot_window.focus();
-}
-
-function ${module.instance_name}_plot_test(){
-$('#${module.instance_name}_plot_form').submit();
+function ${module.instance_name}_plot_test(metric_name){
+$('#${module.instance_name}_data').append('<input type="hidden" name="filter" value="'+metric_name+'" />');
+$('#${module.instance_name}_data').submit();
 }
 </script>
 
-<div id='${module.instance_name}_latest_data'>
+<form id="${module.instance_name}_data" method="get" action="${hf.plotgenerator.getCustomPlotUrl()}" target="_blank">
+<input name="module_instance_name" type="hidden" value="${module.instance_name}" />
+<input name="tier_name" type="hidden" value="${tier_name}" />
+<input name="subtable_name" type="hidden" value="formatted_history_data" />
+<input name="x_name" type="hidden" value="time" />
+<input name="y_name" type="hidden" value="status" />
+
+<input name="quantity_column_name" type="hidden" value="metric_name" />
 	<h3>Note: Currently used view option for dashboard metrics: "${view_option}"</h3>
 	<table class='TableData'>
 	<tr>
@@ -26,7 +29,7 @@ $('#${module.instance_name}_plot_form').submit();
 	<tr class='TableHeader'>
 		<td>Metric name</td>
 		<td colspan=2>UTC time of latest status</td>
-		<td colspan=2>Plot last 24 hours</td>
+		<td colspan=2>Plot status history</td>
 	</tr>
 	<%!
 	import time
@@ -48,23 +51,9 @@ $('#${module.instance_name}_plot_form').submit();
 		%endif
 		<td>${entry['metric_name']}</td>
 		<td colspan=2>${time.asctime(time.gmtime(entry['latest_time']))}</td>
-   	<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_metric('${plot_name}')"value="Plot Metric" name="Plot Metric" /></center></td>
+		<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test(#${entry['metric_name']})" value="Plot Metric" name="Plot Metric" /></center></td>
 		</tr>
 	%endfor
 	</table>
-</div>
-
-<form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getCustomPlotUrl()}" target="_blank">
-<input name="module_instance_name" type="hidden" value="${module.instance_name}" />
-<input name="subtable_name" type="hidden" value="formatted_history_data" />
-<input name="x_name" type="hidden" value="time" />
-<input name="y_name" type="hidden" value="status" />
-<input name="quantity_column_name" type="hidden" value="metric_name" />
-<input name="chosen_quantity_name" type="hidden" value="AAA Federations">
-<table class='TableData'>
-<tr>
-<td colplan=2><center>${module.instance_name}</td> 
-<td colspan=2><center><input type="button" onclick = "${module.instance_name}_plot_test()"value="Plot Metric" name="Plot Metric" /></center></td></tr>
-</table>
 </form>
 </%def>

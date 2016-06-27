@@ -28,7 +28,7 @@ class DashboardSummary(hf.module.ModuleBase):
 		'tier_name' : ('Name of the site', 'T1_DE_KIT')
 	}
 	
-	table_columns = [Column("filename_plot", TEXT)],["filename_plot"]
+	table_columns = [Column("filename_plot", TEXT),["filename_plot"]
 	subtable_columns = {
 		'latest_data' : ( [
 		Column('metric_name',TEXT),
@@ -191,4 +191,5 @@ class DashboardSummary(hf.module.ModuleBase):
 		data['formatted_history_data'] = map(dict, formatted_history_data_list)
 		data['plots'] = map(dict, plots_list)
 		data['view_option'] = self.config['view_option']
+		data['tier_name'] = self.config['tier_name']
 		return data
