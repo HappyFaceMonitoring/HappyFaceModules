@@ -28,7 +28,7 @@ class DashboardSummary(hf.module.ModuleBase):
 		'tier_name' : ('Name of the site', 'T1_DE_KIT')
 	}
 	
-	table_columns = [Column("filename_plot", TEXT),["filename_plot"]
+	table_columns = [Column("filename_plot", TEXT)],["filename_plot"]
 	subtable_columns = {
 		'latest_data' : ( [
 		Column('metric_name',TEXT),
