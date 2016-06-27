@@ -16,8 +16,8 @@ $('#${module.instance_name}_data').submit();
 <input name="subtable_name" type="hidden" value="formatted_history_data" />
 <input name="x_name" type="hidden" value="time" />
 <input name="y_name" type="hidden" value="status" />
-
 <input name="quantity_column_name" type="hidden" value="metric_name" />
+
 	<h3>Note: Currently used view option for dashboard metrics: "${view_option}"</h3>
 	<table class='TableData'>
 	<tr>
@@ -35,10 +35,7 @@ $('#${module.instance_name}_data').submit();
 	<%!
 	import time
 	%>
-	%for entry,plot in zip(latest_data,plots):
-		<%
-			plot_name = module.dataset['filename_plot'].getArchiveUrl().replace("dashboard_summary",plot["filename_plot"])
-		%>
+	%for entry in latest_data:
 		%if entry['latest_status'] == 3:
 			<tr class='critical'>
 		%elif entry['latest_status'] == 4:
