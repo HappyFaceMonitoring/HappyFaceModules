@@ -40,6 +40,11 @@ class DashboardSummary(hf.module.ModuleBase):
 		Column('status', INT),
 		Column('time',INT)
 	], [] ),
+		'formatted_history_data' : ( [
+		Column('metric_name',TEXT),
+		Column('status', INT),
+		Column('time',INT)
+	], [] ),
 		'plots' : ( [
 		Column("filename_plot", TEXT)
 	], ["filename_plot"] )
@@ -63,6 +68,7 @@ class DashboardSummary(hf.module.ModuleBase):
 		
 		self.latest_data_db_value_list = []
 		self.allday_data_db_value_list = []
+		self.formatted_data_db_value_list = []
 		self.plots_list = []
 		
 	def extractData(self):
@@ -76,22 +82,33 @@ class DashboardSummary(hf.module.ModuleBase):
 		for index, metric in enumerate(data_object['data']):
 			info_latest = {'metric_name':metric[0],'latest_status':-1,'latest_time':-1}
 			info_allday_list = []
+			info_formatted_history_list = []
 			
 			# going through entries in data for the metric. Format of datapoint:
 			# [time in seconds, status in integers (coding see source_url)]
 			for datapoint in reversed(metric[1]):
 				info = {'metric_name':metric[0],'status':-1,'time':-1}
+				info_formatted = {'metric_name':metric[0],'status':-1,'time':-1}
+				
 				info['time'],info['status'] = datapoint
+				info_formatted['time'] = datapoint[0]
+				if datapoint[1] == 5: info_formatted['status'] = 4
+				elif datapoint[1] == 4: info_formatted['status'] = 3
+				elif datapoint[1] == 3: info_formatted['status'] = 2
+				elif datapoint[1] == 8: info_formatted['status'] = 0
+				else: info_formatted['status'] = 1
 				
 				# determining latest status for metric. Status 8 means, that it is not filled for that time.
 				if info_latest['latest_time'] == -1 and datapoint[1] != 8:
 					info_latest['latest_time'],info_latest['latest_status'] = datapoint
 				
 				info_allday_list.insert(0,info)
+				info_formatted_history_list.insert(0,info_formatted)
 			
 			if len(info_allday_list) == 0: continue
 			self.latest_data_db_value_list.append(info_latest)
 			self.allday_data_db_value_list += info_allday_list
+			self.formatted_data_db_value_list += info_formatted_history_list
 			
 			### Creating plots
 			#prepare data
@@ -161,14 +178,17 @@ class DashboardSummary(hf.module.ModuleBase):
 	def fillSubtables(self, module_entry_id):
 		self.subtables['latest_data'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.latest_data_db_value_list])
 		self.subtables['allday_data'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.allday_data_db_value_list])
+		self.subtables['formatted_history_data'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.formatted_data_db_value_list])
 		self.subtables['plots'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.plots_list])
 	def getTemplateData(self):
 		data = hf.module.ModuleBase.getTemplateData(self)
 		latest_data_list = self.subtables['latest_data'].select().where(self.subtables['latest_data'].c.parent_id==self.dataset['id']).execute().fetchall()
 		allday_data_list = self.subtables['allday_data'].select().where(self.subtables['allday_data'].c.parent_id==self.dataset['id']).execute().fetchall()
+		formatted_history_data_list = self.subtables['formatted_history_data'].select().where(self.subtables['formatted_history_data'].c.parent_id==self.dataset['id']).execute().fetchall()
 		plots_list = self.subtables['plots'].select().where(self.subtables['plots'].c.parent_id==self.dataset['id']).execute().fetchall()
 		data['latest_data'] = map(dict, latest_data_list)
 		data['allday_data'] = map(dict, allday_data_list)
+		data['formatted_history_data'] = map(dict, formatted_history_data_list)
 		data['plots'] = map(dict, plots_list)
 		data['view_option'] = self.config['view_option']
 		return data
