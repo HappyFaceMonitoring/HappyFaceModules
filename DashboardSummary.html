@@ -17,8 +17,9 @@ $('#${module.instance_name}_data').submit();
 <input name="x_name" type="hidden" value="time" />
 <input name="y_name" type="hidden" value="status" />
 <input name="quantity_column_name" type="hidden" value="metric_name" />
+<input name="run_time" type="hidden" value="${run['time']}" />
 
-	<h3>Note: Currently used view option for dashboard metrics: "${view_option}"</h3>
+	<h3>Note: Currently used view option for dashboard metrics: <a href="${link_url}">"${view_option}"</a></h3>
 	<table class='TableData'>
 	<tr>
 	<td>Status color coding used here:</td>

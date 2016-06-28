@@ -132,4 +132,5 @@ class DashboardSummary(hf.module.ModuleBase):
 		data['formatted_history_data'] = map(dict, formatted_history_data_list)
 		data['view_option'] = self.config['view_option']
 		data['tier_name'] = self.config['tier_name']
+		data['link_url'] =  'http://dashb-ssb.cern.ch/dashboard/request.py/sitehistory?site={SITE}#currentView={VIEW}&time=24&start_date=&end_date=&values=false&spline=false&white=false'.format(SITE=self.config['tier_name'], VIEW=self.config['view_option'])
 		return data
