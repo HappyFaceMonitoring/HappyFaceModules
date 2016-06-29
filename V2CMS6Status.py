@@ -46,6 +46,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         Column('ram', INT),
         Column('efficiency', INT),
         Column('qtime', TEXT),
+        Column('remote', INT),
         Column('error', INT),
         Column('error_msg', TEXT),
         Column('filename_plot', TEXT)
@@ -149,6 +150,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         qdate_list = list(services[id]['QueueDate'] for id in job_id_list)
         host_list = list(services[id]['HostName'] for id in job_id_list)
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
+        remote_list = list(bool(services[id]['Remote_Job']) for id in job_id_list)
         last_status_list = []
         for id in job_id_list:
             try:
@@ -230,9 +232,9 @@ class V2CMS6Status(hf.module.ModuleBase):
                             plot_sites[k] = host_list[i]
                         else:
                             plot_sites[k] += ", " + host_list[i]
-            for k in xrange(len(plot_names)):
-                if plot_sites[k] == "":
-                    plot_sites[k] = "Undefined"
+        for k in xrange(len(plot_names)):
+            if plot_sites[k] == "":
+                plot_sites[k] = "No running jobs"
         # fill subtable statistics
         for i in xrange(len(plot_names)):
             if plot_efficiency_count[i] == 0.0:  # Calculation of efficiency
@@ -320,7 +322,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 left=plot_status["queued"])
             bar_3 = axis.barh(
                 ind, plot_status["idle"], width, color=plot_color['idle'], align='center',
-                left=plot_status["idle"] + plot_status["2"], log=True)
+                left=plot_status["idle"] + plot_status[2], log=True)
             bar_4 = axis.barh(
                 ind, plot_status[5], width, color=plot_color['held'], align='center',
                 left=plot_status[2] + plot_status["idle"] + plot_status["queued"], log=True)
@@ -386,6 +388,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         data['cores'] = sum(core_list)
         data['running_jobs'] = sum(plot_status[2])
         data['queued_jobs'] = sum(plot_status["queued"])
+        data['remote'] = remote_list.count(True)
         #########################
         # calculation of Status #
         #########################

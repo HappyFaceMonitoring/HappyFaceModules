@@ -2,7 +2,6 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-
 % if module.dataset['error'] == 1:
   <table>
     <tr>
@@ -12,30 +11,32 @@
 % else:
   <table class="TableData">
   <tr class="TableHeader">
-    <th width="15%"> Jobs running </th>
-    <th width="15%"> Jobs Queued</th>
-    <th width="20%"> Average Efficiency </th>
-    <th width="15%"> Cores Used </th>
-    <th width="15%"> RAM Used </th>
-    <th width="20%"> Average Queue time </th>
+    <th > Jobs running </th>
+    <th > Jobs Queued</th>
+    <th > Remoteable Jobs  </th>
+    <th > Average Efficiency </th>
+    <th > Cores </th>
+    <th > RAM </th>
+    <th > Average Queue time </th>
   </tr>
   <tr>
-    <td width="15%">${module.dataset['running_jobs']}</td>
-    <td width="15%">${module.dataset['queued_jobs']}</td>
+    <td >${module.dataset['running_jobs']}</td>
+    <td >${module.dataset['queued_jobs']}</td>
+    <td >${module.dataset['remote']}</td>
     % if float(dataset['efficiency']) < float(module.config['min_efficiency']) and dataset['running_jobs'] != 0:
       <td class=critical
     % else:
       <td class=ok
     % endif
-      width="20%"> ${module.dataset['efficiency']} </td>
-    <td width="15%" >${module.dataset['cores']}</td>
-    <td width="15%">${module.dataset['ram']} GB</td>
+      > ${module.dataset['efficiency']} </td>
+    <td >${module.dataset['cores']}</td>
+    <td >${module.dataset['ram']} GB</td>
     % if "hours in the queue" in module.dataset['error_msg']:
       <td class=critical
     % else:
       <td class=ok
     % endif
-      width="20%">${module.dataset['qtime']}</td>
+      > ${module.dataset['qtime']}</td>
     </tr>
   </table>
   <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
