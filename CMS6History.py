@@ -123,7 +123,7 @@ class CMS6History(hf.module.ModuleBase):
         ########################################
         # Function for handling of the time in queue, same for every job #
         def qtime_handling(qdate, startdate, plot_data_queued):
-            k = round(qdate, 0)
+            k = int(round(qdate, 0))
             # if time when job was queued and starting time are older than plotrange,
             # set k to zero and detect job as running
             if k <= 0 and startdate <= 0:
@@ -247,11 +247,11 @@ class CMS6History(hf.module.ModuleBase):
         # Make   plot #
         ###############
         plot_color = {
-            'queued':   '#5CADFF',
-            'idle':     '#9D5CDE',
-            'running':  '#85CE9D',
-            'finished': '#009933',
-            'removed':  '#CC6060',
+            'removed' : '#e69f00',
+            'running' : '#d55e00',
+            'finished': '#009e73',
+            'queued'  : '#0072b2',
+            'idle'    : '#56b4e9',
         }
         # define size according to config
         fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y*2))

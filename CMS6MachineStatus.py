@@ -145,6 +145,10 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         activity_list = list(services[id]['Activity'] for id in slot_id_list)
         load_list = list(float(services[id]['LoadAvg']) for id in slot_id_list)
         machine_name_list = list(services[id]['Machine']for id in slot_id_list)
+        # small hack to replace ekpsm01 to ekpsg05 to put them in the same group
+        #for i in xrange(len(machine_name_list)):
+        #    if "ekpsm01" in machine_name_list[i]:
+        #        machine_name_list[i]=machine_name_list[i].replace("ekpsm01", "ekpsg05")
         condor_version_list = list(services[id]['CondorVersion']for id in slot_id_list)
         condor_load_list = list(float(services[id]['TotalCondorLoadAvg'])for id in slot_id_list)
         disk_list = list(round(float(services[id]['Disk'])/(1024*1024), 2)for id in slot_id_list)
@@ -161,6 +165,8 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                     machine_slots[k] = total_slot_list[i]
         for k in xrange(len(machine_names)):  # get machine_names reduced to name of different sites
             machine_names[k] = sitescan(machine_names[k], sites)
+            if machine_names[k] == "ekpsm":
+                machine_names[k] = "ekpsg"
         # create Arrays for plot and additional ones for Plot Details Subtable:
         plot_claimed = np.zeros(len(sites))
         plot_unclaimed = np.zeros(len(sites))
@@ -220,15 +226,15 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         # Make   plot #
         ###############
         plot_color = {
-            # 'queued':   '#5CADFF',
-            # 'idle':     '#9D5CDE',
-            # 'running':  '#85CE9D',
-            # 'finished': '#009933',
-            # 'removed':  '#CC6060',
-            'suspended':  '#CFF09E',
-            'busy':    '#79BD9A',
-            'retiring':     '#3B8686',
-            'idle':       '#0B486B',
+            #'suspended':  '#e69f00',
+            #'held':       '#d55e00',
+            #'running':    '#009e73',
+            #'queued':     '#0072b2',
+            #'idle':       '#56b4e9',
+            'suspended':  '#d55e00',
+            'busy':    '#009e73',
+            'retiring':     '#e69f00',
+            'idle':       '#56b4e9',
         }
         # set plot size according to config and data size
         if len(sites) <= self.min_plotsize:
