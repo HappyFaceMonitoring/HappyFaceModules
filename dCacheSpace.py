@@ -71,7 +71,9 @@ class dCacheSpace(hf.module.ModuleBase):
         
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.group.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select(). \
+            where(self.subtables['details'].c.parent_id==self.dataset['id']). \
+            order_by(self.subtables['details'].c.group.asc()).execute().fetchall()
         
         table_dict = {}
         for line in map(dict, details_list):
