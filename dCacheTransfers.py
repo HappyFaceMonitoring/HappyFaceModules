@@ -14,7 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, logging, datetime
+import hf
 from sqlalchemy import Column, TEXT, INT, FLOAT
 from lxml.html import parse
 from string import strip
