@@ -168,9 +168,9 @@ class dCacheTransfers(hf.module.ModuleBase):
             else:
                 data['details'][i]['status'] = 'critical'
             store = item['since']
-            data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600)))
-            + ':' + str('%02i' %int((store % (24 * 3600)) / (3600)))
-            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600) / (60))))
-            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600)) % (60)))
+            data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600))) \
+            + ':' + str('%02i' %int((store % (24 * 3600)) / (3600))) \
+            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600) / (60)))) \
+            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600)) % (60))) \
 
         return data
