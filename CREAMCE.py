@@ -1,7 +1,7 @@
 # Module Definition
 import hf
 from sqlalchemy import Column, TEXT, INT, TIMESTAMP, MetaData, Table, create_engine
-from sqlalchemy.sql import select, func, or_, and_
+from sqlalchemy.sql import select, func, or_, and_, text, not_
 
 class CREAMCE(hf.module.ModuleBase):
 	config_keys = {
@@ -107,7 +107,8 @@ class CREAMCE(hf.module.ModuleBase):
 			count=row[2], local_name=None) for row in self.node_db_values])
 
 		self.subtables['type_description'].insert().execute([dict(parent_id=parent_id, **row) for row in self.type_db_values])
-		self.subtables['job'].insert().execute([dict(parent_id=parent_id, job_id=row[0], lrmsJobId=row[1], node=row[2], status=row[3], time_stamp=row[4]) for row in self.job_db_values])
+		self.subtables['job'].insert().execute([dict(parent_id=parent_id, job_id=row[0], lrmsJobId=row[1], node=row[2],
+			status=row[3], time_stamp=row[4]) for row in self.job_db_values])
 
 
 	def getTemplateJobData(self,job_type):
