@@ -146,18 +146,18 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
         info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         all_requests_list = map(dict, info_list)
-	self.statusTagsOK = ['Pool2Pool','Staging','Idle']
+        self.statusTagsOK = ['Pool2Pool','Staging','Idle']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
         for x in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
-	  data[x] = []
-	  details_cutoff = -1 # for this value, no limit is set. Also used if fall into exception.
-	  try:
-	     details_cutoff = int(self.config['details_cutoff'])
-	  except Exception:
-	     pass
-	  data['details_cutoff'] = details_cutoff
-	for request in all_requests_list:
-	  for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
-	    if tag in request['status_short']:
-	      data[tag].append(request)
+            data[x] = []
+            details_cutoff = -1 # for this value, no limit is set. Also used if fall into exception.
+            try:
+                details_cutoff = int(self.config['details_cutoff'])
+            except Exception:
+                pass
+            data['details_cutoff'] = details_cutoff
+        for request in all_requests_list:
+            for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
+                if tag in request['status_short']:
+                    data[tag].append(request)
         return data
