@@ -44,7 +44,6 @@ function ${module.instance_name}_col_button(name) {
         <th width = "16%">Machines running </th>
         <th width = "16%"> Claimed Slots</th>
         <th width = "16%"> Unclaimed Slots</th>
-        <!--<th width = "16%">Slot Load claimed / unclaimed</th>-->
         <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
         <th width = "16%">Avg Condor Load </th>
       </tr>
@@ -53,7 +52,6 @@ function ${module.instance_name}_col_button(name) {
         <td width = "16% ">${module.dataset['machines']}    </td>
         <td width = "16%" >${module.dataset['claimed_slots']} </td>
         <td width = "16%" >${module.dataset['unclaimed_slots']} </td>
-        <!--<td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>-->
         % if "of working slots have a load below" in module.dataset['error_msg']:
           <td class=critical
         % else:
@@ -105,6 +103,7 @@ function ${module.instance_name}_col_button(name) {
             <td><input type="checkbox" id="${module.instance_name}_variable_2" value="busy" checked="checked" />Busy Slots</td>
             <td><input type="checkbox" id="${module.instance_name}_variable_3" value="suspended" checked="unchecked" />Suspended Slots</td>
             <td><input type="checkbox" id="${module.instance_name}_variable_4" value="retiring" checked="unchecked" />Retiring Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_5" value="blocked" checked="unchecked" />Blocked Slots</td>
             <td>Plot jobs</td>
            <tr class="TableHeader">
             <td>  </td>
@@ -113,6 +112,7 @@ function ${module.instance_name}_col_button(name) {
             <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('busy')">Plot Col</button></td>
             <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('suspended')">Plot Col</button></td>
             <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('retiring')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('blocked')">Plot Col</button></td>
             <td> </td>
            </tr>
         </tr>
@@ -140,6 +140,7 @@ function ${module.instance_name}_col_button(name) {
             <td >${entry['busy']}</td>
             <td >${entry['suspended']}</td>
             <td >${entry['retiring']}</td>
+            <td >${entry['blocked']}</td>
             <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
           </tr>
           <% i += 1 %>
