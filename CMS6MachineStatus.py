@@ -272,9 +272,9 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             bar_2 = axis.barh(ind, plot_activity["Busy"], width, color=plot_color[
                               'busy'], align='center', left=plot_activity["Idle"], log=True)
             bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
-                              'suspended'], align='center', left=plot_activity["queued"] + plot_activity["Busy"], log=True)
+                              'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"], log=True)
             bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                              'retiring'], align='center', left=plot_activity["finished"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
+                              'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
             bar_5 = axis.barh(ind, plot_activity["Blocked"], width, color=plot_color[
                               'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"] + plot_activity["Retiring"], log=True)
             for i in xrange(len(sites)):
