@@ -117,7 +117,15 @@ class CMS6History(hf.module.ModuleBase):
             for k in xrange(len(self.sites)):
                 if self.sites[k] in host:
                     plot_data_hosts[k] += 1
-
+        # remove ekpsm machines and add them to ekpsg for clearer monitoring
+        for k in xrange(len(self.sites)):
+            if self.sites[k] == "ekpsm":
+                temp =  k
+            if self.sites[k] == "ekpsg":
+                temp_2 = k
+        plot_data_hosts[temp_2] += plot_data_hosts[temp]
+        self.sites.remove("ekpsm")
+        plot_data_hosts = np.delete(plot_data_hosts, temp)
         ########################################
         # create Lists for barPlot, sorted by time
         ########################################

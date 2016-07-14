@@ -114,7 +114,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             i = 0
             while sites[i] not in machine_name and i + 1 < len(sites):
                 i += 1
-            return sites[i]
+            # put ekpsg and ekpsm in one group
+            if sites[i] == "ekpsm":
+                return "ekpsg"
+            else:
+                return sites[i]
         data = {}
         data["filename_plot"] = ''
         data["error_msg"] = ''
@@ -171,6 +175,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         # get machine_names reduced to name of different sites
         for k in xrange(len(machine_names)):
             machine_names[k] = sitescan(machine_names[k], sites)
+        sites.remove("ekpsm")
         # create Arrays for plot and additional ones for Plot Details Subtable:
         plot_claimed = np.zeros(len(sites))
         plot_unclaimed = np.zeros(len(sites))
@@ -193,7 +198,8 @@ class CMS6MachineStatus(hf.module.ModuleBase):
          shorten the information '''
         for i in xrange(len(machine_name_list)):
             for j in xrange(len(sites)):
-                if sites[j] in machine_name_list[i]:  # how much machines are running per site
+                # special conditition to sort ekpsg and ekpsm together
+                if sites[j] in machine_name_list[i] or ("ekpsm" in machine_name_list[i] and sites[j] == "ekpsg"):  # how much machines are running per site
                     plot_disk[j] += disk_list[i]
                     # how much slots are claimed or set on Owner -> not
                     # available for new jobs
@@ -248,7 +254,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         if len(sites) <= self.min_plotsize:
             y = self.plotsize_y
         else:
-            y = round(self.plotsize_y / self.min_plotsize, 1) * len(sites)
+            y = round(self.plotsize_y / self.min_plotsize, 1) * (len(sites))
         fig = plt.figure(figsize=(self.plotsize_x, y))
         axis = fig.add_subplot(111)
         ind = np.arange(len(sites))

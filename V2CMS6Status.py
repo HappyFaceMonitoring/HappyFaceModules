@@ -204,13 +204,17 @@ class V2CMS6Status(hf.module.ModuleBase):
         for k in xrange(len(host_list)):  # shorten host_list to site name only
             if host_list[k] != "undefined":
                 for i in xrange(len(sites)):
-                    if sites[i] in host_list[k]:
+                    if sites[i] in host_list[k] and sites[i] != "ekpsm":
                         host_list[k] = sites[i]
+                    elif "ekpsm" in host_list[k]:
+                        host_list[k] = "ekpsg"
+        sites.remove("ekpsm")
         for i in xrange(job_count):
             try:  # fix RAM - List so only values
                 ram_list[i] = round(float(ram_list[i]) / (1024 * 1024), 2)
             except ValueError:
                 pass
+
             # generate the array used in plot later to show data per user
             for k in xrange(len(plot_names)):  # sort jobs via user to get data for plot
                 if user_list[i] == plot_names[k]:
