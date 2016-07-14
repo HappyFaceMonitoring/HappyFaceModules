@@ -48,7 +48,10 @@ class CacheDistribution(hf.module.ModuleBase):
     ], ['filename_plot']
 
     def ideal_dist(self, x, n):
-        return np.sqrt(max(0.0, 1.0/x-1.0/n))
+        try:
+            return np.sqrt(max(0.0, 1.0/x-1.0/n))
+        except RuntimeWarning:
+            return 0.0
 
     def prepareAcquisition(self):
         link = self.config['sourceurl']

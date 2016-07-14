@@ -2,43 +2,152 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-% if module.dataset['error'] == 1:
-  <table>
-    <tr>
-      <td class="warning"> ${module.dataset['error_msg']}</td>
-    </tr>
-  </table>
-% else:
-  <table class="TableData">
-    <tr class="TableHeader">
-      <th width = "16%" > Slots Claimed / Unclaimed </th>
-      <th width = "16%">Total Slots </th>
-      <th width = "16%">Machines running </th>
-      <th width = "16%">Slot Load claimed / unclaimed</th>
-      <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
-      <th width = "16%">Avg Condor Load </th>
-    </tr>
-    <tr>
-      <td width = "16%" >${module.dataset['claimed_slots']} / ${module.dataset['unclaimed_slots']} </td>
-      <td width = "16%" >${module.dataset['slots']}    </td>
-      <td width = "16% ">${module.dataset['machines']}    </td>
-      <td width = "16%" >${module.dataset['claimedslots_loadavg']} / ${module.dataset['unclaimedslots_loadavg']}  </td>
-      % if "of working slots have a load below" in module.dataset['error_msg']:
-        <td class=critical
-      % else:
-        <td class=ok
-      % endif
-      <td width = "16%" >${module.dataset['weak_slots']}  </td>
-      <td width = "16%" >${module.dataset['condor_load']} % </td>
-    </tr>
-  </table>
-  <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
-  <div>
-    <input type="button" value="Show Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
-    <input type="button" value="show all Slots" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
-    <input type="button" value="Error Message" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
-    <input type="button" value="Condor Versions" onfocus="this.blur()" onclick="$('#${module.instance_name}_condor').toggle()" />
-  </div>
+<script type="text/javascript">
+function ${module.instance_name}_row_button(name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    counter = 1;
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="site,'+name+'" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="0" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value='+name+' />');
+    $('input[id*="${module.instance_name}_variable"]').each(function(idx, item){
+        if(item.checked){
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_'+counter+'" value="${module.instance_name},plot,'+item.value+','+item.value+'" />');
+            counter++;
+            }});
+    $('#${module.instance_name}_plot_form').submit();
+}
+function ${module.instance_name}_col_button(name) {
+    $('#${module.instance_name}_plot_form :hidden').remove();
+    counter = 1;
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="0" />');
+    $('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value='+name+' />');
+    $('input[id*="${module.instance_name}_entry_"]').each(function(idx, item){
+        if(item.checked){
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_'+counter+'" value="${module.instance_name},plot,'+name+','+item.value+'" />');
+            $('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter_'+counter+'" value="site,'+item.value+'" />');
+            counter++;
+            }});
+    $('#${module.instance_name}_plot_form').submit();
+}
+</script>
+<form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getTimeseriesUrl()}" target="_blank">
+  % if module.dataset['error'] == 1:
+    <table>
+      <tr>
+        <td class="warning"> ${module.dataset['error_msg']}</td>
+      </tr>
+    </table>
+  % else:
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th width = "16%">Total Slots </th>
+        <th width = "16%">Machines running </th>
+        <th width = "16%"> Claimed Slots</th>
+        <th width = "16%"> Unclaimed Slots</th>
+        <th width = "16%">Load below ${float(module.config['weak_threshold'])*100} %  </th>
+        <th width = "16%">Avg Condor Load </th>
+      </tr>
+      <tr>
+        <td width = "16%" >${module.dataset['slots']}    </td>
+        <td width = "16% ">${module.dataset['machines']}    </td>
+        <td width = "16%" >${module.dataset['claimed_slots']} </td>
+        <td width = "16%" >${module.dataset['unclaimed_slots']} </td>
+        % if "of working slots have a load below" in module.dataset['error_msg']:
+          <td class=critical
+        % else:
+          <td class=ok
+        % endif
+        <td width = "16%" >${module.dataset['weak_slots']}  </td>
+        <td width = "16%" >${module.dataset['condor_load']} % </td>
+      </tr>
+    </table>
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+    <div>
+      <input type="button" value="Show Details" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
+      <input type="button" value="show all Slots" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').toggle()" />
+      <input type="button" value="Error Message" onfocus="this.blur()" onclick="$('#${module.instance_name}_error').toggle()" />
+      <input type="button" value="Condor Versions" onfocus="this.blur()" onclick="$('#${module.instance_name}_condor').toggle()" />
+    </div>
+    <div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
+      <table style="font: bold 0.7em sans-serif; font-color: #ddd; width:800px; background-color: #ddd; border: 1px #ddd;">
+       <tr>
+        <td>Start:</td>
+        <td>
+         <%
+         import datetime
+         backintime = run['time']-datetime.timedelta(days=2)
+         %>
+         <input name="start_date" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+         <input name="start_time" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
+        </td>
+        <td>End:</td>
+        <td>
+         <input name="end_date" type="text" id="datepicker" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+         <input name="end_time" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
+        </td>
+       </tr>
+      </table>
+      <table class="TableData">
+        <tr class="TableHeader">
+           <td width = "25%">Site</td>
+          <!--
+           <td><input type="checkbox" id="${module.instance_name}_variable_0" value="machines" checked="checked" />Machines running</td>
+           <td><input type="checkbox" id="${module.instance_name}_variable_1" value="claimed" checked="checked" />Claimed Slots</td>
+           <td><input type="checkbox" id="${module.instance_name}_variable_2" value="unclaimed" checked="checked" />Unclaimed Slots</td>
+           <td><input type="checkbox" id="${module.instance_name}_variable_3" value="claimed_avg" checked="unchecked" />Average Load claimed Slots</td>
+           <td><input type="checkbox" id="${module.instance_name}_variable_4" value="unclaimed_avg" checked="unchecked" />Average Load unclaimed Slots</td>
+           <td>Plot jobs</td>
+          -->
+            <td><input type="checkbox" id="${module.instance_name}_variable_0" value="machines" checked="checked" />Machines running</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_1" value="idle" checked="checked" />Idle Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_2" value="busy" checked="checked" />Busy Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_3" value="suspended" checked="unchecked" />Suspended Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_4" value="retiring" checked="unchecked" />Retiring Slots</td>
+            <td><input type="checkbox" id="${module.instance_name}_variable_5" value="blocked" checked="unchecked" />Blocked Slots</td>
+            <td>Plot jobs</td>
+           <tr class="TableHeader">
+            <td>  </td>
+            <td><button onfocus="this.blur()" group="total" onclick="${module.instance_name}_col_button('machines')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('idle')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('busy')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('suspended')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('retiring')">Plot Col</button></td>
+            <td><button onfocus="this.blur()" onclick="${module.instance_name}_col_button('blocked')">Plot Col</button></td>
+            <td> </td>
+           </tr>
+        </tr>
+        <% i = 1 %>
+        % for entry in plot:
+          % if entry['claimed_avg'] < float(module.config['weak_threshold']) and entry['claimed'] > 0:
+            <tr class=critical>
+          % elif entry['unclaimed_avg'] > float(module.config['weak_threshold'])and entry['unclaimed'] > 0:
+            <tr class=critical>
+          % else:
+            <tr class=ok>
+          % endif
+          <!--
+            <td><input type="checkbox" id="${'%s_entry_%i' %(module.instance_name, i)}" value="${entry['site']}" checked="checked" />${entry['site']}</td>
+            <td class="TableThirdCol" width="10%">${entry['machines']}</td>
+            <td class="TableSecondCol" width="10%">${entry['claimed']}</td>
+            <td class="TableThirdCol" width="10%">${entry['unclaimed']}</td>
+            <td class="TableThirdCol" width="15%">${entry['claimed_avg']}</td>
+            <td class="TableThirdCol" width="15%">${entry['unclaimed_avg']}</td>
+            <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
+          -->
+            <td><input type="checkbox" id="${'%s_entry_%i' %(module.instance_name, i)}" value="${entry['site']}" checked="checked" />${entry['site']}</td>
+            <td >${entry['machines']}</td>
+            <td >${entry['idle']}</td>
+            <td >${entry['busy']}</td>
+            <td >${entry['suspended']}</td>
+            <td >${entry['retiring']}</td>
+            <td >${entry['blocked']}</td>
+            <td><input type="button" onclick="${module.instance_name}_row_button('${entry['site']}')" value="Plot Row" name="Plot Row" /></td>
+          </tr>
+          <% i += 1 %>
+        %endfor
+      </table>
+    </div>
+</form>
   % if dataset['error_msg'] != '':
     <div id="${module.instance_name}_error" style="display:none;">
       <h3>Error Message:</h3>
@@ -50,35 +159,6 @@
       style="position: relative; margin-right: 240px">${module.dataset['error_msg']}</p>
     </div>
   % endif
-
-  <div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
-    <table class="TableData">
-      <tr class="TableHeader">
-        <th class="TableFirstCol" width="20%"> Site </th>
-        <th class="TableThirdCol" width="10%"> Machines running</th>
-        <th class="TableSecondCol" width="10%"> claimed Slots</th>
-        <th class="TableThirdCol" width="10%"> unclaimed Slots</th>
-        <th class="TableThirdCol" width="15%"> Average Load claimed Slots</th>
-        <th class="TableThirdCol" width="15%"> Average Load unclaimed Slots</th>
-      </tr>
-      %for entry in plot:
-        % if float(entry['claimed_avg']) < float(module.config['weak_threshold']) and float(entry['claimed']) > 0.0:
-          <tr class=critical>
-        % elif float(entry['unclaimed_avg']) > float(module.config['weak_threshold'])and float(entry['unclaimed']) > 0.0:
-          <tr class=critical>
-        % else:
-          <tr class=ok>
-        % endif
-          <td class="TableFirstCol" width="20%">${entry['site']}</td>
-          <td class="TableThirdCol" width="10%">${entry['machines']}</td>
-          <td class="TableSecondCol" width="10%">${entry['claimed']}</td>
-          <td class="TableThirdCol" width="10%">${entry['unclaimed']}</td>
-          <td class="TableThirdCol" width="15%">${entry['claimed_avg']}</td>
-          <td class="TableThirdCol" width="15%">${entry['unclaimed_avg']}</td>
-        </tr>
-      %endfor
-    </table>
-  </div>
   <div id="${module.instance_name}_condor" style="display:none;">
     <table class="TableData">
       <tr class="TableHeader">
@@ -99,7 +179,7 @@
     <table class="TableData">
       <tr class="TableHeader">
         <th class="TableFirstCol" width="60%"> SlotID </th>
-        <th class="TableSecondCol" width="15%"> Status</th>
+        <th class="TableSecondCol" width="15%"> Activity</th>
         <th class="TableForthCol" width="10%"> LoadAvg </th>
       </tr>
       %for entry in statistics:
@@ -111,7 +191,7 @@
           <tr class=ok>
         % endif
           <td class="TableFirstCol" width="60%">${entry['mid']}</td>
-          <td class="TableSecondCol" width="15%">${entry['status']}</td>
+          <td class="TableSecondCol" width="15%">${entry['activity']}</td>
           <td class="TableForthCol" width="10%">${entry['LoadAvg']}</td>
         </tr>
       %endfor

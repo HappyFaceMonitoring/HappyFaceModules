@@ -1,0 +1,17 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<table class="TableData">
+  <tr class="TableHeader">
+    <th class="TableFirstCol" width="60%"> User </th>
+    <th class="TableSecondCol" width="15%"> Priority</th>
+  </tr>
+  %for entry in user:
+      <tr>
+      <td class="TableFirstCol" width="60%">${entry['user']}</td>
+      <td class="TableSecondCol" width="15%">${entry['prio']}</td>
+    </tr>
+  %endfor
+</table>
+</%def>
