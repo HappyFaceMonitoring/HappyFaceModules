@@ -58,7 +58,6 @@ class CMS6History(hf.module.ModuleBase):
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = "0"
-        current_time = time.time()
         path = self.source.getTmpPath()
         # open file
         with open(path, 'r') as f:
@@ -72,6 +71,8 @@ class CMS6History(hf.module.ModuleBase):
             data['status'] = 0.5
             data['error_msg'] = "No jobs in the last " + str(self.plotrange) + " hours."
             return data
+        # get time from file
+        current_time = int(services[job_id_list[0]]['time'])
         # create lists with all neeeded values
         completion_date_list = list(int(services[id]['CompletionDate'])for id in job_id_list)
         start_date_list = list(services[id]['JobStartDate']for id in job_id_list)
@@ -229,7 +230,7 @@ class CMS6History(hf.module.ModuleBase):
                         k += 1
         # queued Jobs that got removed before they started to run
                 elif final_status_list[i] == 3 and last_status_list[i] == 1:
-                    k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
+                    k = qtime_handling(qdate_list[i], final_status_date_list[i], plot_data_queued)
                     k = round(final_status_date_list[i])
                     if k >= 0:
                         plot_data_removed[k] += 1
