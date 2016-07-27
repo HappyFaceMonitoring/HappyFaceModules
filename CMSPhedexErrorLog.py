@@ -14,8 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import Column, TEXT, FLOAT
 from lxml import etree
 
 class CMSPhedexErrorLog(hf.module.ModuleBase):
@@ -108,8 +108,8 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
             if link.tag == 'link':
                 sourcedata[link.get(self.link_direction)] = []
                 for block in link:
-                    for file in block: 
-                        if file.tag == 'file':
+                    for blockfile in block: 
+                        if blockfile.tag == 'file':
                             sourcedata[link.get(self.link_direction)].append(file)
 
         for site, files in sourcedata.iteritems():
@@ -123,12 +123,12 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
             source = 0
             destination = 0
             unknown = 0
-            for file in files:
+            for datafile in files:
                 atransfer = 0
                 asource = 0
                 adestination = 0
                 aunknown = 0
-                for errors in file:
+                for errors in datafile:
                     if abs(request_time - float(errors.get('time_done'))) <= self.timerange_seconds:
                         for details in errors:
                             if details.tag == 'detail_log':

@@ -1,12 +1,10 @@
-import hf, logging
-from sqlalchemy import *
-#from lxml import etree
+import hf
+from sqlalchemy import Column, TEXT, INT, FLOAT
 import lxml.html
-from lxml.html.clean import clean_html
 import StringIO
 
 def rare_to_TB(rare_value):
-    tb_value = rare_value/1000.0/1000.0/1000.0/1000.0
+    tb_value = rare_value/(10.0)**12
     return round(tb_value,1)
 
 class dCacheSpace(hf.module.ModuleBase):
@@ -50,7 +48,7 @@ class dCacheSpace(hf.module.ModuleBase):
         cur_timestamp = 0
         try:
             cur_timestamp = int(map(lambda date: date.text, tree.iter('date'))[0])
-        except:
+        except Exception:
             cur_timestamp = -1
         data['timestamp'] = cur_timestamp
         
@@ -66,7 +64,6 @@ class dCacheSpace(hf.module.ModuleBase):
                         append_help[files.tag] = int(files.text)
                 if append_help != {}:
                     self.details_db_value_list.append(append_help)
-        #for line in self.details_db_value_list: print line
         return data
     
     def fillSubtables(self, parent_id):
@@ -74,25 +71,24 @@ class dCacheSpace(hf.module.ModuleBase):
         
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        #print data
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.group.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select(). \
+            where(self.subtables['details'].c.parent_id==self.dataset['id']). \
+            order_by(self.subtables['details'].c.group.asc()).execute().fetchall()
         
         table_dict = {}
-        for i,line in enumerate(map(dict, details_list)):
+        for line in map(dict, details_list):
             for key in line:
                 if 'parent' not in key and '_' in key:
-                    if key.split('_')[1] == 'size' and line[key] != None:
-                        val = line[key]
-                    else:
-                        val = line[key]
+                    val = line[key]
                     if val != None:
                         if line['pool'] == 'allpools':
-                            table_dict.setdefault(line['group'], {}).setdefault(line['pool'], {}).setdefault('%s (all)' % key.split('_')[0], {})[key.split('_')[1]] = val
+                            table_dict.setdefault(line['group'], {}). \
+                                setdefault(line['pool'], {}). \
+                                setdefault('%s (all)' % key.split('_')[0], {})[key.split('_')[1]] = val
                         else:
-                            table_dict.setdefault(line['group'], {}).setdefault(line['pool'], {}).setdefault('%s (%s)' % (key.split('_')[0], line['pool'].split('_')[1]), {})[key.split('_')[1]] = val
+                            table_dict.setdefault(line['group'], {}). \
+                                setdefault(line['pool'], {}). \
+                                setdefault('%s (%s)' % (key.split('_')[0], line['pool'].split('_')[1]), {})[key.split('_')[1]] = val
         data['table_dict'] = table_dict
         
         return data
-        
-        
-        

@@ -16,9 +16,8 @@
 
 import hf
 import lxml.html
-from lxml.html.clean import clean_html
 import StringIO
-from sqlalchemy import *
+from sqlalchemy import Column, TEXT, INT
 
 class FTSMonitor(hf.module.ModuleBase):
     
@@ -83,7 +82,7 @@ class FTSMonitor(hf.module.ModuleBase):
             self.in_channel_filter_string = self.config['in_channel_filter_string']
             self.out_channel_filter_string = self.config['out_channel_filter_string']
         except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
         url = []
         if 'source_url' not in self.config:
             raise hf.exceptions.ConfigError('No source URL specified')
@@ -161,12 +160,12 @@ class FTSMonitor(hf.module.ModuleBase):
                 try:
                     strMembersFrom = str(rowlist2[irow][1][1].text).split('\n')
                     MembersFrom = len(strMembersFrom)-1
-                except:
+                except Exception:
                     MembersFrom = 1
                 try:
                     strMembersTo = str(rowlist2[irow][2][1].text).split('\n')
                     MembersTo = len(strMembersTo)-1
-                except:
+                except Exception:
                     MembersTo = 1
                 # look up current channel and add member numbers on 'to' and 'from'
                 # side of channel to in_channel_stats
@@ -180,12 +179,12 @@ class FTSMonitor(hf.module.ModuleBase):
                 try:
                     strMembersFrom = str(rowlist2[irow][1][1].text).split('\n')
                     MembersFrom = len(strMembersFrom)-1
-                except:
+                except Exception:
                     MembersFrom = 1
                 try:
                     strMembersTo = str(rowlist2[irow][2][1].text).split('\n')
                     MembersTo = len(strMembersTo)-1
-                except:
+                except Exception:
                     MembersTo = 1
                 # look up current channel and add member numbers on 'to' and 'from'
                 # side of channel to out_channel_stats
@@ -194,7 +193,6 @@ class FTSMonitor(hf.module.ModuleBase):
                         self.out_details_db_value_list[i]['MembersFrom'] = MembersFrom
                         self.out_details_db_value_list[i]['MembersTo'] = MembersTo
                         break
-            pass
         
         data['total_in_channels'] = len(self.in_details_db_value_list)
         data['in_channels_above_failed_threshold'] = iBreachIn

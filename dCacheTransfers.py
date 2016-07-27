@@ -14,8 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import Column, TEXT, INT, FLOAT
 from lxml.html import parse
 from string import strip
 import math
@@ -66,7 +66,7 @@ class dCacheTransfers(hf.module.ModuleBase):
             self.rating_ratio = float(self.config['rating_ratio'])
             self.rating_threshold = int(self.config['rating_threshold']) 
         except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
         if 'source_url' not in self.config: raise hf.exceptions.ConfigError('No source file')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
         self.source_url = self.source.getSourceUrl()
@@ -86,43 +86,43 @@ class dCacheTransfers(hf.module.ModuleBase):
         speed_sum = 0
         for line in root.findall('.//tr'):
             try:
-		tds = line.findall('.//td')
-		appender = {}
-		appender['protocol'] = tds[2].findall('.//span')[0].text
-		appender['pnfsid'] = tds[5].findall('.//span')[0].text
-		appender['pool'] = tds[6].findall('.//span')[0].text
-		appender['host'] = 'empty'
-		appender['status_text'] = tds[7].findall('.//span')[0].text
-		e_time = map(strip, tds[8].findall('.//span')[0].text.split(':'))
-		if 'd' in e_time[0]:
-		    help_string = map(strip, e_time[0].split())
-		    h1 = int(help_string[0]) * 24
-		    e_time[0] = h1 + int(help_string[-1])
-		e_time = map(int, e_time)
-		appender['since'] = e_time[0] * 3600 + e_time[1] * 60 + e_time[2]
-		appender['transferred'] = float(tds[10].findall('.//span')[0].text) * 1000 / 1024.0 / 1024.0 / 1024.0
-		try:
-		    appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
-		except ValueError:
-		    appender['speed'] = 0
-		data['total_transfers'] += 1
-		speed_sum += appender['speed']
-		if int(appender['speed']) <= self.speed_critical_limit:
-		  appender['status'] = 0.0
-		  data['below_speed_critical_limit'] += 1
-		elif int(appender['speed']) <= self.speed_warning_limit:
-		  appender['status'] = 0.5
-		  data['below_speed_warning_limit'] += 1
-		else:
-		  appender['status'] = 1.0
-		  
-		if appender['since'] >= (self.time_critical_limit * 3600) and appender['status'] != 0.0:
-		  appender['status'] = 0.0
-		  data['exceed_time_critical_limit'] += 1
-		elif appender['since'] >= (self.time_warning_limit * 3600) and appender['status'] == 1.0:
-		  appender['status'] = 0.5
-		  data['exceed_time_warning_limit'] += 1
-		self.details_db_value_list.append(appender)
+                tds = line.findall('.//td')
+                appender = {}
+                appender['protocol'] = tds[2].findall('.//span')[0].text
+                appender['pnfsid'] = tds[5].findall('.//span')[0].text
+                appender['pool'] = tds[6].findall('.//span')[0].text
+                appender['host'] = 'empty'
+                appender['status_text'] = tds[7].findall('.//span')[0].text
+                e_time = map(strip, tds[8].findall('.//span')[0].text.split(':'))
+                if 'd' in e_time[0]:
+                    help_string = map(strip, e_time[0].split())
+                    h1 = int(help_string[0]) * 24
+                    e_time[0] = h1 + int(help_string[-1])
+                e_time = map(int, e_time)
+                appender['since'] = e_time[0] * 3600 + e_time[1] * 60 + e_time[2]
+                appender['transferred'] = float(tds[10].findall('.//span')[0].text) * 1000 / 1024.0 / 1024.0 / 1024.0
+                try:
+                    appender['speed'] = float(tds[11].findall('.//span')[0].text) * 1000.0 / 1024.0
+                except ValueError:
+                    appender['speed'] = 0
+                data['total_transfers'] += 1
+                speed_sum += appender['speed']
+                if int(appender['speed']) <= self.speed_critical_limit:
+                    appender['status'] = 0.0
+                    data['below_speed_critical_limit'] += 1
+                elif int(appender['speed']) <= self.speed_warning_limit:
+                    appender['status'] = 0.5
+                    data['below_speed_warning_limit'] += 1
+                else:
+                    appender['status'] = 1.0
+                
+                if appender['since'] >= (self.time_critical_limit * 3600) and appender['status'] != 0.0:
+                    appender['status'] = 0.0
+                    data['exceed_time_critical_limit'] += 1
+                elif appender['since'] >= (self.time_warning_limit * 3600) and appender['status'] == 1.0:
+                    appender['status'] = 0.5
+                    data['exceed_time_warning_limit'] += 1
+                self.details_db_value_list.append(appender)
             except IndexError:
                 continue
 
@@ -130,19 +130,21 @@ class dCacheTransfers(hf.module.ModuleBase):
         data['critical_transfers'] = data['below_speed_critical_limit'] + data['exceed_time_critical_limit']
 
         if data['total_transfers']<>0:
-	  data['speed_average'] = int(speed_sum / data['total_transfers'])
-	else:
-	  data['speed_average'] = 0
+            data['speed_average'] = int(speed_sum / data['total_transfers'])
+        else:
+            data['speed_average'] = 0
         speed_avg = data['speed_average']
         speed_delta = 0
         total_jobs = data['total_transfers']
-        for i, item in enumerate(self.details_db_value_list):
+        for item in self.details_db_value_list:
             speed_delta += 1.0 /((float(total_jobs) - 1.0) * float(total_jobs)) * (float(item['speed']) - float(speed_avg)) ** 2
         data['speed_stdev'] = int(math.sqrt(speed_delta))
 
-        if float(data['warning_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
+        if float(data['warning_transfers']) / data['total_transfers'] >= self.rating_ratio \
+            and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.5
-        elif float(data['warning_transfers'] + data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
+        elif float(data['warning_transfers'] + data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio \
+            and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.5
         elif float(data['critical_transfers']) / data['total_transfers'] >= self.rating_ratio and data['total_transfers'] >= self.rating_threshold:
             data['status'] = 0.0
@@ -166,6 +168,9 @@ class dCacheTransfers(hf.module.ModuleBase):
             else:
                 data['details'][i]['status'] = 'critical'
             store = item['since']
-            data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600))) + ':' + str('%02i' %int((store % (24 * 3600)) / (3600))) + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600) / (60)))) + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600)) % (60)))
+            data['details'][i]['since'] = str('%02i' %int(store / (24 * 3600))) \
+            + ':' + str('%02i' %int((store % (24 * 3600)) / (3600))) \
+            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600) / (60)))) \
+            + ':' + str('%02i' %int(((store % (24 * 3600)) % (3600)) % (60))) \
 
         return data

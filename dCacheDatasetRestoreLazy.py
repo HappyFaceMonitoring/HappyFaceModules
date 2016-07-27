@@ -14,12 +14,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, logging
-from sqlalchemy import *
+import hf
+from sqlalchemy import Column, TEXT, INT
 from lxml.html import parse
 from string import strip
 import datetime
-import re
 
 class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
     config_keys = {
@@ -81,64 +80,62 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
         data = {'time_limit': self.stage_max_time,
                 'retry_limit': self.stage_max_retry,
                 'status': self.status}
-	self.stage_max_time = datetime.timedelta(hours = self.stage_max_time)
-	count = {}
-	critical = 0
-	expired = 0
-	retried = 0
-	for tag in (self.statusTagsOK + self.statusTagsFail):
-	  count[tag] = 0
-	  
+        self.stage_max_time = datetime.timedelta(hours = self.stage_max_time)
+        count = {}
+        critical = 0
+        expired = 0
+        retried = 0
+        for tag in (self.statusTagsOK + self.statusTagsFail):
+            count[tag] = 0
+        
         source_tree = parse(open(self.source.getTmpPath()))
         root = source_tree.getroot()
-	root = root.findall('.//tbody')[0].findall('.//tr')
-        stage_requests = []
+        root = root.findall('.//tbody')[0].findall('.//tr')
         current_time = datetime.datetime.today()
 
         # parse html
         for tr in root:
-          tds = tr.findall('.//td')
-          pnfs = tds[0].findall('.//span')[0].text
-          started = tds[3].findall('.//span')[0].text
-          retries = int(tds[5].findall('.//span')[0].text)
-          status = tds[6].findall('.//span')[0].text
-          stat_name = [ x for x in (self.statusTagsOK + self.statusTagsFail) if x in status]
-          
-          # hotfix due to some entries with status [<idle>]. Later extension of DB needed.
-          if len(stat_name) > 0: stat_name = stat_name[0]
-          else: stat_name = 'Idle'
-          count[stat_name] += 1
-          started = map(strip, started.split())
-          month_day = map(int, map(strip, started[0].split('.')))
-          hour_min_sec = map(int, map(strip, started[1].split(':')))
-          job_time = datetime.datetime(current_time.year, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
-          if (current_time - job_time) < datetime.timedelta(microseconds = 0):
-	    job_time = datetime.datetime(current_time.year - 1, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
-	  if (current_time - job_time) > self.stage_max_time:
-	    expired += 1
-	    stat_name += '  Expired'
-	  if retries > self.stage_max_retry:
-	    retried += 1
-	    stat_name += '  Tried'
-	  
-	  bools = [x in stat_name for x in (self.statusTagsFail + ['Expired', 'Tried'])]
-	  if True in bools:
-	    critical += 1
-	  info = {'pnfs': pnfs, 'started_full': job_time.isoformat(' '), 'status_short': stat_name, 'retries':retries, 'path': 'empty'}
-	  self.details_db_value_list.append(info)
-	
-	
+            tds = tr.findall('.//td')
+            pnfs = tds[0].findall('.//span')[0].text
+            started = tds[3].findall('.//span')[0].text
+            retries = int(tds[5].findall('.//span')[0].text)
+            status = tds[6].findall('.//span')[0].text
+            stat_name = [ x for x in (self.statusTagsOK + self.statusTagsFail) if x in status]
+
+            # hotfix due to some entries with status [<idle>]. Later extension of DB needed.
+            if len(stat_name) > 0: stat_name = stat_name[0]
+            else: stat_name = 'Idle'
+            count[stat_name] += 1
+            started = map(strip, started.split())
+            month_day = map(int, map(strip, started[0].split('.')))
+            hour_min_sec = map(int, map(strip, started[1].split(':')))
+            job_time = datetime.datetime(current_time.year, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
+            if (current_time - job_time) < datetime.timedelta(microseconds = 0):
+                job_time = datetime.datetime(current_time.year - 1, month_day[0], month_day[1], hour_min_sec[0], hour_min_sec[1], hour_min_sec[2])
+            if (current_time - job_time) > self.stage_max_time:
+                expired += 1
+                stat_name += '  Expired'
+            if retries > self.stage_max_retry:
+                retried += 1
+                stat_name += '  Tried'
+
+            bools = [x in stat_name for x in (self.statusTagsFail + ['Expired', 'Tried'])]
+            if True in bools:
+                critical += 1
+            info = {'pnfs': pnfs, 'started_full': job_time.isoformat(' '), 'status_short': stat_name, 'retries':retries, 'path': 'empty'}
+            self.details_db_value_list.append(info)
+
         for tag in (self.statusTagsOK + self.statusTagsFail):
-          data['status_'+tag.lower()] = count[tag]
-	data['hit_retry'] = retried
-	data['hit_time'] = expired
-	data['total_problem'] = critical
+            data['status_'+tag.lower()] = count[tag]
+        data['hit_retry'] = retried
+        data['hit_time'] = expired
+        data['total_problem'] = critical
         if critical >= self.limit_warning:
             self.status = 0.5
         if critical >= self.limit_critical:
             self.status = 0.0
         data['status'] = self.status
-	data['total'] = len(self.details_db_value_list)
+        data['total'] = len(self.details_db_value_list)
         return data
 
     def fillSubtables(self, parent_id):
@@ -149,18 +146,18 @@ class dCacheDatasetRestoreLazy(hf.module.ModuleBase):
 
         info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         all_requests_list = map(dict, info_list)
-	self.statusTagsOK = ['Pool2Pool','Staging','Idle']
+        self.statusTagsOK = ['Pool2Pool','Staging','Idle']
         self.statusTagsFail = ['Waiting','Suspended','Unknown']
         for x in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
-	  data[x] = []
-	  details_cutoff = -1 # for this value, no limit is set. Also used if fall into exception.
-	  try:
-	     details_cutoff = int(self.config['details_cutoff'])
-	  except:
-	     pass
-	  data['details_cutoff'] = details_cutoff
-	for request in all_requests_list:
-	  for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
-	    if tag in request['status_short']:
-	      data[tag].append(request)
+            data[x] = []
+            details_cutoff = -1 # for this value, no limit is set. Also used if fall into exception.
+            try:
+                details_cutoff = int(self.config['details_cutoff'])
+            except Exception:
+                pass
+            data['details_cutoff'] = details_cutoff
+        for request in all_requests_list:
+            for tag in (self.statusTagsFail + self.statusTagsOK + ['Expired','Tried']):
+                if tag in request['status_short']:
+                    data[tag].append(request)
         return data

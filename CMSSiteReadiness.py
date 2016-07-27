@@ -60,7 +60,7 @@ class CMSSiteReadiness(hf.module.ModuleBase):
                 giveback += divs.text
         if giveback == '':
             return None
-        return str(giveback).strip(' ')
+        return giveback.strip()
 
     def extractData(self):
         tree = ltml.parse(open(self.site_html.getTmpPath()))
