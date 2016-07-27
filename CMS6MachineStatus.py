@@ -27,7 +27,6 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                    'plot_width': ('width of the bars in plot', '0.38'),
                    'log_limit': ('x-Value, when to use a log scale', '500'),
                    'plot_right_margin': ('white space between biggest bar and right side of the plot in %', '0.1'),
-                   'weak_threshold': ('Weak Slots have a load below this value', '0.5'),
                    'min_plotsize': ('how much bars the plots shows at least before scaling bigger', '3'),
                    'sites': ('differnet sites - input a python list with strings', '["gridka", "ekpcms6", "ekp-cloud", "ekpsg", "ekpsm","bwforcluster"]'),
                    'machine_slot_min': ('min many slots per machine', '2'),
@@ -195,8 +194,8 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         }
         condor_version_per_site = {}
 
-        '''Checking how many machines and how many slots are available per site and fill lists to
-         shorten the information '''
+        # Checking how many machines and how many slots are available per site and fill lists to
+        # shorten the information
         for i in xrange(len(machine_name_list)):
             for j in xrange(len(sites)):
                 # special conditition to sort ekpsg and ekpsm together
@@ -268,9 +267,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
                           'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"])
         bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                          'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"])
+                          'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                              "Suspended"])
         bar_5 = axis.barh(ind, plot_activity["Blocked"], width, color=plot_color[
-                          'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"] + plot_activity["Retiring"])
+                          'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                              "Suspended"] + plot_activity["Retiring"])
         max_width = axis.get_xlim()[1]
         # use log scale if max_width gets bigger than 1000
         if max_width >= self.log_limit:
@@ -281,9 +282,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
                               'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"], log=True)
             bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                              'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
+                              'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                                  "Suspended"], log=True)
             bar_5 = axis.barh(ind, plot_activity["Blocked"], width, color=plot_color[
-                              'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"] + plot_activity["Retiring"], log=True)
+                              'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                                  "Suspended"] + plot_activity["Retiring"], log=True)
             for i in xrange(len(sites)):
                 temp = sites[i] + " - " + \
                     str(int(plot_activity["Idle"][i] + plot_activity["Busy"][i] + plot_activity["Suspended"][

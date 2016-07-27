@@ -152,9 +152,9 @@ class V2CMS6Status(hf.module.ModuleBase):
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
         remote_list = list(services[id]['Remote_Job'] for id in job_id_list)
         last_status_list = []
-        for id in job_id_list:
+        for job in job_id_list:
             try:
-                last_status_list.append(int(services[id]['LastJobStatus']))
+                last_status_list.append(int(services[job]['LastJobStatus']))
             except KeyError:
                 last_status_list.append(0)
 

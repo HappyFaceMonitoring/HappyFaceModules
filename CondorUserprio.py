@@ -41,10 +41,8 @@ class CondorUserprio(hf.module.ModuleBase):
         self.source_url = self.source.getSourceUrl()
 
     def extractData(self):
-        import numpy as np
         #  define default values
         data = {}
-        details_data = {}
         prio = []
         path = self.source.getTmpPath()
 
