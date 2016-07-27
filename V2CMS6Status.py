@@ -152,9 +152,9 @@ class V2CMS6Status(hf.module.ModuleBase):
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
         remote_list = list(services[id]['Remote_Job'] for id in job_id_list)
         last_status_list = []
-        for id in job_id_list:
+        for job in job_id_list:
             try:
-                last_status_list.append(int(services[id]['LastJobStatus']))
+                last_status_list.append(int(services[job]['LastJobStatus']))
             except KeyError:
                 last_status_list.append(0)
 
@@ -409,12 +409,12 @@ class V2CMS6Status(hf.module.ModuleBase):
                     str(temp) + " jobs are longer than " + \
                     str(self.qtime_max) + " hours in the queue. <br>"
             if eff_count < self.min_efficiency and data['running_jobs'] != 0:
-                data['status'] = 0
+                data['status'] = 0.5
                 data['error_msg'] = data['error_msg'] + \
                     " The efficiency is below " + str(self.min_efficiency) + ".<br>"
             try:
                 if float(status_list.count(2)) / float(status_list.count(1)) < self.running_idle_ratio:
-                    data['status'] = 0
+                    data['status'] = 0.5
                     data['error_msg'] = data['error_msg'] + \
                         "The ratio between queued and running jobs is below " + \
                         str(self.running_idle_ratio) + ". <br>"

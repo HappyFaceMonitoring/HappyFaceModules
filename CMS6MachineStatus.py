@@ -17,6 +17,7 @@ import hf
 from sqlalchemy import *
 import json
 import ast
+from operator import itemgetter
 
 
 class CMS6MachineStatus(hf.module.ModuleBase):
@@ -26,7 +27,6 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                    'plot_width': ('width of the bars in plot', '0.38'),
                    'log_limit': ('x-Value, when to use a log scale', '500'),
                    'plot_right_margin': ('white space between biggest bar and right side of the plot in %', '0.1'),
-                   'weak_threshold': ('Weak Slots have a load below this value', '0.5'),
                    'min_plotsize': ('how much bars the plots shows at least before scaling bigger', '3'),
                    'sites': ('differnet sites - input a python list with strings', '["gridka", "ekpcms6", "ekp-cloud", "ekpsg", "ekpsm","bwforcluster"]'),
                    'machine_slot_min': ('min many slots per machine', '2'),
@@ -64,7 +64,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         ], []),
 
         'plot': ([
-            Column('site', TEXT, index=True),
+            Column('site', TEXT),
             Column('claimed', INT),
             Column('unclaimed', INT),
             Column('machines', INT),
@@ -194,12 +194,13 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         }
         condor_version_per_site = {}
 
-        '''Checking how many machines and how many slots are available per site and fill lists to
-         shorten the information '''
+        # Checking how many machines and how many slots are available per site and fill lists to
+        # shorten the information
         for i in xrange(len(machine_name_list)):
             for j in xrange(len(sites)):
                 # special conditition to sort ekpsg and ekpsm together
-                if sites[j] in machine_name_list[i] or ("ekpsm" in machine_name_list[i] and sites[j] == "ekpsg"):  # how much machines are running per site
+                # how much machines are running per site
+                if sites[j] in machine_name_list[i] or ("ekpsm" in machine_name_list[i] and sites[j] == "ekpsg"):
                     plot_disk[j] += disk_list[i]
                     # how much slots are claimed or set on Owner -> not
                     # available for new jobs
@@ -211,8 +212,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                     elif activity_list[i] == "Idle":  # how much slots are idle
                         plot_unclaimed[j] += 1
                         plot_avg_load_unclaimed[j] += load_list[i]
-                    # filter by activity for the plot since activity is more
-                    # interesting
+                    # filter slots by activity
                     for activity in act_states:
                         if activity_list[i] == activity:
                             if activity_list[i] == "Idle" and (state_list[i] == "Drained" or state_list[i] == "Owner"):
@@ -245,10 +245,10 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         ###############
         plot_color = {
             'suspended': '#d55e00',
-            'busy'     : '#009e73',
-            'retiring' : '#e69f00',
-            'idle'     : '#56b4e9',
-            'blocked'  : '#0072b2',
+            'busy': '#009e73',
+            'retiring': '#e69f00',
+            'idle': '#56b4e9',
+            'blocked': '#0072b2',
         }
         # set plot size according to config and data size
         if len(sites) <= self.min_plotsize:
@@ -267,9 +267,11 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
                           'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"])
         bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                          'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"])
+                          'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                              "Suspended"])
         bar_5 = axis.barh(ind, plot_activity["Blocked"], width, color=plot_color[
-                          'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"] + plot_activity["Retiring"])
+                          'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                              "Suspended"] + plot_activity["Retiring"])
         max_width = axis.get_xlim()[1]
         # use log scale if max_width gets bigger than 1000
         if max_width >= self.log_limit:
@@ -280,18 +282,22 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             bar_3 = axis.barh(ind, plot_activity["Suspended"], width, color=plot_color[
                               'suspended'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"], log=True)
             bar_4 = axis.barh(ind, plot_activity["Retiring"], width, color=plot_color[
-                              'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"], log=True)
+                              'retiring'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                                  "Suspended"], log=True)
             bar_5 = axis.barh(ind, plot_activity["Blocked"], width, color=plot_color[
-                              'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity["Suspended"] + plot_activity["Retiring"], log=True)
+                              'blocked'], align='center', left=plot_activity["Idle"] + plot_activity["Busy"] + plot_activity[
+                                  "Suspended"] + plot_activity["Retiring"], log=True)
             for i in xrange(len(sites)):
                 temp = sites[i] + " - " + \
-                    str(int(plot_unclaimed[i] + plot_claimed[i])) + " Slots"
+                    str(int(plot_activity["Idle"][i] + plot_activity["Busy"][i] + plot_activity["Suspended"][
+                        i] + plot_activity["Retiring"][i] + plot_activity["Blocked"][i])) + " Slots"
                 axis.text(axis.get_xlim()[0] + 0.5, i + (width / 2) +
                           0.07, temp, ha='left', va="center")
         else:
             for i in xrange(len(sites)):
                 temp = sites[i] + " - " + \
-                    str(int(plot_unclaimed[i] + plot_claimed[i])) + " Slots"
+                    str(int(plot_activity["Idle"][i] + plot_activity["Busy"][i] + plot_activity["Suspended"][
+                        i] + plot_activity["Retiring"][i] + plot_activity["Blocked"][i])) + " Slots"
                 axis.text(1, i + (width / 2) + 0.07,
                           temp, ha='left', va="center")
         # set ylimit so fix look of plots with few users
@@ -310,7 +316,7 @@ class CMS6MachineStatus(hf.module.ModuleBase):
         fontLeg = FontProperties()
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]), ('idle slots', 'busy slots', 'suspended slots', 'retiring slots', 'blocked slots'),
-                    loc=0, borderaxespad=0., prop=fontLeg)
+                    loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
         plt.grid(axis=y)
         ##########
         # Output #
@@ -363,15 +369,22 @@ class CMS6MachineStatus(hf.module.ModuleBase):
                         }
                         self.condor_db_value_list.append(details_data)
         # Fill Subtable statistics
+        # sorter is used to sort the details list in reserver order so all
+        # slots of the same machine appear next to each other.
         for i in xrange(slot_count):
             details_data = {
                 'mid':      slot_id_list[i],
+                'sorter':   slot_id_list[i][::-1],
                 'status':   state_list[i],
                 'activity': activity_list[i],
                 'LoadAvg':  load_list[i]
             }
             self.statistics_db_value_list.append(details_data)
-
+        self.statistics_db_value_list = sorted(
+            self.statistics_db_value_list, key=itemgetter('sorter'))
+        # sorter value deleted after sorting
+        for i in xrange(slot_count):
+            del self.statistics_db_value_list[i]["sorter"]
         # Fill Subtable plot
         for i in xrange(len(sites)):
             details_data = {
@@ -415,17 +428,17 @@ class CMS6MachineStatus(hf.module.ModuleBase):
             #        str(self.claimed_unclaimed_ratio) + ". <br>"
 
             if claimed_avg < self.weak_threshold and state_list.count("Claimed") > 0:
-                data['status'] = 0
+                data['status'] = 0.5
                 data['error_msg'] = data['error_msg'] + \
                     "The average load of busy and retiring slots is below " + \
                     str(self.weak_threshold) + ". <br>"
             if unclaimed_avg > self.weak_threshold:
-                data['status'] = 0
+                data['status'] = 0.5
                 data['error_msg'] = data['error_msg'] + \
                     "The average load of idle and suspended slots is bigger than " + \
                     str(self.weak_threshold) + ". <br>"
             if float(sum(plot_weak)) / state_list.count("Claimed") > self.weak_slots_limit:
-                data['status'] = 0
+                data['status'] = 0.5
                 data['error_msg'] = data['error_msg'] + \
                     "More than " + str(self.weak_slots_limit * 100) + " % of busy and retiring slots have a load below " + \
                     str(self.weak_threshold) + ". <br>"

@@ -41,10 +41,8 @@ class CondorUserprio(hf.module.ModuleBase):
         self.source_url = self.source.getSourceUrl()
 
     def extractData(self):
-        import numpy as np
         #  define default values
         data = {}
-        details_data = {}
         prio = []
         path = self.source.getTmpPath()
 
@@ -57,7 +55,7 @@ class CondorUserprio(hf.module.ModuleBase):
             if split != [] and split[0] != "undefined" and float(split[1]) != 500.0 and split[0] != "<none>":
                 user = {
                     'user': split[0],
-                    'prio': float(split[1])
+                    'prio': round(float(split[1]), 0)
                 }
                 prio.append(user)
         self.user_db_value_list = sorted(prio, key=itemgetter('prio'), reverse=True)
