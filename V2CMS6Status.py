@@ -73,6 +73,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             Column("cpu", TEXT),
             Column("user", TEXT),
             Column("host", TEXT),
+            Column("requestwalltime", INT),
             Column("ram", TEXT)], [])
     }
 
@@ -90,7 +91,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         self.min_efficiency = float(self.config['min_efficiency'])
         self.qtime_max_jobs = int(self.config['qtime_max_jobs'])
         temp = self.config['sites']
-        self.sites = ast.literal_eval(temp) # fix fromat so sites is a list of strings
+        self.sites = ast.literal_eval(temp)  # fix fromat so sites is a list of strings
         self.source = hf.downloadService.addDownload(link)  # Download the file
         self.source_url = self.source.getSourceUrl()  # Get URL
         # Set up Container for subtable data
@@ -152,14 +153,22 @@ class V2CMS6Status(hf.module.ModuleBase):
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
         remote_list = list(services[id]['Remote_Job'] for id in job_id_list)
         last_status_list = []
+        walltime_list = []
         for job in job_id_list:
             try:
                 last_status_list.append(int(services[job]['LastJobStatus']))
             except KeyError:
                 last_status_list.append(0)
+            # convert walltime into readable time format
+            try:
+                m, s = divmod(int(services[job]['RequestWalltime']), 60)
+                h, m = divmod(m, 60)
+                walltime_list.append("%d:%02d:%02d" % (h, m, s))
+            except ValueError:
+                walltime_list.append(services[job]['RequestWalltime'])
 
         # calculate runtime from cpu_1 and cpu_2
-        cpu_time_list = map(add, map(float, cpu1_list), map(float, cpu2_list))  #total cpu_time is cpu1+cpu2
+        cpu_time_list = map(add, map(float, cpu1_list), map(float, cpu2_list))  # total cpu_time is cpu1+cpu2
         job_count = len(job_id_list)
         plot_names = list(set(user_list))  # Create Array with unique Usernames
         # initiate arrays for plot and subtable
@@ -270,6 +279,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 'ram':    ram_list[i],
                 'status': status_list[i],
                 'user':   user_list[i],
+                'requestwalltime': walltime_list[i],
                 'host':   host_list[i]}
             self.jobs_db_value_list.append(details_data)
 
@@ -358,7 +368,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]), (
             'running jobs', 'idle jobs', 'held jobs', 'suspended jobs', 'queued jobs'),
-            loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+            loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
         plt.tight_layout()
         # save data as Output
         fig.savefig(hf.downloadService.getArchivePath(
