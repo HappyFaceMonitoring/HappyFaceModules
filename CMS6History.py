@@ -16,7 +16,6 @@
 import hf
 from sqlalchemy import *
 import json
-import time
 import datetime
 import ast
 
@@ -121,7 +120,7 @@ class CMS6History(hf.module.ModuleBase):
         # remove ekpsm machines and add them to ekpsg for clearer monitoring
         for k in xrange(len(self.sites)):
             if self.sites[k] == "ekpsm":
-                temp =  k
+                temp = k
             if self.sites[k] == "ekpsg":
                 temp_2 = k
         plot_data_hosts[temp_2] += plot_data_hosts[temp]
@@ -131,6 +130,7 @@ class CMS6History(hf.module.ModuleBase):
         # create Lists for barPlot, sorted by time
         ########################################
         # Function for handling of the time in queue, same for every job #
+
         def qtime_handling(qdate, startdate, plot_data_queued):
             k = int(round(qdate, 0))
             # if time when job was queued and starting time are older than plotrange,
@@ -211,7 +211,7 @@ class CMS6History(hf.module.ModuleBase):
                     final_handling(final_status_date_list[i],
                                    k, plot_data_removed, plot_data_queued)
         # jobs from condor_q that are still running
-                elif final_status_list[i] == 2 and last_status_list[i] == 1:
+                elif final_status_list[i] == 2 and last_status_list[i] == 1 and start_date_list[i] != "undefined":
                     k = qtime_handling(qdate_list[i], start_date_list[i], plot_data_queued)
                     if k == self.plotrange + 1:
                         plot_data_running[k - 1] += 1
@@ -256,11 +256,11 @@ class CMS6History(hf.module.ModuleBase):
         # Make   plot #
         ###############
         plot_color = {
-            'removed' : '#e69f00',
-            'running' : '#d55e00',
+            'removed': '#e69f00',
+            'running': '#d55e00',
             'finished': '#009e73',
-            'queued'  : '#0072b2',
-            'idle'    : '#56b4e9',
+            'queued': '#0072b2',
+            'idle': '#56b4e9',
         }
         # define size according to config
         fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y*2))
@@ -302,7 +302,7 @@ class CMS6History(hf.module.ModuleBase):
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]),
                     ("runnings jobs", "queued jobs", "idle jobs", "removed jobs", "finished jobs"),
-                    loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+                    loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
         # plot that shows site usage
         bar_21 = axis_2.bar(ind_2, plot_data_hosts, width*0.5, align='center', color=plot_color['finished'])
         for rect in bar_21:

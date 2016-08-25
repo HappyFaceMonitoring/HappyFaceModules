@@ -243,7 +243,9 @@ class V2CMS6Status(hf.module.ModuleBase):
                     plot_cores[k] += core_list[i]  # cores per user
                     if ram_list[i] != 'undefined':  # ram per user
                         plot_ram[k] += ram_list[i]
-                    if efficiency_list[i] != 'Undefined':  # eff per user
+                    if efficiency_list[i] != 'Undefined' and efficiency_list[i] < 2:  # eff per user
+                        # routed jobs are restarting, though it takes some time for condor to update the cpu time value. Therefore the efficiency could
+                        # be higher than 2, so these are excluded until thier efficiency is calculated correctly
                         plot_efficiency[k] += efficiency_list[i]
                         plot_efficiency_count[k] += 1
                     if host_list[i] not in plot_sites[k] and host_list[i] != 'undefined':
