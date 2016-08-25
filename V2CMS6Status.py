@@ -18,7 +18,6 @@ import hf
 from sqlalchemy import *
 import json
 from operator import add
-import time
 import ast
 from math import ceil
 
@@ -412,7 +411,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             except (ZeroDivisionError, ValueError, TypeError):
                 pass
         limit = ceil(max(max(walltime_list_2), max(runtime_list)))
-        bins = [np.arange(0.0, limit+0.1, 0.5), np.arange(0.0, limit+0.1, 0.5)]
+        bins = [np.arange(0.0, limit+0.1, 1), np.arange(0.0, limit+0.1, 1)]
         # axis_2.scatter(walltime_list_2, runtime_list)
         H, xedges, yedges = np.histogram2d(walltime_list_2, runtime_list, bins=bins)
         H = np.rot90(H)
