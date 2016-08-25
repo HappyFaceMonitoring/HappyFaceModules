@@ -68,6 +68,7 @@
       <th width="10%"> Suspended Jobs </th>
       <th width="10%"> Cores used </th>
       <th width="10%"> RAM used </th>
+      <th width="10%"> Average requested Walltime </th>
       <th width="5%"> Efficiency </th>
     </tr>
     %for entry in statistics:
@@ -85,6 +86,7 @@
             <td width="10%">${entry['suspended']}</td>
             <td width="10%">${entry['core']}</td>
             <td width="10%">${entry['ram']} GB</td>
+            <td width="10%">${entry['walltime']} </td>
             <td width="5%">${entry['efficiency']}</td>
           </tr>
     %endfor
@@ -99,6 +101,7 @@
         <th width="15%"> RAM</th>
         <th width="15%"> CPU Time </th>
         <th width="10%"> Status </th>
+        <th width="10%"> Requested Walltime </th>
       </tr>
       %for entry in jobs:
         <tr>
@@ -119,9 +122,14 @@
     	       <td width="10%">Removed</td>
           %elif int(entry['status']) == 4:
     	       <td width="10%">finished</td>
+          %elif int(entry['status']) == 5:
+   	        <td width="10%">held</td>
+          %elif int(entry['status']) == 7:
+       	       <td width="10%">Suspended</td>
           %else:
     	       <td width="10%">${entry['status']}</td>
           %endif
+          <td width="10%"> ${entry['requestwalltime']} </td>
         </tr>
       %endfor
     </table>

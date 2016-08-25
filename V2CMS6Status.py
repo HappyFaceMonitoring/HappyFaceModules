@@ -18,8 +18,8 @@ import hf
 from sqlalchemy import *
 import json
 from operator import add
-import time
 import ast
+from math import ceil
 
 
 class V2CMS6Status(hf.module.ModuleBase):
@@ -64,6 +64,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             Column("suspended", INT),
             Column("core", TEXT),
             Column("efficiency", TEXT),
+            Column("walltime", TEXT),
             Column("sites", TEXT),
             Column("ram", TEXT)], []),
 
@@ -73,6 +74,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             Column("cpu", TEXT),
             Column("user", TEXT),
             Column("host", TEXT),
+            Column("requestwalltime", INT),
             Column("ram", TEXT)], [])
     }
 
@@ -90,7 +92,8 @@ class V2CMS6Status(hf.module.ModuleBase):
         self.min_efficiency = float(self.config['min_efficiency'])
         self.qtime_max_jobs = int(self.config['qtime_max_jobs'])
         temp = self.config['sites']
-        self.sites = ast.literal_eval(temp) # fix fromat so sites is a list of strings
+        # fix fromat so sites is a list of strings
+        self.sites = ast.literal_eval(temp)
         self.source = hf.downloadService.addDownload(link)  # Download the file
         self.source_url = self.source.getSourceUrl()  # Get URL
         # Set up Container for subtable data
@@ -123,16 +126,19 @@ class V2CMS6Status(hf.module.ModuleBase):
 
         def seconds_to_time(seconds):
             try:
-                m, s = divmod(float(seconds), 60)
+                sec = int(seconds)
+                m, s = divmod(sec, 60)
                 h, m = divmod(m, 60)
                 return "%d:%02d:%02d" % (h, m, s)
             except ValueError:
                 return "Undefined"
-
+            except OverflowError:
+                return "Undefined"
         # open file
         with open(path, 'r') as f:
             content = f.read()
-        if '{ }' in content:  # if no jobs in condor_q, stop script and display error_msg inst.
+        # if no jobs in condor_q, stop script and display error_msg inst.
+        if '{ }' in content:
             data['status'] = 1
             data['error'] = 1
             data['error_msg'] = "No Jobs running"
@@ -140,26 +146,35 @@ class V2CMS6Status(hf.module.ModuleBase):
         content_fixed = content.replace("}, }", "} }")  # fix JSON to be valid
         services = json.loads(content_fixed)  # load JSON
         job_id_list = list(services.keys())  # list of jobs
+        current_time = int(services[job_id_list[0]]['time'])  # get time from condor
         # create lists with all neeeded values
         status_list = list(int(services[id]['Status'])for id in job_id_list)
         ram_list = list(services[id]['RAM']for id in job_id_list)
         cpu1_list = list(services[id]['Cpu_1']for id in job_id_list)
         cpu2_list = list(services[id]['Cpu_2']for id in job_id_list)
-        core_list = list(int(services[id]["RequestedCPUs"])for id in job_id_list)
+        core_list = list(int(services[id]["RequestedCPUs"])
+                         for id in job_id_list)
         user_list = list(services[id]['User'] for id in job_id_list)
         qdate_list = list(services[id]['QueueDate'] for id in job_id_list)
         host_list = list(services[id]['HostName'] for id in job_id_list)
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
+        current_jobstart_list = list(services[id]['JobCurrentStartDate']for id in job_id_list)
         remote_list = list(services[id]['Remote_Job'] for id in job_id_list)
+        walltime_list_raw = list(
+            services[id]['RequestWalltime'] for id in job_id_list)
         last_status_list = []
+        walltime_list = []
         for job in job_id_list:
             try:
                 last_status_list.append(int(services[job]['LastJobStatus']))
             except KeyError:
                 last_status_list.append(0)
+            # convert walltime into readable time format
+            walltime_list.append(seconds_to_time(services[job]['RequestWalltime']))
 
         # calculate runtime from cpu_1 and cpu_2
-        cpu_time_list = map(add, map(float, cpu1_list), map(float, cpu2_list))  #total cpu_time is cpu1+cpu2
+        cpu_time_list = map(add, map(float, cpu1_list), map(
+            float, cpu2_list))  # total cpu_time is cpu1+cpu2
         job_count = len(job_id_list)
         plot_names = list(set(user_list))  # Create Array with unique Usernames
         # initiate arrays for plot and subtable
@@ -178,10 +193,10 @@ class V2CMS6Status(hf.module.ModuleBase):
         plot_efficiency = np.zeros(len(plot_names))
         plot_efficiency_count = np.zeros(len(plot_names))
         plot_sites = [''] * len(plot_names)
+        plot_walltime = np.zeros(len(plot_names))
         efficiency_list = []
         qtime_list = []
         sites = self.sites
-        current_time = time.time()
         ###################
         #   Calculations  #
         ###################
@@ -193,7 +208,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             # calculate the efficiency per job
             try:
                 efficiency_list.append(
-                    round(float(cpu_time_list[i]) / float(current_time - int(jobstart_list[i])), 3))
+                    round(float(cpu_time_list[i]) / float(current_time - int(current_jobstart_list[i])), 3))
             except (ZeroDivisionError, ValueError):
                 efficiency_list.append("Undefined")
             # calculate the qtime per job
@@ -214,7 +229,6 @@ class V2CMS6Status(hf.module.ModuleBase):
                 ram_list[i] = round(float(ram_list[i]) / (1024 * 1024), 2)
             except ValueError:
                 pass
-
             # generate the array used in plot later to show data per user
             for k in xrange(len(plot_names)):  # sort jobs via user to get data for plot
                 if user_list[i] == plot_names[k]:
@@ -228,7 +242,9 @@ class V2CMS6Status(hf.module.ModuleBase):
                     plot_cores[k] += core_list[i]  # cores per user
                     if ram_list[i] != 'undefined':  # ram per user
                         plot_ram[k] += ram_list[i]
-                    if efficiency_list[i] != 'Undefined':  # eff per user
+                    if efficiency_list[i] != 'Undefined' and efficiency_list[i] < 2:  # eff per user
+                        # routed jobs are restarting, though it takes some time for condor to update the cpu time value. Therefore the efficiency could
+                        # be higher than 2, so these are excluded until thier efficiency is calculated correctly
                         plot_efficiency[k] += efficiency_list[i]
                         plot_efficiency_count[k] += 1
                     if host_list[i] not in plot_sites[k] and host_list[i] != 'undefined':
@@ -236,16 +252,28 @@ class V2CMS6Status(hf.module.ModuleBase):
                             plot_sites[k] = host_list[i]
                         else:
                             plot_sites[k] += ", " + host_list[i]
+                    try:
+                        plot_walltime[k] += int(walltime_list_raw[i])
+                    except ValueError:
+                        pass
         for k in xrange(len(plot_names)):
             if plot_sites[k] == "":
                 plot_sites[k] = "No running jobs"
+            avg = plot_walltime[k] / (plot_status["queued"][k] + plot_status["idle"][k] + plot_status[
+                                      2][k] + plot_status[3][k] + plot_status[4][k] + plot_status[5][k] + plot_status[7][k])
+            plot_walltime[k] = avg
         # fill subtable statistics
         for i in xrange(len(plot_names)):
+            if plot_walltime[i] == 0.0:
+                walltime = "Undefinded"
+            else:
+                walltime = seconds_to_time(plot_walltime[i])
             if plot_efficiency_count[i] == 0.0:  # Calculation of efficiency
                 eff = 0.0
             else:
                 try:
-                    eff = round(float(plot_efficiency[i]) / plot_efficiency_count[i], 2)
+                    eff = round(
+                        float(plot_efficiency[i]) / plot_efficiency_count[i], 2)
                 except (ZeroDivisionError, ValueError):
                     eff = 0.0
             details_data = {
@@ -259,6 +287,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 'suspended': int(plot_status[7][i]),
                 'core':      int(plot_cores[i]),
                 'sites':     plot_sites[i],
+                'walltime':  walltime,
                 'ram':       round(plot_ram[i], 1),
                 'efficiency': eff}
             self.statistics_db_value_list.append(details_data)
@@ -270,6 +299,7 @@ class V2CMS6Status(hf.module.ModuleBase):
                 'ram':    ram_list[i],
                 'status': status_list[i],
                 'user':   user_list[i],
+                'requestwalltime': walltime_list[i],
                 'host':   host_list[i]}
             self.jobs_db_value_list.append(details_data)
 
@@ -290,28 +320,35 @@ class V2CMS6Status(hf.module.ModuleBase):
             'idle':       '#56b4e9',
         }
 
-        if len(plot_names) <= self.min_plotsize:  # set plot size depending on how much users are working
+        # set plot size depending on how much users are working
+        if len(plot_names) <= self.min_plotsize:
             y = self.plotsize_y
         else:
-            y = round((self.plotsize_y / self.min_plotsize), 1) * len(plot_names)
-        fig = plt.figure(figsize=(self.plotsize_x, y))
-        axis = fig.add_subplot(111)
+            y = round((self.plotsize_y / self.min_plotsize), 1) * \
+                len(plot_names)
+        fig = plt.figure(figsize=(self.plotsize_x, y*3))
+        axis = fig.add_subplot(211)
+        axis_2 = fig.add_subplot(212)
         ind = np.arange(len(plot_names))
         width = self.plot_width
         # create stacked horizontal bars
         bar_1 = axis.barh(
             ind, plot_status[2], width, color=plot_color['running'], align='center')
         bar_2 = axis.barh(
-            ind, plot_status['idle'], width, color=plot_color['idle'], align='center',
+            ind, plot_status['idle'], width, color=plot_color[
+                'idle'], align='center',
             left=plot_status[2])
         bar_3 = axis.barh(
-            ind, plot_status[5], width, color=plot_color['held'], align='center',
+            ind, plot_status[5], width, color=plot_color[
+                'held'], align='center',
             left=plot_status['idle'] + plot_status[2])
         bar_4 = axis.barh(
-            ind, plot_status[7], width, color=plot_color['suspended'], align='center',
+            ind, plot_status[7], width, color=plot_color[
+                'suspended'], align='center',
             left=plot_status[2] + plot_status['idle'] + plot_status[5])
         bar_5 = axis.barh(
-            ind, plot_status['queued'], width, color=plot_color['queued'], align='center',
+            ind, plot_status['queued'], width, color=plot_color[
+                'queued'], align='center',
             left=plot_status[5] + plot_status[2] + plot_status['idle'] + plot_status[7])
         max_width = axis.get_xlim()[1]
         if max_width <= 10:  # set xlim for 10 jobs or less
@@ -324,18 +361,22 @@ class V2CMS6Status(hf.module.ModuleBase):
                 ind, plot_status['idle'], width, color=plot_color['idle'], align='center', log=True,
                 left=plot_status[2])
             bar_3 = axis.barh(
-                ind, plot_status[5], width, color=plot_color['held'], align='center',
+                ind, plot_status[5], width, color=plot_color[
+                    'held'], align='center',
                 left=plot_status['idle'] + plot_status[2], log=True)
             bar_4 = axis.barh(
-                ind, plot_status[7], width, color=plot_color['suspended'], align='center',
+                ind, plot_status[7], width, color=plot_color[
+                    'suspended'], align='center',
                 left=plot_status[2] + plot_status["idle"] + plot_status[5], log=True)
             bar_5 = axis.barh(
-                ind, plot_status['queued'], width, color=plot_color['queued'], align='center',
+                ind, plot_status['queued'], width, color=plot_color[
+                    'queued'], align='center',
                 left=plot_status[5] + plot_status[2] + plot_status['idle'] + plot_status[7], log=True)
             for i in xrange(len(plot_names)):  # position name tags for log plot
                 temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[7][i] + plot_status[2][
-                                                    i] + plot_status[5][i] + plot_status["queued"][i])) + " Jobs"
-                axis.text(axis.get_xlim()[0] + 0.5, i + 0.37, temp, ha='left', va="center")
+                    i] + plot_status[5][i] + plot_status["queued"][i])) + " Jobs"
+                axis.text(axis.get_xlim()[0] + 0.5, i +
+                          0.37, temp, ha='left', va="center")
         else:  # position name tags for normal plot
             for i in xrange(len(plot_names)):
                 temp = plot_names[i] + " - " + str(int(plot_status["idle"][i] + plot_status[7][i] + plot_status[2][
@@ -358,7 +399,36 @@ class V2CMS6Status(hf.module.ModuleBase):
         fontLeg.set_size('small')
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]), (
             'running jobs', 'idle jobs', 'held jobs', 'suspended jobs', 'queued jobs'),
-            loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+            loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
+
+        # plot the walltime over requested walltime
+        runtime_list = []
+        walltime_list_2 = []
+        for i in xrange(job_count):
+            try:
+                runtime_list.append((current_time - int(current_jobstart_list[i]))/(60*60))
+                walltime_list_2.append(int(walltime_list_raw[i])/(60*60))
+            except (ZeroDivisionError, ValueError, TypeError):
+                pass
+        limit = ceil(max(max(walltime_list_2), max(runtime_list)))
+        bins = [np.arange(0.0, limit+0.1, 1), np.arange(0.0, limit+0.1, 1)]
+        # axis_2.scatter(walltime_list_2, runtime_list)
+        H, xedges, yedges = np.histogram2d(walltime_list_2, runtime_list, bins=bins)
+        H = np.rot90(H)
+        H = np.flipud(H)
+        axe = axis_2.pcolor(xedges, yedges, H, cmap='Blues')
+        axis_2.plot([0, limit], [0, limit])
+        axis_2.set_xlim(0, limit)
+        axis_2.set_ylim(0, limit)
+        axis_2.set_yticks(np.arange(0.0, limit+0.1, 1))
+        axis_2.set_xticks(np.arange(0.0, limit+0.1, 1))
+        axis_2.set_xlabel('Requested Walltime in h')
+        axis_2.set_ylabel('Job Runtime in h')
+        axis_2.set_title("Job Runtime")
+        axis_2.grid(True)
+        cbar = plt.colorbar(axe)
+        cbar.ax.set_ylabel('Jobs')
+
         plt.tight_layout()
         # save data as Output
         fig.savefig(hf.downloadService.getArchivePath(
@@ -368,7 +438,8 @@ class V2CMS6Status(hf.module.ModuleBase):
         while "Undefined" in efficiency_list:
             efficiency_list.remove("Undefined")
         try:
-            eff_count = round(float(sum(efficiency_list) / len(efficiency_list)), 2)
+            eff_count = round(
+                float(sum(efficiency_list) / len(efficiency_list)), 2)
         except ZeroDivisionError:
             eff_count = 0.0
         data['efficiency'] = eff_count
@@ -382,7 +453,8 @@ class V2CMS6Status(hf.module.ModuleBase):
         while "Undefined" in qtime_list:  # filter undefined qtime values from qtime list
             qtime_list.remove("Undefined")
         try:
-            qtime_count = int(round(float(sum(qtime_list)) / len(qtime_list), 0))
+            qtime_count = int(
+                round(float(sum(qtime_list)) / len(qtime_list), 0))
         except ZeroDivisionError:
             qtime_count = 0
         except ValueError:
@@ -401,7 +473,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         else:
             temp = 0
             for i in xrange(job_count):
-                if status_list[i] == 1 and int(current_time) - int(qdate_list[i]) > (self.qtime_max*60*60):
+                if status_list[i] == 1 and int(current_time) - int(qdate_list[i]) > (self.qtime_max * 60 * 60):
                     temp += 1
             if temp > self.qtime_max_jobs:
                 data['status'] = 0.5
@@ -411,7 +483,8 @@ class V2CMS6Status(hf.module.ModuleBase):
             if eff_count < self.min_efficiency and data['running_jobs'] != 0:
                 data['status'] = 0.5
                 data['error_msg'] = data['error_msg'] + \
-                    " The efficiency is below " + str(self.min_efficiency) + ".<br>"
+                    " The efficiency is below " + \
+                    str(self.min_efficiency) + ".<br>"
             try:
                 if float(status_list.count(2)) / float(status_list.count(1)) < self.running_idle_ratio:
                     data['status'] = 0.5
