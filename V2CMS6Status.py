@@ -20,6 +20,7 @@ import json
 from operator import add
 import time
 import ast
+from math import ceil
 
 
 class V2CMS6Status(hf.module.ModuleBase):
@@ -126,12 +127,14 @@ class V2CMS6Status(hf.module.ModuleBase):
 
         def seconds_to_time(seconds):
             try:
-                m, s = divmod(float(seconds), 60)
+                sec = int(seconds)
+                m, s = divmod(sec, 60)
                 h, m = divmod(m, 60)
                 return "%d:%02d:%02d" % (h, m, s)
             except ValueError:
                 return "Undefined"
-
+            except OverflowError:
+                return "Undefined"
         # open file
         with open(path, 'r') as f:
             content = f.read()
@@ -144,6 +147,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         content_fixed = content.replace("}, }", "} }")  # fix JSON to be valid
         services = json.loads(content_fixed)  # load JSON
         job_id_list = list(services.keys())  # list of jobs
+        current_time = int(services[job_id_list[0]]['time'])  # get time from condor
         # create lists with all neeeded values
         status_list = list(int(services[id]['Status'])for id in job_id_list)
         ram_list = list(services[id]['RAM']for id in job_id_list)
@@ -155,6 +159,7 @@ class V2CMS6Status(hf.module.ModuleBase):
         qdate_list = list(services[id]['QueueDate'] for id in job_id_list)
         host_list = list(services[id]['HostName'] for id in job_id_list)
         jobstart_list = list(services[id]['JobStartDate']for id in job_id_list)
+        current_jobstart_list = list(services[id]['JobCurrentStartDate']for id in job_id_list)
         remote_list = list(services[id]['Remote_Job'] for id in job_id_list)
         walltime_list_raw = list(
             services[id]['RequestWalltime'] for id in job_id_list)
@@ -193,7 +198,6 @@ class V2CMS6Status(hf.module.ModuleBase):
         efficiency_list = []
         qtime_list = []
         sites = self.sites
-        current_time = time.time()
         ###################
         #   Calculations  #
         ###################
@@ -205,7 +209,7 @@ class V2CMS6Status(hf.module.ModuleBase):
             # calculate the efficiency per job
             try:
                 efficiency_list.append(
-                    round(float(cpu_time_list[i]) / float(current_time - int(jobstart_list[i])), 3))
+                    round(float(cpu_time_list[i]) / float(current_time - int(current_jobstart_list[i])), 3))
             except (ZeroDivisionError, ValueError):
                 efficiency_list.append("Undefined")
             # calculate the qtime per job
@@ -258,9 +262,8 @@ class V2CMS6Status(hf.module.ModuleBase):
                                       2][k] + plot_status[3][k] + plot_status[4][k] + plot_status[5][k] + plot_status[7][k])
             plot_walltime[k] = avg
         # fill subtable statistics
-        print plot_walltime
         for i in xrange(len(plot_names)):
-            if plot_walltime[i] == 0:
+            if plot_walltime[i] == 0.0:
                 walltime = "Undefinded"
             else:
                 walltime = seconds_to_time(plot_walltime[i])
@@ -322,8 +325,9 @@ class V2CMS6Status(hf.module.ModuleBase):
         else:
             y = round((self.plotsize_y / self.min_plotsize), 1) * \
                 len(plot_names)
-        fig = plt.figure(figsize=(self.plotsize_x, y))
-        axis = fig.add_subplot(111)
+        fig = plt.figure(figsize=(self.plotsize_x, y*3))
+        axis = fig.add_subplot(211)
+        axis_2 = fig.add_subplot(212)
         ind = np.arange(len(plot_names))
         width = self.plot_width
         # create stacked horizontal bars
@@ -395,6 +399,35 @@ class V2CMS6Status(hf.module.ModuleBase):
         axis.legend((bar_1[0], bar_2[0], bar_3[0], bar_4[0], bar_5[0]), (
             'running jobs', 'idle jobs', 'held jobs', 'suspended jobs', 'queued jobs'),
             loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
+
+        # plot the walltime over requested walltime
+        runtime_list = []
+        walltime_list_2 = []
+        for i in xrange(job_count):
+            try:
+                runtime_list.append((current_time - int(current_jobstart_list[i]))/(60*60))
+                walltime_list_2.append(int(walltime_list_raw[i])/(60*60))
+            except (ZeroDivisionError, ValueError, TypeError):
+                pass
+        limit = ceil(max(max(walltime_list_2), max(runtime_list)))
+        bins = [np.arange(0.0, limit+0.1, 0.5), np.arange(0.0, limit+0.1, 0.5)]
+        # axis_2.scatter(walltime_list_2, runtime_list)
+        H, xedges, yedges = np.histogram2d(walltime_list_2, runtime_list, bins=bins)
+        H = np.rot90(H)
+        H = np.flipud(H)
+        axe = axis_2.pcolor(xedges, yedges, H, cmap='Blues')
+        axis_2.plot([0, limit], [0, limit])
+        axis_2.set_xlim(0, limit)
+        axis_2.set_ylim(0, limit)
+        axis_2.set_yticks(np.arange(0.0, limit+0.1, 1))
+        axis_2.set_xticks(np.arange(0.0, limit+0.1, 1))
+        axis_2.set_xlabel('Requested Walltime in h')
+        axis_2.set_ylabel('Job Runtime in h')
+        axis_2.set_title("Job Runtime")
+        axis_2.grid(True)
+        cbar = plt.colorbar(axe)
+        cbar.ax.set_ylabel('Jobs')
+
         plt.tight_layout()
         # save data as Output
         fig.savefig(hf.downloadService.getArchivePath(
