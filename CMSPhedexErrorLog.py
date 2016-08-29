@@ -110,7 +110,7 @@ class CMSPhedexErrorLog(hf.module.ModuleBase):
                 for block in link:
                     for blockfile in block: 
                         if blockfile.tag == 'file':
-                            sourcedata[link.get(self.link_direction)].append(file)
+                            sourcedata[link.get(self.link_direction)].append(blockfile)
 
         for site, files in sourcedata.iteritems():
             stash = {}
