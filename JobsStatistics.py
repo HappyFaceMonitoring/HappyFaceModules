@@ -14,8 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf, datetime
+from sqlalchemy import Column, TEXT, INT, FLOAT
 from lxml import etree
 
 class JobsStatistics(hf.module.ModuleBase):
@@ -204,12 +204,13 @@ class JobsStatistics(hf.module.ModuleBase):
 
                         if user == '' or state == '': continue
                         if user not in users:
-                                users[user] = { 'total': 0, 'ncpus': 0, 'running': 0, 'pending': 0, 'waiting': 0, 'ratio100': 0, 'ratio80': 0, 'ratio30': 0, 'ratio10': 0 };
+                            users[user] = { 'total': 0, 'ncpus': 0, 'running': 0, 'pending': 0,
+                                'waiting': 0, 'ratio100': 0, 'ratio80': 0, 'ratio30': 0, 'ratio10': 0 };
 
                         users[user]['total'] += 1
                         if state == 'running':
-                        	users[user]['running'] += 1
-                        	users[user]['ncpus'] += ncpus
+                            users[user]['running'] += 1
+                            users[user]['ncpus'] += ncpus
                         elif state == 'pending': users[user]['pending'] += 1
                         elif state == 'waiting': users[user]['waiting'] += 1
 
@@ -255,7 +256,7 @@ class JobsStatistics(hf.module.ModuleBase):
             group_list = []
 
         # convert RowProxy to dicts
-        group_list = map(lambda x: dict(x), group_list)
+        group_list = map(dict, group_list)
 
         group_parents = dict((group['group'], group['parentgroup']) for group in group_list)
         group_children = {}
@@ -290,8 +291,6 @@ class JobsStatistics(hf.module.ModuleBase):
 
         # get the detailed information from database
         info_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-        data['info_list'] = map(lambda x: dict(x), info_list)
+        data['info_list'] = map(dict, info_list)
 
         return data
-
-
