@@ -15,13 +15,13 @@
 #   limitations under the License.
 
 import hf, time
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 
 try:
     import imghdr
 except ImportError:
-    self.logger.warning("imghdr module not found, Plot module will not be able \
-to check if downloaded file is actuallly an image.")
+    hf.module.ModuleBase.logger.warning("imghdr module not found, Plot module will not be able \
+to check if downloaded file is actually an image.")
     imghdr = None
 
 class Plot(hf.module.ModuleBase):
@@ -50,11 +50,11 @@ class Plot(hf.module.ModuleBase):
         if use_start_end_time:
             try:
                 url += "&"+self.config["starttime_parameter_name"]+"="+str(int(time.time())-int(self.config["timerange_seconds"]))
-            except KeyError, e:
+            except KeyError:
                 pass
             try:
                 url += "&"+self.config["endtime_parameter_name"]+"="+str(int(time.time()))
-            except KeyError, e:
+            except KeyError:
                 pass
 
         self.plot = hf.downloadService.addDownload(url)
