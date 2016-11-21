@@ -15,12 +15,12 @@
 #   limitations under the License.
 
 import hf, time
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 
 try:
     import imghdr
 except ImportError:
-    self.logger.warning("imghdr module not found, Plot module will not be able \
+    hf.module.ModuleBase.logger.warning("imghdr module not found, Plot module will not be able \
 to check if downloaded file is actuallly an image.")
     imghdr = None
 
@@ -80,7 +80,7 @@ class Multiplot(hf.module.ModuleBase):
         data = {}
         data['description'] = ''
         for i,group in enumerate(self.plot):
-          data['description'] += 'plot%20i: '%i + group['plot_file'].getSourceUrl()
+            data['description'] += 'plot%20i: '%i + group['plot_file'].getSourceUrl()
 
         for i,group in enumerate(self.plot):
             if group['plot_file'].isDownloaded():
