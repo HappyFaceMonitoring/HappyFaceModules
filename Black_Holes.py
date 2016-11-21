@@ -14,16 +14,28 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 import re
 from BeautifulSoup import BeautifulSoup
 
 class Black_Holes(hf.module.ModuleBase):
+
+    bhwt_help = ("If the number of failures of "
+        "a specific worker node compared to "
+        "the total number of failures exceeds this threshold, "
+        "the status is set to warning."
+        )
+    bhct_help = ("If the number of failures of "
+        "a specific worker node compared to "
+        "the total number of failures exceeds this threshold, "
+        "the status is set to critical."
+        )
+
     config_keys = {
         'source_url': ('Source URL', 'both||panda.cern.ch/server/pandamon/query?jobsummary=site&site=%s'),
         'queues': ('Name of the queues to check for black hole worker nodes', 'GoeGrid,ANALY_GOEGRID'),
-        'black_hole_warning_threshold': ('If the number of failures of a specific worker node compared to the total number of failures exceeds this threshold, the status is set to warning.', '25'),
-        'black_hole_critical_threshold': ('If the number of failures of a specific worker node compared to the total number of failures exceeds this threshold, the status is set to critical.', '50'),
+        'black_hole_warning_threshold': (bhwt_help, '25'),
+        'black_hole_critical_threshold': (bhct_help, '50'),
     }
 
     table_columns = [
