@@ -14,7 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 import json
 import datetime
 import ast
@@ -73,20 +73,20 @@ class CMS6History(hf.module.ModuleBase):
         # get time from file
         current_time = int(services[job_id_list[0]]['time'])
         # create lists with all neeeded values
-        completion_date_list = list(int(services[id]['CompletionDate'])for id in job_id_list)
-        start_date_list = list(services[id]['JobStartDate']for id in job_id_list)
-        final_status_list = list(int(services[id]['JobStatus'])for id in job_id_list)
+        completion_date_list = list(int(services[ID]['CompletionDate'])for ID in job_id_list)
+        start_date_list = list(services[ID]['JobStartDate']for ID in job_id_list)
+        final_status_list = list(int(services[ID]['JobStatus'])for ID in job_id_list)
         last_status_list = []
-        for id in job_id_list:
+        for ID in job_id_list:
             try:
-                last_status_list.append(int(services[id]['LastJobStatus']))
+                last_status_list.append(int(services[ID]['LastJobStatus']))
             except KeyError:
                 last_status_list.append(0)
             except ValueError:
                 last_status_list.append(0)
         final_status_date_list = list(
-            int(services[id]['EnteredCurrentStatus'])for id in job_id_list)
-        qdate_list = list(int(services[id]['QueueDate'])for id in job_id_list)
+            int(services[ID]['EnteredCurrentStatus'])for ID in job_id_list)
+        qdate_list = list(int(services[ID]['QueueDate'])for ID in job_id_list)
         total_jobs = len(job_id_list)
         starttime = current_time - (self.plotrange * 60 * 60)
         qdate_list = list(map(lambda x: x - starttime, qdate_list))
@@ -216,7 +216,7 @@ class CMS6History(hf.module.ModuleBase):
                     if k == self.plotrange + 1:
                         plot_data_running[k - 1] += 1
                     else:
-                        k + 1
+                        k += 1
                     while k < self.plotrange + 1:
                         plot_data_running[k] += 1
                         k += 1
