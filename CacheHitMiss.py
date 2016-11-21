@@ -15,11 +15,9 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 import json
 import time
-import datetime
-
 
 class CacheHitMiss(hf.module.ModuleBase):
     config_keys = {'sourceurl': ('Source Url', ''),
@@ -64,10 +62,10 @@ class CacheHitMiss(hf.module.ModuleBase):
         id_list = services['jobs'].keys()
         hit_list = []
         local_list = []
-        for id in id_list:
-            if services['jobs'][id]['creation_time'] > self.time_limits:
-                hit_list.append(float(services['jobs'][id]['cachehit_rate']))
-                local_list.append(float(services['jobs'][id]['locality_rate']))
+        for ID in id_list:
+            if services['jobs'][ID]['creation_time'] > self.time_limits:
+                hit_list.append(float(services['jobs'][ID]['cachehit_rate']))
+                local_list.append(float(services['jobs'][ID]['locality_rate']))
         # generate 2d histogram
         nbins = 1.0/(self.nbins)
         bins = [np.arange(0.0, 1.1, nbins), np.arange(0.0, 1.1, nbins)]
