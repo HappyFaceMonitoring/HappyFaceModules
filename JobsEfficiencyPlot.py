@@ -14,10 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
+import hf
 import numpy as np 
 from numpy import array
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 from lxml import etree
 
 class JobsEfficiencyPlot(hf.module.ModuleBase):
@@ -66,7 +66,7 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
                     return False
                 group_chk = hierarchy[group_chk]
             return True
-        except:
+        except Exception:
             return False
 
     def checkGroups(self, group_chk, groups, hierarchy):
@@ -78,7 +78,6 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         return False
 
     def extractData(self):
-        import matplotlib
         import matplotlib.pyplot as plt
         self.plt = plt
         data = {}
@@ -242,7 +241,8 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         axis_abs.set_xticklabels(user_names, rotation='vertical')
         #if N > 1: axis_abs.set_ylim(1,max_jobs)
         axis_abs.set_yticks(np.arange(0,max_jobs + 5,scale_value))
-        axis_abs.legend( (p0[0], p1[0], p2[0], p3[0], p4[0]), ('queue', 'ratio < 10%', '10% < ratio < 30%', '30% < ratio < 80%', 'ratio > 80%') )
+        axis_abs.legend( (p0[0], p1[0], p2[0], p3[0], p4[0]),
+            ('queue', 'ratio < 10%', '10% < ratio < 30%', '30% < ratio < 80%', 'ratio > 80%') )
 
 
         fig_abs.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_eff.png"), dpi=60)
@@ -264,7 +264,8 @@ class JobsEfficiencyPlot(hf.module.ModuleBase):
         axis_rel.set_xticklabels(user_names, rotation='vertical')
         axis_rel.set_yticks(np.arange(0,101,10))
 
-        axis_rel.legend( (rel_p0[0], rel_p1[0], rel_p2[0], rel_p3[0], rel_p4[0]), ('queue', 'ratio < 10%', '10% < ratio < 30%', '30% < ratio < 80%', 'ratio > 80%') )
+        axis_rel.legend( (rel_p0[0], rel_p1[0], rel_p2[0], rel_p3[0], rel_p4[0]),
+            ('queue', 'ratio < 10%', '10% < ratio < 30%', '30% < ratio < 80%', 'ratio > 80%') )
 
         fig_rel.savefig(hf.downloadService.getArchivePath(self.run, self.instance_name + "_jobs_rel_eff.png"), dpi=60)
         data["filename_rel_eff_plot"] = self.instance_name + "_jobs_rel_eff.png"
