@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 import json
 import numpy as np
 
@@ -116,8 +116,8 @@ class CacheDistribution(hf.module.ModuleBase):
             data['error_msg'] = "No data to display!"
             print data
             return data
-        """ calculate the metric of the Dataset
-            sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)"""
+        # calculate the metric of the Dataset
+        # sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)
         metric = []
         file_count = []
         norm = np.sqrt(1-1.0/len(machines))
@@ -145,7 +145,7 @@ class CacheDistribution(hf.module.ModuleBase):
         ###############
         # Make   plot #
         ###############
-        ''' calculate bin size so bins have equal size in log-Plot '''
+        # calculate bin size so bins have equal size in log-Plot
         self.x_max = np.log10(self.x_max)
         self.x_min = np.log10(self.x_min)
         width = (self.x_max-self.x_min)/self.nbinsx
