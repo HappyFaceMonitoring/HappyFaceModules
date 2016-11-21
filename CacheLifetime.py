@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 import json
 import time
 
