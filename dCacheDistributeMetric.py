@@ -25,7 +25,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
     config_keys = {
         'lower_variance_limit': ('variance limit at highest number of files', '0.07'),
         'upper_variance_limit': ('variance limit at lowest number of files', '0.4'),
-        'distribute_source': ('link to the distribute imbalance metric source file', 'both||http://ekphappyface.physik.uni-karlsruhe.de/upload/gridka/dcache_distribute_imbalance_metric'),
+        'distribute_source': ('link to the distribute imbalance metric source file', 'both||http://ekphappyface.ekp.kit.edu/upload/gridka/dcache_distribute_imbalance_metric'),
         'pool_source_xml': ('link to the pool source file', 'both||http://cmsdcacheweb-kit.gridka.de:2288/info/pools'),
     }
     #'categories': ('name of the categories to be extracted, poolname and status will always be generated', 'total,free,precious,removable'),
