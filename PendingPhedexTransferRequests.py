@@ -17,7 +17,7 @@
 import hf
 import json
 import time
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 
 class PendingPhedexTransferRequests(hf.module.ModuleBase):
 	
@@ -57,7 +57,6 @@ class PendingPhedexTransferRequests(hf.module.ModuleBase):
 		current_time = time.time()
 		request_time_list = [0.0]
 		for request in request_list["phedex"]["request"]:
-			request_time = time.gmtime(request["time_create"])
 			period = current_time - request["time_create"]
 			request_time_list.append(period)
 		data["pending_transfer_requests"] = len(request_time_list)-1
