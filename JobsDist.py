@@ -14,10 +14,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-import numpy as np 
-from numpy import array
-from sqlalchemy import *
+import hf
+import numpy as np
+from sqlalchemy import TEXT, INT, Column
 from lxml import etree
 
 class JobsDist(hf.module.ModuleBase):
@@ -53,7 +52,6 @@ class JobsDist(hf.module.ModuleBase):
 
 
     def extractData(self):
-        import matplotlib
         import matplotlib.pyplot as plt
         self.plt = plt
         data = {}
@@ -100,7 +98,7 @@ class JobsDist(hf.module.ModuleBase):
 
                     # Check user
                     if not self.checkGroups(group, self.groups, hierarchy) or job_state != 'running' or variable_str == '':
-                            continue
+                        continue
 
                     values.append(float(variable_str))
 ################################################################
@@ -129,13 +127,13 @@ class JobsDist(hf.module.ModuleBase):
             content = [0]*nbins
             for value in values:
                 if diff_var > 0:
-                    bin = int(round((value - min_var) * nbins / diff_var))
+                    Bin = int(round((value - min_var) * nbins / diff_var))
                 else:
-                    bin = nbins;
+                    Bin = nbins;
 
-                if bin == nbins:
-                    bin = nbins - 1
-                content[bin] += 1
+                if Bin == nbins:
+                    Bin = nbins - 1
+                content[Bin] += 1
 
             xlabels = [0]*nbins
             for x in range(0,nbins):
@@ -166,7 +164,7 @@ class JobsDist(hf.module.ModuleBase):
 
             axis = fig.add_subplot(111)
 
-            p0 = axis.bar(ind, content, width, color='orange')
+            axis.bar(ind, content, width, color='orange')
 
             axis.set_position([0.10,0.2,0.85,0.75])
             axis.set_xlabel(variable);
@@ -203,7 +201,7 @@ class JobsDist(hf.module.ModuleBase):
                     return False
                 group_chk = hierarchy[group_chk]
             return True
-        except:
+        except Exception:
             return False
 
     def checkGroups(self, group_chk, groups, hierarchy):
