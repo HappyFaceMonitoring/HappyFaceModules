@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf, datetime
+from sqlalchemy import TEXT, INT, FLOAT, Column
 import json
 from string import strip
 import time
 
 class CMSPhedexDataExtract(hf.module.ModuleBase):
 
+    rb_help = ("insert base url for reports "
+        "don't forget fromfilter or tofilter with your name! "
+        "finish your link with starttime=, "
+        "the starttime is inserted by the module "
+        )
+
     config_keys = {
         'link_direction': ("transfers 'from' or 'to' you", 'to'),
         'time_range': ('set timerange in hours', '24'),
         'base_url': ('use --no-check-certificate, end base url with starttime=', ''),
         'linktest_url': ('use --no-check-certificate, end linktest url with starttime=', ''),
-        'report_base':("insert base url for reports don't forget fromfilter or tofilter with your name! finish your link with starttime=, the starttime is inserted by the module ",'https://cmsweb.cern.ch/phedex/prod/Activity::ErrorInfo?tofilter=T1_DE_KIT&starttime='),
+        'report_base': (rb_help, 'https://cmsweb.cern.ch/phedex/prod/Activity::ErrorInfo?tofilter=T1_DE_KIT&starttime='),
         'blacklist': ('ignore links from or to those sites, csv', ''),
         'your_name': ('Name of your site', 'T1_DE_KIT_Buffer'),
         'category': ('use prod or debug, its used to build links to the cern info sites','prod'),
@@ -103,7 +109,6 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.qualitiy_broken_value = float(self.config['qualitiy_broken_value'])
     
     def confirmLinkStatus(self, link_name):
-        crit_average = 0.1
         fobj1 = json.load(open(self.source1.getTmpPath(), 'r'))['phedex']['link']
         
         i = 0
@@ -147,8 +152,21 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 self.warning_ratio[tier] = float(self.config[tier + '_warning_ratio'])
         
         self.unused_link_color = '#0000FF'
-        self.color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4',\
-        '#f4fab0', '#eff8aa', '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', '#07753e', '#05713c', '#026c39', '#006837']
+        self.color_map = ['#a50026', '#a90426', '#af0926', '#b30d26', '#b91326', '#bd1726', \
+            '#c21c27', '#c62027', '#cc2627', '#d22b27', '#d62f27', '#da362a', '#dc3b2c', \
+            '#e0422f', '#e24731', '#e54e35', '#e75337', '#eb5a3a', '#ee613e', '#f16640', \
+            '#f46d43', '#f57245', '#f67a49', '#f67f4b', '#f8864f', '#f98e52', '#f99355', \
+            '#fa9b58', '#fba05b', '#fca85e', '#fdad60', '#fdb365', '#fdb768', '#fdbd6d', \
+            '#fdc372', '#fdc776', '#fecc7b', '#fed07e', '#fed683', '#feda86', '#fee08b', \
+            '#fee28f', '#fee695', '#feea9b', '#feec9f', '#fff0a6', '#fff2aa', '#fff6b0', \
+            '#fff8b4', '#fffcba', '#feffbe', '#fbfdba', '#f7fcb4', '#f4fab0', '#eff8aa', \
+            '#ecf7a6', '#e8f59f', '#e5f49b', '#e0f295', '#dcf08f', '#d9ef8b', '#d3ec87', \
+            '#cfeb85', '#c9e881', '#c5e67e', '#bfe47a', '#bbe278', '#b5df74', '#afdd70', \
+            '#abdb6d', '#a5d86a', '#a0d669', '#98d368', '#93d168', '#8ccd67', '#84ca66', \
+            '#7fc866', '#78c565', '#73c264', '#6bbf64', '#66bd63', '#5db961', '#57b65f', \
+            '#4eb15d', '#45ad5b', '#3faa59', '#36a657', '#30a356', '#279f53', '#219c52', \
+            '#199750', '#17934e', '#148e4b', '#118848', '#0f8446', '#0c7f43', '#0a7b41', \
+            '#07753e', '#05713c', '#026c39', '#006837']
     
     def getTierStatus(self, link_list):
         status = {}
@@ -158,16 +176,18 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             good_link = 0
             bad_link = 0
             warn_link = 0
-            for  link_name, time_bins in links.iteritems():
+            for time_bins in links.itervalues():
                 try:
                     done_files = 0
                     fail_files = 0
                     for single_bin in time_bins:
                         done_files += int(single_bin['done_files'])
                         fail_files += int(single_bin['fail_files'])
-                    if fail_files != 0 and (float(done_files) / (done_files + fail_files) <= self.critical_quality[tier] or fail_files >= self.critical_failures[tier]):
+                    if fail_files != 0 and (float(done_files) / (done_files + fail_files) <= self.critical_quality[tier] or \
+                        fail_files >= self.critical_failures[tier]):
                         bad_link += 1
-                    elif fail_files != 0 and (float(done_files) / (done_files + fail_files) <= self.warning_quality[tier] or fail_files >= self.warning_failures[tier]):
+                    elif fail_files != 0 and (float(done_files) / (done_files + fail_files) <= self.warning_quality[tier] or \
+                        fail_files >= self.warning_failures[tier]):
                         warn_link += 1
                     elif done_files != 0:
                         good_link += 1
@@ -218,7 +238,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                         help_append['color'] = self.color_map[int(help_append['quality']*100)]
                         
                         linkappend = 1
-                        if (help_append['timebin'] >= self.quality_x_line) and (help_append['quality'] < self.critical_average_quality) and (not self.confirmLinkStatus(help_append['name'])):
+                        if (help_append['timebin'] >= self.quality_x_line) and \
+                            (help_append['quality'] < self.critical_average_quality) and \
+                            (not self.confirmLinkStatus(help_append['name'])):
                             help_append['color'] = self.unused_link_color
                             linkappend = 0
                         self.details_db_value_list.append(help_append)
@@ -260,7 +282,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             your_direction = 'tofilter='
 
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select().\
+            where(self.subtables['details'].c.parent_id==self.dataset['id']).\
+            order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
 
         raw_data_list = [] #contains dicts {x,y,weight,fails,done,rate,time,color,link} where the weight determines the the color
         x_list = {} #for Summary of the quality of all links at one time
@@ -279,7 +303,16 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 marking_color = '#ff0000'
             elif int(self.config['%s_warning_failures'%t_number]) <= int(values['fail_files']):
                 marking_color = '#af00af'
-            help_dict = {'x':int(values['timebin']-x0)/3600, 'y':int(y_value_map[values['name']]), 'w':str('%.2f' %values['quality']), 'fails':int(values['fail_files']), 'done':int(values['done_files']), 'rate':str('%.3f' %(float(values['rate'])/1024/1024)), 'time':datetime.datetime.fromtimestamp(values['timebin']), 'color':values['color'], 'link':report_base + their_direction + values['name'], 'marking':marking_color}
+            help_dict = {'x':int(values['timebin']-x0)/3600,
+                'y':int(y_value_map[values['name']]),
+                'w':str('%.2f' %values['quality']),
+                'fails':int(values['fail_files']),
+                'done':int(values['done_files']),
+                'rate':str('%.3f' %(float(values['rate'])/1024/1024)),
+                'time':datetime.datetime.fromtimestamp(values['timebin']),
+                'color':values['color'],
+                'link':report_base + their_direction + values['name'],
+                'marking':marking_color}
             help_append = {'x': int(values['timebin']-x0)/3600, 'done_files': int(values['done_files']), 'fail_files': int(values['fail_files'])}
             raw_data_list.append(help_dict)
             if values['timebin'] >= x_line:
@@ -330,10 +363,10 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         data['width'] = int(660/(self.dataset['time_range']+1))
         if self.config['link_direction'] == 'to':
             data['button_pic'] = self.config['button_pic_path_in']
-            data['info_link'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
+            data['info_link'] = 'https://cmsweb.cern.ch/phedex/'+self.config['category']+'/Activity::QualityPlots?graph=quality_all&entity=dest&src_filter='
         else:
             data['button_pic'] = self.config['button_pic_path_out']
-            data['info_link'] = 'https://cmsweb.cern.ch/phedex/' + self.config['category'] + '/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
+            data['info_link'] = 'https://cmsweb.cern.ch/phedex/'+self.config['category']+'/Activity::QualityPlots?graph=quality_all&entity=src&dest_filter='
         data['eval_time'] = 'last %s hrs' % self.eval_time
         data['y_summary'] = y_summary
         data['x_summary'] = x_summary
