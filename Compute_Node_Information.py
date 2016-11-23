@@ -14,20 +14,32 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 import re
 from BeautifulSoup import BeautifulSoup
 
 class Compute_Node_Information(hf.module.ModuleBase):
+
+    tjns_help = ("If there are any transferring jobs, "
+        "this parameter defines a lower limit "
+        "for the number of compute nodes shown "
+        "(even if everything is ok)"
+        )
+    tjct_help = ("If the number of transferring jobs "
+        "is larger than or equal to this threshold, "
+        "this is shown as critical"
+        )
+
     config_keys = {
         'source_url': ('Source URL', 'both||panda.cern.ch/server/pandamon/query?jobsummary=site&site=%s'),
-        'link_status': ('Link for displaying information on specific jobs statuses', 'http://panda.cern.ch/server/pandamon/query?job=*&site=%s&type=&hours=12&jobStatus=%s'),
+        'link_status': ('Link for displaying information on specific jobs statuses', \
+            'http://panda.cern.ch/server/pandamon/query?job=*&site=%s&type=&hours=12&jobStatus=%s'),
         'queues': ('Name of the queues to check for black hole worker nodes', 'GoeGrid,ANALY_GOEGRID'),
         'failed_jobs_number_shown_as_warning': ('If there are any failed jobs, this parameter defines the number of compute nodes shown as warning', '3'),
         'failed_jobs_number_shown_as_critical': ('If there are any failed jobs, this parameter defines the number of compute nodes shown as critical', '2'),
-        'transferring_jobs_number_shown': ('If there are any transferring jobs, this parameter defines a lower limit for the number of compute nodes shown (even if everything is ok)', '5'),
-        'transferring_jobs_warning_threshold': ('If the number of transferring jobs is larger than or equal to this treshold, this is shown as warning', '5'),
-        'transferring_jobs_critical_threshold': ('If the number of transferring jobs  is larger than or equal to this treshold, this is shown as critical', '10'),
+        'transferring_jobs_number_shown': (tjns_help, '5'),
+        'transferring_jobs_warning_threshold': ('If the number of transferring jobs is larger than or equal to this threshold, this is shown as warning', '5'),
+        'transferring_jobs_critical_threshold': (tjct_help, '10'),
     }
 
     table_columns = [
@@ -178,7 +190,7 @@ class Compute_Node_Information(hf.module.ModuleBase):
             plot_list = []
             plot_list.append(['Compute Node', 'Failed Jobs (crit)', 'Failed Jobs (warn)', 'Failed Jobs (ok)'])
             iterator = 0
-            for index, detail in enumerate(data['details']):
+            for detail in data['details']:
                 if detail['queue_name'] == queue:
                     if int(detail['failed']) == 0:
                         break
