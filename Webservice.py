@@ -15,7 +15,7 @@
 
 import hf
 import hf.database
-from sqlalchemy import *
+from sqlalchemy import TEXT, Column
 import json
 
 class Webservice(hf.module.ModuleBase):
@@ -28,12 +28,6 @@ class Webservice(hf.module.ModuleBase):
     table_columns = [
         Column('database_structure_file', TEXT),
     ], []
-
-    #subtable_columns = {
-    #    'details_table': ([
-    #    Column('key', TEXT),
-    #    ], []),
-    #}
 
     def prepareAcquisition(self):
         self.source_url = self.config['database_structure_file']
@@ -49,43 +43,15 @@ class Webservice(hf.module.ModuleBase):
             'status': 1,
         }
 
-        # read the downloaded files
-        json_string = open(self.source.getTmpPath()).read()
-        #print json_string
-        #json_content = json.loads(json_string)
-        #for entry in json_content:
-        #    print entry
-
-        hf_runs_table = None
-        module_instances = []
-        for table in hf.database.metadata.sorted_tables:
-            if table.name == 'hf_runs':
-                hf_runs_table = table
-            elif table.name == 'module_instances':
-                module_instances = select([table.c.instance,table.c.module]).execute().fetchall() 
-
         return data
 
-#    def fillSubtables(self, parent_id):
-#        self.subtables['details_table'].insert().execute([dict(parent_id=parent_id, **row) for row in self.details_table_db_value_list])
-
     def getTemplateData(self):
-        data = hf.module.ModuleBase.getTemplateData(self)
-#        details = self.subtables['details_table'].select().where(self.subtables['details_table'].c.parent_id==self.dataset['id']).execute().fetchall()
-#        data['details'] = map(dict, space_tokens_details)
 
-        hf_runs_table = None
-        module_instances = []
-        for table in hf.database.metadata.sorted_tables:
-            if table.name == 'hf_runs':
-                hf_runs_table = table
-            elif table.name == 'module_instances':
-                module_instances = select([table.c.instance,table.c.module]).execute().fetchall()
+        data = hf.module.ModuleBase.getTemplateData(self)
 
         database_tables = []
         for table in hf.database.metadata.sorted_tables:
             if table.name.startswith('mod_'):
-                #print table.name
                 table_dictionary = {}
                 table_dictionary['module_table_name'] = table.name
                 module_table_columns = []
@@ -94,12 +60,7 @@ class Webservice(hf.module.ModuleBase):
                 table_dictionary['module_table_columns'] = module_table_columns
                 table_dictionary['subtables'] = []
                 table_dictionary['module_name'] = table.name
-                #for instance, module in module_instances:
-                #    if table.c.instance.foreign_keys[0] == instance:
-                #        print module
-                #        table_dictionary['module_name'] = module
-                #        break
-                #print table.c.instance
+
                 database_tables.append(table_dictionary)
         for table in hf.database.metadata.sorted_tables:
             if table.name.startswith('sub_'):
