@@ -14,10 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging
+import hf
 from datetime import datetime
 import time
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 from lxml import etree
 
 class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
@@ -71,7 +71,8 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         root = source_tree.getroot()
         data["request_date"] = root.get('request_date')
         data["request_timestamp"] = int(float(root.get('request_timestamp')))
-        old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).order_by(self.module_table.c.id.desc()).execute().fetchone()
+        old_data = self.module_table.select().where(self.module_table.c.instance==self.instance_name).\
+            order_by(self.module_table.c.id.desc()).execute().fetchone()
         if old_data == None or old_data['data_id'] == None:
             self.save_data = 'yes'
             data['data_id'] = 'NULL'
@@ -133,7 +134,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
             data["failed_total_files"] = num_files
 
             if data["failed_total_files"] > 0 or data["failed_blocks"] > 0:
-                    data['status'] = 0.0
+                data['status'] = 0.0
 
         else:
             if old_data['data_id'] != 'NULL':
@@ -218,7 +219,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
 
             else:
                 self.logger.error('Something went terrebly wrong. the timestamp of the old dataset seems to be greater than the new one...')
-                data['status'] = -2               
+                data['status'] = -2
                 self.save_data = 'yes'
                 data['data_id'] = 'NULL'
                 num_blocks_raw =0 
@@ -294,7 +295,7 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
         else:
             details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, details_list)
-        for i, group in enumerate(data['details']):
+        for group in data['details']:
             group['time_reported'] = datetime.fromtimestamp(group['time_reported'])
 
         return data
@@ -306,10 +307,10 @@ class CMSPhedexBlockTestFiles(hf.module.ModuleBase):
             details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['data_id']).execute().fetchall()
         else:
             details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-	details_list = map(dict, details_list)
-	for group in details_list:
-	    if group['isfile'] == int(kwargs['isfile']) and group['filtered'] == int(kwargs['filter']):
-		data.append(group)
+        details_list = map(dict, details_list)
+        for group in details_list:
+            if group['isfile'] == int(kwargs['isfile']) and group['filtered'] == int(kwargs['filter']):
+                data.append(group)
         for group in data:
             group['time_reported'] = str(datetime.fromtimestamp(group['time_reported']))
         return data
