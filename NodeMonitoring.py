@@ -363,7 +363,7 @@ class NodeMonitoring(hf.module.ModuleBase):
                     if self.primary_key == 'WNHostName':
                         cluster = PrimaryKeys[PlotIndices[k]].upper().split('-')
                         for r in range(len(racks)):
-                            if cluster[0]!='UNKNOWN' and cluster[1] in racks[r]['clusters']:
+                            if len(cluster) > 1 and cluster[0]!='UNKNOWN' and cluster[1] in racks[r]['clusters']:
                                 SubtableEntry['PrimaryKeyURL'] = self.table_link_url.\
                                         replace('RACK', racks[r]['rack_string']).\
                                         replace('CLUSTER', cluster[0] + '-' + cluster[1]).\
