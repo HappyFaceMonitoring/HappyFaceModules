@@ -14,8 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, logging
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, Column
 from lxml import etree
 
 class PhedexStats(hf.module.ModuleBase):
