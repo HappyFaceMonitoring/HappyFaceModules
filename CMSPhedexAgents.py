@@ -13,8 +13,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, FLOAT, Column
 from lxml import etree
 from string import strip
 
@@ -137,7 +137,7 @@ class CMSPhedexAgents(hf.module.ModuleBase):
                 else:
                     break
             min_list = min_list[0]
-            for p,q in enumerate(self.details_db_value_list):
+            for q in self.details_db_value_list:
                 if min_list['pid'] == q['pid']:
                     checked = False
             if checked:
@@ -165,7 +165,8 @@ class CMSPhedexAgents(hf.module.ModuleBase):
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select().where(self.subtables['details'].c.\
+            parent_id==self.dataset['id']).order_by(self.subtables['details'].c.name.asc()).execute().fetchall()
         details_list = [dict(time_str=self.formatTime(row['time_diff']), **row) for row in details_list]
 
         data['details'] = details_list
