@@ -1,6 +1,6 @@
 import hf
-from sqlalchemy import *
-from random import random
+from sqlalchemy import TEXT, INT, Column
+from sqlalchemy.sql import and_
 import datetime
 
 class PBS(hf.module.ModuleBase):
@@ -132,8 +132,10 @@ class PBS(hf.module.ModuleBase):
 
 		self.subtables['total'].insert().execute([dict(parent_id=parent_id, type=row, count=self.total[row]) for row in self.total])
 
-	def getTemplateJobData(self,type):
-		info_list = self.subtables['status'].select().where(and_(self.subtables['status'].c.parent_id==self.dataset['id'],self.subtables['status'].c.type==type)).execute().fetchall()
+	def getTemplateJobData(self, Type):
+		info_list = self.subtables['status'].select().\
+			where(and_(self.subtables['status'].c.parent_id==self.dataset['id'],self.subtables['status'].c.type==Type)).\
+			execute().fetchall()
 
 		data = {None: {'total':0}}
 
