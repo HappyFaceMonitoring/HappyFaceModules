@@ -14,24 +14,36 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 from BeautifulSoup import BeautifulSoup
-import urllib2,json
-from datetime import datetime
+import json
 
 class Panda(hf.module.ModuleBase):
+
+    site_names_example = ("praguelcg2,LRZ-LMU,CSCS-LCG2,GoeGrid,FZK-LCG2,PSNC,"
+        "HEPHY-UIBK,UNI-FREIBURG,wuppertalprod,TUDresden-ZIH,"
+        "MPPMU,DESY-HH,DESY-ZN,CYFRONET-LCG2,"
+        "UNI-DORTMUND,FMPhI-UNIBA,IEPSAS-Kosice")
+
     config_keys = {
         'schedconfig_url': ('Schedconfig link', 'local||http://pandaserver.cern.ch:25080/cache/schedconfig/schedconfig.all.json'),
         'panda_analysis_url': ('Panda analysis URL', 'local||http://panda.cern.ch:25980/server/pandamon/query?job=*&type=analysis&computingSite='),
         'panda_analysis_interval': ('Interval for analysis queue in hours', '3'),
         'panda_production_url': ('Panda production URL', 'local||http://panda.cern.ch:25980/server/pandamon/query?job=*&type=production&computingSite='),
         'panda_production_interval': ('Interval for production queue in hours', '3'),
-        'site_names': ('Site names', 'praguelcg2,LRZ-LMU,CSCS-LCG2,GoeGrid,FZK-LCG2,PSNC,HEPHY-UIBK,UNI-FREIBURG,wuppertalprod,TUDresden-ZIH,MPPMU,DESY-HH,DESY-ZN,CYFRONET-LCG2,UNI-DORTMUND,FMPhI-UNIBA,IEPSAS-Kosice'),
+        'site_names': ('Site names', site_names_example),
         'failed_warning': ('Failed rate that triggers warning status', '30'),
         'failed_critical': ('Failed rate that triggers critical status', '50'),
     }
 
-    config_hint = 'Specify one or multiple queues of sites you would like to monitor. A queue <queue> of type <analysis|production> for site <site> (that has to be mentioned in parameter site_names in order to be taken into account) is specified as follows: <site>_<analysis|production> = <queue>. Several queues for the same site are given in the same parameter, separated by commas.'
+    config_hint = ("Specify one or multiple queues of sites "
+        "you would like to monitor. A queue <queue> of type "
+        "<analysis|production> for site <site> "
+        "(that has to be mentioned in parameter site_names "
+        "in order to be taken into account) is specified as follows: "
+        "<site>_<analysis|production> = <queue>. "
+        "Several queues for the same site are given "
+        "in the same parameter, separated by commas.")
 
     table_columns = [
         Column('site_names', TEXT),
@@ -176,7 +188,7 @@ class Panda(hf.module.ModuleBase):
 
         queue_details = {}
         for site in self.site_names:
-            grid_site_info = cloud_class(datetime.now(),schedconfig_content)
+            grid_site_info = cloud_class(schedconfig_content)
             # parse information from the file for each analysis queue
             for source, queue in map(None, (self.site_sources[site])['analysis'], (self.queue_names[site])['analysis']):
                 queue_info = {}
@@ -194,7 +206,8 @@ class Panda(hf.module.ModuleBase):
                 queue_info['holding_jobs'] = grid_site_info.get_numberof_holding_jobs()
                 queue_info['finished_jobs'] = grid_site_info.get_numberof_finished_jobs()
                 queue_info['failed_jobs'] = grid_site_info.get_numberof_failed_jobs()
-                #if int(queue_info['failed_jobs']) >= int(self.config['failed_warning']) and int(queue_info['failed_jobs']) < int(self.config['failed_critical']):
+                #if int(queue_info['failed_jobs']) >= int(self.config['failed_warning']) and \
+                    #int(queue_info['failed_jobs']) < int(self.config['failed_critical']):
                 #    data['status'] = min(data['status'],0.5)
                 #elif int(queue_info['failed_jobs']) >= int(self.config['failed_critical']):
                 #    data['status'] = min(data['status'],0.)
@@ -205,7 +218,8 @@ class Panda(hf.module.ModuleBase):
                 else:
                     queue_info['efficiency'] = 0
                 # determine the module status
-                if 100. - float(queue_info['efficiency']) >= int(self.config['failed_warning']) and 100. - float(queue_info['efficiency']) < int(self.config['failed_critical']):
+                if 100. - float(queue_info['efficiency']) >= int(self.config['failed_warning']) \
+                    and 100. - float(queue_info['efficiency']) < int(self.config['failed_critical']):
                     data['status'] = min(data['status'],0.5)
                 elif 100. - float(queue_info['efficiency']) >= int(self.config['failed_critical']):
                     data['status'] = min(data['status'],0.)
@@ -245,7 +259,19 @@ class Panda(hf.module.ModuleBase):
                 # add to array
                 queue_details[site+'_'+queue+'_production'] = queue_info
 
-        self.details_db_value_list = [{'site_name':(queue_details[queue])['site_name'], 'queue_type':(queue_details[queue])['queue_type'], 'queue_name':(queue_details[queue])['queue_name'], 'queue_link':(queue_details[queue])['queue_link'],'efficiency':(queue_details[queue])['efficiency'], 'status':(queue_details[queue])['status'], 'active_jobs':(queue_details[queue])['active_jobs'], 'running_jobs':(queue_details[queue])['running_jobs'], 'defined_jobs':(queue_details[queue])['defined_jobs'], 'holding_jobs':(queue_details[queue])['holding_jobs'], 'finished_jobs':(queue_details[queue])['finished_jobs'], 'failed_jobs':(queue_details[queue])['failed_jobs'], 'cancelled_jobs':(queue_details[queue])['cancelled_jobs']} for queue in queue_details]
+        self.details_db_value_list = [{'site_name':(queue_details[queue])['site_name'], \
+            'queue_type':(queue_details[queue])['queue_type'], \
+            'queue_name':(queue_details[queue])['queue_name'], \
+            'queue_link':(queue_details[queue])['queue_link'], \
+            'efficiency':(queue_details[queue])['efficiency'], \
+            'status':(queue_details[queue])['status'], \
+            'active_jobs':(queue_details[queue])['active_jobs'], \
+            'running_jobs':(queue_details[queue])['running_jobs'], \
+            'defined_jobs':(queue_details[queue])['defined_jobs'], \
+            'holding_jobs':(queue_details[queue])['holding_jobs'], \
+            'finished_jobs':(queue_details[queue])['finished_jobs'], \
+            'failed_jobs':(queue_details[queue])['failed_jobs'], \
+            'cancelled_jobs':(queue_details[queue])['cancelled_jobs']} for queue in queue_details]
 
         return data
 
@@ -276,8 +302,9 @@ class Panda(hf.module.ModuleBase):
         return data
 
 
-class cloud_class:
-    def __init__(self,time_now,schedconfig_content):
+class cloud_class(object):
+
+    def __init__(self,schedconfig_content):
         content = schedconfig_content
         self.json_source=json.loads(content,'utf-8')
         self.resource=[]
@@ -287,19 +314,29 @@ class cloud_class:
         l=True
         while l:
             n=len(src)
-            if ("Click job number to see details." in src[0:n/2] or "Listing limited to search depth of" in src[0:n/2]) and ("defined" in src[0:n/2] or "activated" in src[0:n/2] or "running" in src[0:n/2] or "holding" in src[0:n/2] or "transferring" in src[0:n/2] or "finished" in src[0:n/2] or "cancelled" in src[0:n/2]) and "Users" in src[0:n/2] and "Releases" in src[0:n/2]:
+            if ("Click job number to see details." in src[0:n/2] or \
+                "Listing limited to search depth of" in src[0:n/2]) and \
+                ("defined" in src[0:n/2] or "activated" in src[0:n/2] or \
+                "running" in src[0:n/2] or "holding" in src[0:n/2] or \
+                "transferring" in src[0:n/2] or "finished" in src[0:n/2] or \
+                "cancelled" in src[0:n/2]) and "Users" in src[0:n/2] and "Releases" in src[0:n/2]:
                 l=True
                 src=src[0:(n/2)+15]
-            elif ("Click job number to see details." in src[n/2:n] or "Listing limited to search depth of" in src[0:n/2]) and("defined" in src[n/2:n] or "activated" in src[n/2:n] or "running" in src[n/2:n] or  "holding" in src[n/2:n] or "transferring" in src[n/2:n] or "finished" in src[n/2:n] or "cancelled" in src[n/2:n]) and "Users" in src[n/2:n] and "Releases" in src[n/2:n]:
+            elif ("Click job number to see details." in src[n/2:n] or \
+                "Listing limited to search depth of" in src[0:n/2]) and \
+                ("defined" in src[n/2:n] or "activated" in src[n/2:n] or \
+                "running" in src[n/2:n] or  "holding" in src[n/2:n] or \
+                "transferring" in src[n/2:n] or "finished" in src[n/2:n] or \
+                "cancelled" in src[n/2:n]) and "Users" in src[n/2:n] and "Releases" in src[n/2:n]:
                 l=True
                 src=src[(n/2)-15:n]
             else:
                 l=False
         i=0
         while i<len(src)-len("Click job number to see details."):
-            if src[i:i+len("Click job number to see details.")]=="Click job number to see details." or src[i:i+len("Listing limited to search depth of")]=="Listing limited to search depth of":
+            if src[i:i+len("Click job number to see details.")]=="Click job number to see details." or \
+                src[i:i+len("Listing limited to search depth of")]=="Listing limited to search depth of":
                 src=src[i:len(src)]
-                l1=True
                 break
             i+=1
         soup = BeautifulSoup(src)
@@ -339,8 +376,8 @@ class cloud_class:
             return production_queues,queue_status
         return queue_status
 
-    def get_queue_gatekeeper_info(self,queue):
-        return 0
+    #def get_queue_gatekeeper_info(self,queue):
+    #    return 0
 
     def get_numberof_activated_jobs(self):
         activated_jobs=0
@@ -407,7 +444,7 @@ class cloud_class:
                 except ValueError:
                     failed_jobs=0
         return failed_jobs
-    
+
     def get_numberof_cancelled_jobs(self):
         cancelled_jobs=0
         for item in self.resource:
