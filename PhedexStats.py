@@ -54,8 +54,15 @@ class PhedexStats(hf.module.ModuleBase):
                 'failed_transfers': '',
                 'status': 1.0}
 
-        source_tree = etree.parse(open(self.phedex_xml.getTmpPath()))
-        root = source_tree.getroot()
+        # Workaround for a broken XML, where a '<none>' entry in the error message is interpreted as XML keyword
+        root = None
+        try:
+            source_tree = etree.parse(open(self.phedex_xml.getTmpPath()))
+            root = source_tree.getroot()
+        except Exception:
+            xml_file = open(self.phedex_xml.getTmpPath()).read().replace("<none>","'none'")
+            root = etree.fromstring(xml_file)
+
 
         self.startlocaltime = root.get('startlocaltime')
         self.endlocaltime = root.get('endlocaltime')
