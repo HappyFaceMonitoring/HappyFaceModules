@@ -1,6 +1,6 @@
 import hf
 from sqlalchemy import INT, FLOAT, Column
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class CERNdCacheTapeinfo(hf.module.ModuleBase):
     config_keys = {
@@ -74,9 +74,11 @@ class CERNdCacheTapeinfo(hf.module.ModuleBase):
         date_string=all_lines[start_str:end_str].splitlines()[2]
         used_tape_time=datetime.strptime(date_string,'%a %b %d %H:%M:%S %Z %Y')
 
+        # used_tape_time is given in CET, datetime(1970,1,1) in UTC. Therefore, 1 hour is substracted
+        total_seconds = int((used_tape_time - datetime(1970,1,1) - timedelta(hours=1)).total_seconds())
 
         data['total_tape_size'] = total_tape_f
-        data['used_tape_timestamp'] = used_tape_time
+        data['used_tape_timestamp'] = total_seconds
 
 
 

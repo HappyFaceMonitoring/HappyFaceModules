@@ -2,9 +2,14 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
+<%
+from datetime import datetime
+tape_time = datetime.fromtimestamp(module.dataset["used_tape_timestamp"])
+%>
 <table class="TableData">
 <tr>
-<td class="PhedexStatsTableFirstCol">TSM tape accounting at ${module.dataset["used_tape_timestamp"]} (CET)</td>
+
+<td class="PhedexStatsTableFirstCol">TSM tape accounting at ${tape_time} (CET)</td>
 <td>${module.dataset["total_tape_size"]} TB</td>
 </tr>
 <!--
