@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, TIMESTAMP, Column
 from datetime import datetime, timedelta
 import json
 
@@ -65,8 +65,12 @@ class Sam_Goe(hf.module.ModuleBase):
                 full_sam_urls[vo_name][profile_name] = {}
                 self.sam_sources[vo_name][profile_name] = {}
                 for service_hostname in service_hostnames:
-                    full_sam_urls[vo_name][profile_name][service_hostname] = sam_url + '&vo_name=' + vo_name + '&profile_name=' + profile_name + '&service_hostname=' + service_hostname + '&start_time=' + start_time_str + '&end_time=' + end_time_str
-                    self.sam_sources[vo_name][profile_name][service_hostname] = hf.downloadService.addDownload(full_sam_urls[vo_name][profile_name][service_hostname])
+                    full_sam_urls[vo_name][profile_name][service_hostname] = sam_url + \
+                        '&vo_name=' + vo_name + '&profile_name=' + profile_name + \
+                        '&service_hostname=' + service_hostname + '&start_time=' + \
+                        start_time_str + '&end_time=' + end_time_str
+                    self.sam_sources[vo_name][profile_name][service_hostname] = hf.downloadService.\
+                        addDownload(full_sam_urls[vo_name][profile_name][service_hostname])
                     #print(full_sam_urls[vo_name][profile_name][service_hostname])
 
         self.test_details_db_value_list = []
