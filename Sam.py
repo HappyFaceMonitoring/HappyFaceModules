@@ -14,11 +14,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
-from lxml import etree
+import hf
+from sqlalchemy import TEXT, FLOAT, Column
 import json
-
 
 class Sam(hf.module.ModuleBase):
     config_keys = {
@@ -63,7 +61,7 @@ class Sam(hf.module.ModuleBase):
     }
 
 
-    def prepareAcquisition(self):                      
+    def prepareAcquisition(self):
         try:
             self.report_url = self.config['report_url']
             if 'source_url' not in self.config: raise hf.exceptions.ConfigError('source_url option not set')
@@ -113,10 +111,7 @@ class Sam(hf.module.ModuleBase):
                         self.SamResults[name]["tests"].append(details)
                     self.SamResults[name]["status"] = service_status
 
-
-
-
-            samGroups = {}            
+            samGroups = {}
             groupConfig = {}
             groupConfig['computingelements'] = self.config['computingelements']
             groupConfig['storageelements'] = self.config['storageelements']
@@ -133,8 +128,8 @@ class Sam(hf.module.ModuleBase):
                 samGroups[group]['status'] = -1
 
                 if samGroups[group]['ident'].find('Type:') == 0:
-                    for type in samGroups[group]['ident'].split(','):
-                        nodeclass = type.replace('Type:','')
+                    for Type in samGroups[group]['ident'].split(','):
+                        nodeclass = Type.replace('Type:','')
                         for service in  self.SamResults.keys():
                             if  self.SamResults[service]['type'] == nodeclass:
                                 samGroups[group]['nodes'].append(service)
@@ -158,7 +153,7 @@ class Sam(hf.module.ModuleBase):
                 testValue = tmp[2]
                 testRef = groupThresholds[val]
 
-                if not samGroups.has_key(tmp[0]): next
+                if not samGroups.has_key(tmp[0]): continue
                 if not samGroups[ tmp[0] ].has_key(testCat): samGroups[ tmp[0] ][testCat] = []
 
                 tmpThreshold = {}
@@ -166,11 +161,6 @@ class Sam(hf.module.ModuleBase):
                 tmpThreshold['condition'] =  str( testRef )[:1]
                 tmpThreshold['threshold'] = float(str(testRef)[1:])
                 samGroups[ tmp[0] ][testCat].append(tmpThreshold)
-
-
-
-
-
 
             for group in samGroups:
                 theGroup = samGroups[group]
@@ -187,7 +177,6 @@ class Sam(hf.module.ModuleBase):
 
         except Exception, ex:
             raise Exception('Could not extract any useful data from the XML source code for the status calculation:\n' + str(ex))
-
 
         theNodes = self.SamResults.keys()
         theNodes.sort()
@@ -216,9 +205,9 @@ class Sam(hf.module.ModuleBase):
                     if theGroup['status'] < worstGroupStatus: worstGroupStatus = theGroup['status']
         else:
             for service in theNodes:
-                 serviceInfo =  self.SamResults[service]
-                 if serviceInfo['status'] >= 0:
-                     if serviceInfo['status'] < worstGroupStatus: worstGroupStatus = serviceInfo['status']
+                serviceInfo =  self.SamResults[service]
+                if serviceInfo['status'] >= 0:
+                    if serviceInfo['status'] < worstGroupStatus: worstGroupStatus = serviceInfo['status']
 
         if worstGroupStatus != 99.0: self.status = worstGroupStatus
         else: self.status = -1
@@ -281,7 +270,7 @@ class Sam(hf.module.ModuleBase):
 
         for i in range(len(helpdata['summary'])):
             if helpdata['summary'][i]['status'] == 1.0 or helpdata['summary'][i]['status'] == '1.0':
-               helpdata['summary'][i]['status'] = 'ok'
+                helpdata['summary'][i]['status'] = 'ok'
             elif helpdata['summary'][i]['status'] == 0.5 or helpdata['summary'][i]['status'] == '0.5':
                 helpdata['summary'][i]['status'] = 'warning'
             else:
@@ -290,7 +279,6 @@ class Sam(hf.module.ModuleBase):
         data['summary'] = helpdata['summary']
         data['critical_details'] = []
         data['ok_details'] = []
-        temp = ''
         for current in range(len(helpdata['details'])):
             if helpdata['details'][current]['service_status'] == 'ok':
                 data['ok_details'].append(helpdata['details'][current])
@@ -299,16 +287,15 @@ class Sam(hf.module.ModuleBase):
 
         return data
 
-    def getGroupStatus(self,theGroup,type):
-          if not theGroup.has_key(type): return False
-          for check in theGroup[type]:
-              if not theGroup.has_key(check['value']): next
-              if check['condition'] == ">":
-                  if theGroup[check['value']] > check['threshold']: return True
-              if check['condition'] == "<":
-                  if theGroup[check['value']] < check['threshold']: return True
-          return False
-
+    def getGroupStatus(self,theGroup,Type):
+        if not theGroup.has_key(Type): return False
+        for check in theGroup[Type]:
+            if not theGroup.has_key(check['value']): continue
+            if check['condition'] == ">":
+                if theGroup[check['value']] > check['threshold']: return True
+            if check['condition'] == "<":
+                if theGroup[check['value']] < check['threshold']: return True
+        return False
 
     def printInfo(self):
         for service in self.SamResults.keys():
@@ -318,8 +305,6 @@ class Sam(hf.module.ModuleBase):
             for i in  serviceInfo['tests']:
                 print i
             print '  '
-
-
 
     def determineStatus(self, serviceStatusList):
         status = 1.
@@ -332,7 +317,6 @@ class Sam(hf.module.ModuleBase):
             status = -1.
 
         return status
-
 
     def determineTestStatus(self,StatusString):
         testStatus = 1.
