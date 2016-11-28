@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, TIMESTAMP, Column
 import re
 from datetime import datetime
 from HTMLParser import HTMLParser
@@ -79,7 +79,6 @@ class Nagios(hf.module.ModuleBase):
         tableParser = TableParser(self.resource, 'status')
 
         # fetch the arrays' content
-        self.services = {}
         curhost_name = ''
         curhost_link = ''
 
@@ -114,7 +113,8 @@ class Nagios(hf.module.ModuleBase):
 
             # read more info about state
             time_lastcheck = entry[3]
-            service['lastcheck'] = datetime.utcfromtimestamp(float((datetime.strptime(time_lastcheck, '%m-%d-%Y %H:%M:%S')).strftime('%s'))) # convert from local time to UTC
+            service['lastcheck'] = datetime.utcfromtimestamp(float((datetime.strptime(time_lastcheck, '%m-%d-%Y %H:%M:%S')).\
+                strftime('%s'))) # convert from local time to UTC
             service['lastcheck_duration'] = entry[4]
             service['attempt'] = entry[5]
 
@@ -127,13 +127,12 @@ class Nagios(hf.module.ModuleBase):
             service['status_machine_readable'] = number
 
             # add to array
-            self.services[(service['host_name']+'-'+service['service_name'])] = service
+            self.services_db_value_list.append(service)
 
         # determine the status of the module
         data['status'] = 1.0
 
-        for s in self.services:
-            service = self.services[s]
+        for service in self.services_db_value_list:
 
             if service['status_short'].lower() == 'critical':
                 data['services_critical'] += 1
@@ -150,8 +149,6 @@ class Nagios(hf.module.ModuleBase):
             if service['status_short'].lower() == 'ok':
                 data['services_ok'] += 1
 
-        self.services_db_value_list = [{'host_name':(self.services[service])['host_name'], 'host_link':(self.services[service])['host_link'], 'service_name':(self.services[service])['service_name'], 'service_link':(self.services[service])['service_link'], 'status_short':(self.services[service])['status_short'], 'status_long':(self.services[service])['status_long'], 'status_machine_readable':(self.services[service])['status_machine_readable'], 'lastcheck':(self.services[service])['lastcheck'], 'lastcheck_duration':(self.services[service])['lastcheck_duration'], 'attempt':(self.services[service])['attempt']} for service in self.services]
-        
         return data
 
     def fillSubtables(self, parent_id):
@@ -195,7 +192,7 @@ class TableParser(HTMLParser):
         self.incomplete = False
         try:
             self.close()
-        except:
+        except Exception:
             self.incomplete = True
         
         if len(self.table) == 0:
@@ -250,7 +247,7 @@ class TableParser(HTMLParser):
 
                     if self.TableDepth == -1:
                         self.tend = self.getpos()[1]
-                        self.tstring[self.tstart:self.tend]
+                        #self.tstring[self.tstart:self.tend]
 
                 else:
                     self.TableDepth = -1
@@ -258,7 +255,7 @@ class TableParser(HTMLParser):
 
         elif tag == 'tr':
             if self.foundTable == True and self.TableDepth == 0:
-                # it tr did not contain any td, it will not be added
+                # if tr did not contain any td, it will not be added
                 if len(self.trow) == 1:
                     # if tr does only contain one td, skip indexing tds
                     self.table.append(self.trow[0])
