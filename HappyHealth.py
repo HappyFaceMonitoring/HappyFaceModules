@@ -15,9 +15,8 @@
 #   limitations under the License.
 
 import hf
-import time
 import os
-from sqlalchemy import *
+from sqlalchemy import FLOAT, Column
 
 class HappyHealth(hf.module.ModuleBase):
     config_keys = {
