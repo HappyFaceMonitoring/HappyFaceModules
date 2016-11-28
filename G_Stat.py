@@ -14,11 +14,9 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
-from lxml import etree
+from sqlalchemy import TEXT, TIMESTAMP, Column
 import re
 from datetime import datetime
-from datetime import timedelta
 from BeautifulSoup import BeautifulSoup
 
 class G_Stat(hf.module.ModuleBase):
@@ -80,7 +78,7 @@ class G_Stat(hf.module.ModuleBase):
                                     detail['service_name'] = str(col.string).strip()
                                 elif index_col == 3:
                                     for span in col.findAll('span'):
-                                         detail['current_state'] = str(span.string).strip()
+                                        detail['current_state'] = str(span.string).strip()
                                 elif index_col == 4:
                                     detail['information'] = str(col.string).strip()
                                 elif index_col == 5:
