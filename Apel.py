@@ -14,7 +14,8 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, TIMESTAMP, Column
+from sqlalchemy.sql import desc
 from lxml import etree
 import re
 from HTMLParser import HTMLParser
@@ -53,8 +54,6 @@ class Apel(hf.module.ModuleBase):
 
     def prepareAcquisition(self):
         # get urls from config and queue them for downloading
-        url_html = self.config['source_html']
-        url_xml = self.config['source_xml']
         self.source_html = hf.downloadService.addDownload(self.config['source_html'])
         self.source_xml = hf.downloadService.addDownload(self.config['source_xml'])
 
@@ -70,8 +69,6 @@ class Apel(hf.module.ModuleBase):
         daysagocritical = int(self.config['daysagocritical'])
         displayrows = self.config['displayrows']
         displayrows = int(displayrows)
-
-        self.apel_details = {}
 
         # get summary status from xml file
         data_html = open(self.source_html.getTmpPath()).read().replace('\n',' ').replace('\r',' ')
@@ -141,7 +138,7 @@ class Apel(hf.module.ModuleBase):
                 apel_detail['record_count_published'] = table[i][3]
                 apel_detail['sync_status'] = table[i][4]
 
-                self.apel_details[(apel_detail['record_start'].strftime("%Y-%m-%d")+'-'+apel_detail['record_end'].strftime("%Y-%m-%d"))] = apel_detail
+                self.details_table_db_value_list.append(apel_detail)
 
         # get date of last build
         soup = BeautifulSoup(data_html)
@@ -151,8 +148,6 @@ class Apel(hf.module.ModuleBase):
                     last_build_string = li.string.split('lastBuild : ')[1][:-3]
                     last_build = datetime.strptime(last_build_string, "%Y-%m-%d %H:%M:%S")
                     data['last_build'] = last_build
-
-        self.details_table_db_value_list = [{'record_start':(self.apel_details[apel_detail])['record_start'], 'record_end':(self.apel_details[apel_detail])['record_end'], 'record_count_database':(self.apel_details[apel_detail])['record_count_database'], 'record_count_published':(self.apel_details[apel_detail])['record_count_published'], 'sync_status':(self.apel_details[apel_detail])['sync_status']} for apel_detail in self.apel_details]
 
         return data
 
@@ -201,7 +196,7 @@ class TableParser(HTMLParser):
         self.incomplete = False
         try:
             self.close()
-        except:
+        except Exception:
             self.incomplete = True
 
         if len(self.table) == 0:
@@ -260,7 +255,7 @@ class TableParser(HTMLParser):
 
                     if self.TableDepth == -1:
                         self.tend = self.getpos()[1]
-                        self.tstring[self.tstart:self.tend]
+                        #self.tstring[self.tstart:self.tend]
 
                 else:
                     self.TableDepth = -1
