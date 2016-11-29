@@ -2,7 +2,7 @@ import hf
 from sqlalchemy import TEXT, INT, Column
 from datetime import timedelta
 from time import mktime,time
-import modules.feedparser
+import feedparser
 
 class RSSFeed(hf.module.ModuleBase):
     config_keys = {
@@ -55,7 +55,7 @@ class RSSFeed(hf.module.ModuleBase):
 
         data = {'status': self.status}
 
-        feed = modules.feedparser.parse(self.source.getTmpPath())
+        feed = feedparser.parse(self.source.getTmpPath())
 
         data['title'] = feed.feed.title
 
