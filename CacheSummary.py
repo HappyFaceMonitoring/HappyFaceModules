@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 import json
 
 
@@ -54,13 +54,13 @@ class CacheSummary(hf.module.ModuleBase):
             content_fixed = content_fixed.replace("[", " ")
             services = json.loads(content_fixed)
             ekpsg = list(services.keys())
-            for id in ekpsg:
-                if services[id] != 'no data':
-                    volume_size.append(int(services[id]['volume']['total']))
-                    volume_avail.append(int(services[id]['volume']['avail']))
-                    volume_used.append(int(services[id]['volume']['used']))
-                    file_number.append(int(services[id]['allocation']['files_total']))
-                    score_average.append(float(services[id]['allocation']['score_average']))
+            for Id in ekpsg:
+                if services[Id] != 'no data':
+                    volume_size.append(int(services[Id]['volume']['total']))
+                    volume_avail.append(int(services[Id]['volume']['avail']))
+                    volume_used.append(int(services[Id]['volume']['used']))
+                    file_number.append(int(services[Id]['allocation']['files_total']))
+                    score_average.append(float(services[Id]['allocation']['score_average']))
                 else:
                     data['error'] += 1
         data['size'] = sum(volume_size)/(1024*1024*1024)
