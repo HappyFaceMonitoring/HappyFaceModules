@@ -16,9 +16,8 @@
 
 import hf
 import time
-import os
 import numpy as np
-from sqlalchemy import *
+from sqlalchemy import TEXT, FLOAT, Column
 import json
 
 class XRootD(hf.module.ModuleBase):
@@ -50,14 +49,11 @@ class XRootD(hf.module.ModuleBase):
     def extractData(self):
         #Imports for matplotlib & scipy must be made here, otherwise the module wouldn't be threadsafe.
         #This would lead to server problems.
-        import matplotlib
         import matplotlib.pyplot as plt
         from scipy.interpolate import spline
         
         data = {}
         list_of_details = []
-        plot_date = []
-        plot_attribute = []
         with open(self.source.getTmpPath(), 'r') as f:
             data_object = json.loads(f.read())
 
@@ -109,8 +105,8 @@ class XRootD(hf.module.ModuleBase):
         ax1.bar(index_list, finished_list, 1.0, color='mediumslateblue', label='finished')
         ax1.bar(index_list, running_list, 1.0, color='cornflowerblue',bottom=finished_list, label='running')
         ax1.set_ylabel('active = finished + running transfers', color='darkslateblue')
-        y1_min, y1_max = ax1.get_ylim()
-        ax1.set_ylim(0., y1_max*1.25) #Try to avoid histogram overlapping with legend.
+        y1lim = ax1.get_ylim() # (y_min, y_max)
+        ax1.set_ylim(0., y1lim[1]*1.25) #Try to avoid histogram overlapping with legend.
         for tl in ax1.get_yticklabels():
             tl.set_color('darkslateblue')
         # Legend for histograms only when data available
@@ -132,8 +128,8 @@ class XRootD(hf.module.ModuleBase):
         else:
             ax2.plot(index_list+0.5,rate_list, 'r-')
         
-        y2_min, y2_max = ax2.get_ylim()
-        ax2.set_ylim(0., y2_max*1.25) #Try to avoid curve overlapping with legend.
+        y2lim = ax2.get_ylim() # (y_min, y_max)
+        ax2.set_ylim(0., y2lim[1]*1.25) #Try to avoid curve overlapping with legend.
         for tl in ax2.get_yticklabels():
             tl.set_color('r')
         ax2.set_ylabel('Average transfer rate per file (MB/s)', color='r')
@@ -153,7 +149,7 @@ class XRootD(hf.module.ModuleBase):
         details_list = self.subtables['details'].select().where(
             self.subtables['details'].c.parent_id==self.dataset['id']
             ).execute().fetchall()
-        details_list = map(lambda x: dict(x), details_list)
+        details_list = map(dict, details_list)
         
         data['details'] = sorted(details_list, key = lambda k: k['date'])
         return data
