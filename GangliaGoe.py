@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import hf, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, Column
 from lxml import etree
 
 class GangliaGoe(hf.module.ModuleBase):
@@ -55,7 +55,9 @@ class GangliaGoe(hf.module.ModuleBase):
                                 for extraelement in extradata.findall('EXTRA_ELEMENT'):
                                     if extraelement.get('NAME') == 'TITLE':
                                         info = extraelement.get('VAL')
-                            self.details_db_value_list.append({'host': host.get('NAME'), 'variable': metric.get('NAME'), 'value': metric.get('VAL'), 'unit': metric.get('UNITS'), 'info': info})
+                            self.details_db_value_list.append({'host': host.get('NAME'), \
+                                'variable': metric.get('NAME'), 'value': metric.get('VAL'), \
+                                 'unit': metric.get('UNITS'), 'info': info})
 
         if cluster_found == False:
             data['status'] = -1
