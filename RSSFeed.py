@@ -95,11 +95,14 @@ class RSSFeed(hf.module.ModuleBase):
         #only show n entries
         if int(self.entries) != -1:
             entries = int(self.entries)
-            for i in range(0,int(self.entries)):
+            for i in range(0,min(int(self.entries), len(detail_help_list))):
                 self.details_db_value_list.append(detail_help_list[i])
         else:
             self.details_db_value_list = list(detail_help_list)
 
+        for entry in self.details_db_value_list:
+            if "error" in entry['content'].lower():
+                self.status = 0.0
         data['status'] = self.status
 
         return data
@@ -112,5 +115,5 @@ class RSSFeed(hf.module.ModuleBase):
 
         info_list = self.subtables['feeds'].select().where(self.subtables['feeds'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['feed_list'] = map(dict, info_list)
-
+        data['days'] = self.config['days']
         return data
