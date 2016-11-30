@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-import time, re, HTMLParser
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, Column
 from lxml.html import parse
 from string import strip
 
@@ -50,56 +49,62 @@ class dCacheMoverInfo(hf.module.ModuleBase):
 
     def extractData(self):
         data = {'critical_queue_threshold':self.critical_queue_threshold}
-	
-	source_tree = parse(open(self.source.getTmpPath()))
+
+        source_tree = parse(open(self.source.getTmpPath()))
         root = source_tree.getroot()
         #take first tbody as table body with the information
         job_list = [] #list of jobs: gridftpq etc.
 
         for th in root.findall('.//th'):
-	  try:
-	    if th.get('colspan') == '3':
-	      span = th.findall('span')[0]
-	      job_list.append(span.text)
-	  except ValueError:
-	    pass
+            try:
+                if th.get('colspan') == '3':
+                    span = th.findall('span')[0]
+                    job_list.append(span.text)
+            except ValueError:
+                pass
         root = root.findall('.//tbody')[0]
 
         #find all pools to be watched
         pool_list = []
         for tr in root.findall('.//tr'):
-	  spans = tr.findall('.//td')[0].findall('.//span')[0]
-	  bools = [group in spans.text for group in self.pool_match_string]
-	  if True in bools:
-	    pool_list.append(tr)
-	
-	#build summary list:
-	help_dict = []
-	for i in range(len(self.watch_jobs)):
-	  help_dict.append({'active': 0, 'max': 0, 'queued': 0})
-	summary_dict = dict(zip(self.watch_jobs, help_dict))
-	    
-	for pool in pool_list:
-	  tds = pool.findall('.//td')
-	  p_name = tds.pop(0).findall('.//span')[0].text
-	  p_domain = tds.pop(0).findall('.//span')[0].text
-	  job_tuples_list = [tds[x:x+3] for x in range(0, len(tds) - 3, 3)]
-	  for i, job in enumerate(job_tuples_list):
-	    if job_list[i] in self.watch_jobs:
-	      append = {'pool': p_name, 'domain': p_domain, 'job':job_list[i], 'active': int(job[0].findall('.//span')[0].text), 'max': int(job[1].findall('.//span')[0].text), 'queued': int(job[2].findall('.//span')[0].text)}
-	      self.job_info_db_value_list.append(append)
-	      summary_dict[job_list[i]]['active'] += int(job[0].findall('.//span')[0].text)
-	      summary_dict[job_list[i]]['max'] += int(job[1].findall('.//span')[0].text)
-	      summary_dict[job_list[i]]['queued'] += int(job[2].findall('.//span')[0].text)
+            spans = tr.findall('.//td')[0].findall('.//span')[0]
+            bools = [group in spans.text for group in self.pool_match_string]
+            if True in bools:
+                pool_list.append(tr)
+
+        #build summary list:
+        help_dict = []
+        for i in range(len(self.watch_jobs)):
+            help_dict.append({'active': 0, 'max': 0, 'queued': 0})
+        summary_dict = dict(zip(self.watch_jobs, help_dict))
+
+        for pool in pool_list:
+            tds = pool.findall('.//td')
+            p_name = tds.pop(0).findall('.//span')[0].text
+            p_domain = tds.pop(0).findall('.//span')[0].text
+            job_tuples_list = [tds[x:x+3] for x in range(0, len(tds) - 3, 3)]
+            for i, job in enumerate(job_tuples_list):
+                if job_list[i] in self.watch_jobs:
+                    append = {'pool': p_name,
+                        'domain': p_domain,
+                        'job':job_list[i],
+                        'active': int(job[0].findall('.//span')[0].text),
+                        'max': int(job[1].findall('.//span')[0].text),
+                        'queued': int(job[2].findall('.//span')[0].text)
+                    }
+                    self.job_info_db_value_list.append(append)
+                    summary_dict[job_list[i]]['active'] += int(job[0].findall('.//span')[0].text)
+                    summary_dict[job_list[i]]['max'] += int(job[1].findall('.//span')[0].text)
+                    summary_dict[job_list[i]]['queued'] += int(job[2].findall('.//span')[0].text)
         # calculate happiness as ratio of queued pools to total pools,
         # be sad if there is a critical queue
         data['status'] = 1.0
         for v in summary_dict.values():
             queue_ratio = v['queued'] / max(1, float(v['max']))
             if queue_ratio > 0:
-              data['status'] = min(data['status'], 0.5)
+                data['status'] = min(data['status'], 0.5)
             if queue_ratio > self.critical_queue_threshold:
-              data['status'] = 0
+                data['status'] = 0
         self.job_summary_db_value_list = [{'job':job, 'active':v['active'], 'max':v['max'], 'queued':v['queued']} for job,v in summary_dict.iteritems()]
         return data
 
@@ -113,7 +118,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
         info_list = map(dict, info_list)
         summary_list = self.subtables['summary'].select().where(self.subtables['summary'].c.parent_id==self.dataset['id']).execute().fetchall()
         summary_list = map(dict, summary_list)
-        for i,group in enumerate(summary_list):
+        for group in summary_list:
             queue_ratio = group['queued'] / max(1, float(group['max']))
             if queue_ratio >= float(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
@@ -121,7 +126,7 @@ class dCacheMoverInfo(hf.module.ModuleBase):
                 group['status'] = 'warning'
             else:
                 group['status'] = 'ok'
-        for i,group in enumerate(info_list):
+        for group in info_list:
             queue_ratio = group['queued'] / max(1, float(group['max']))
             if queue_ratio >= float(self.dataset['critical_queue_threshold']):
                 group['status'] = 'critical'
@@ -132,16 +137,16 @@ class dCacheMoverInfo(hf.module.ModuleBase):
 
         data['summary_list'] = summary_list
         poollist = []
-        for i,group in enumerate(info_list):
+        for group in info_list:
             if not(group['pool'] in poollist):
                 poollist.append(group['pool'])
 
         details_list = {}
-        for i,group in enumerate(poollist):
+        for group in poollist:
             appending = {group:[]}
             details_list.update(appending)
 
-        for i,group in enumerate(info_list):
+        for group in info_list:
             group['njobs'] = len(self.config['watch_jobs'].split(','))
             details_list[group['pool']].append(group)
 
