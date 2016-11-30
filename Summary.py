@@ -14,20 +14,25 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, FLOAT, Column
 from lxml import etree
 from string import strip
 
 class Summary(hf.module.ModuleBase):
     config_keys = {
-        'site_keys': ('Colon separated list of site names. The values are prefixes for the actual url and category configuration. For example use desy', 'desy'),
+        'site_keys': ('Colon separated list of site names. The values are prefixes for the actual url and category configuration. For example use desy', \
+            'desy'),
         'categories': ('Colon separated list of HF categories to display', ''),
         'SITE_KEY': ('URL of a HappyFace XML output. Replace SITE_KEY with a key from site_keys like desy_site', ''),
         'SITE_CAT': ('title of categories to be parsed, replace SITE_CAT with a key from site_keys like desy_cat',''),
         'pic_path': ('path to local folder with the images for hf3.','/HappyFace/gridka/static/themes/armin_box_arrows/')
     }
-    config_hint = 'The big problem is that different sites use different titles for their categories, so its necessary to define a list of categories for each site, make sure to use the same order for all sites!'
+    config_hint = ("The big problem is that "
+        "different sites use different titles "
+        "for their categories, so its necessary "
+        "to define a list of categories for each site, "
+        "make sure to use the same order for all sites!")
 
     table_columns = [], []   
 
@@ -44,17 +49,17 @@ class Summary(hf.module.ModuleBase):
     def prepareAcquisition(self):
 
         # definition of the database table keys and pre-defined values
-            self.site_keys = map(strip, self.config['site_keys'].lower().split(','))
-            self.order = map(strip, self.config['site_keys'].split(','))
-            self.sites = []
-            self.cats = []
-            self.details_db_value_list = []
-            self.source_url = []
-            for i, site in enumerate(self.site_keys):
-                site_file = hf.downloadService.addDownload(self.config[str(self.site_keys[i]) + '_site'])
-                self.sites.append(site_file)
-                self.source_url.append(site_file.getSourceUrl())
-                self.cats.append(map(strip, self.config[str(self.site_keys[i]) + '_cat'].split(',')))
+        self.site_keys = map(strip, self.config['site_keys'].lower().split(','))
+        self.order = map(strip, self.config['site_keys'].split(','))
+        self.sites = []
+        self.cats = []
+        self.details_db_value_list = []
+        self.source_url = []
+        for site in self.site_keys:
+            site_file = hf.downloadService.addDownload(self.config[str(site) + '_site'])
+            self.sites.append(site_file)
+            self.source_url.append(site_file.getSourceUrl())
+            self.cats.append(map(strip, self.config[str(site) + '_cat'].split(',')))
 
     def extractData(self):
         data = {}
@@ -90,12 +95,14 @@ class Summary(hf.module.ModuleBase):
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).order_by(self.subtables['details'].c.order.asc()).execute().fetchall()
+        details_list = self.subtables['details'].select().\
+        where(self.subtables['details'].c.parent_id==self.dataset['id']).\
+        order_by(self.subtables['details'].c.order.asc()).execute().fetchall()
         details_list = map(dict, details_list)
         pic_path = self.config['pic_path']
         sorted_list = [[]]
         last = 0
-        for i,cats in enumerate(details_list):
+        for cats in details_list:
             act = int(cats['order']/1000)
             if cats['status'] >= 0.66:
                 cats['status'] = pic_path + "mod_happy.png" 
