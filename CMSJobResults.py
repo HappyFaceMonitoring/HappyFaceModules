@@ -15,35 +15,32 @@
 #   limitations under the License.
 
 import hf
-import lxml.html
-from lxml.html.clean import clean_html
+from lxml.html import parse
 import StringIO
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 import numpy as np 
-from numpy import array
 from datetime import datetime
 import pytz
 
-
 state_colors = {
-	'submitted': '#5CADFF',
-	'pending':   '#9D5CDE',
-	'running':   '#85CE9D',
-	'done':      '#0042A3',
-	'retrieved': '#000099',
-	'success':   '#009933',
-	'succeeded': '#009933',
-	'failed':    '#AA0000',
-	'cancelled': '#B48888',
-	'cooloff':   '#505050',
-	'unknown':   '#ADADAD',
+    'submitted': '#5CADFF',
+    'pending':   '#9D5CDE',
+    'running':   '#85CE9D',
+    'done':      '#0042A3',
+    'retrieved': '#000099',
+    'success':   '#009933',
+    'succeeded': '#009933',
+    'failed':    '#AA0000',
+    'cancelled': '#B48888',
+    'cooloff':   '#505050',
+    'unknown':   '#ADADAD',
 }
 
 def getcolor(label):
-	for k in state_colors.keys():
-		if k in label.lower():
-			return state_colors[k]
-	return None  # None makes way for the Colors defined during plotting
+    for k in state_colors.keys():
+        if k in label.lower():
+            return state_colors[k]
+    return None  # None makes way for the Colors defined during plotting
 
 class CMSJobResults(hf.module.ModuleBase):
 
@@ -67,7 +64,7 @@ class CMSJobResults(hf.module.ModuleBase):
         'eval_crit_threshold': ('ref eval_warn_threshold', '')
     }
     config_hint = ''
-    
+
     table_columns = ([
         Column("InstanceTitle", TEXT),
         Column("filename_plot", TEXT),
@@ -106,10 +103,10 @@ class CMSJobResults(hf.module.ModuleBase):
             self.eval_warn_threshold[1] = float(self.eval_warn_threshold[1])
             self.eval_crit_threshold[1] = float(self.eval_crit_threshold[1])
         except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
         if len(self.cat_names)<>len(self.tags):
             raise hf.exceptions.ConfigError('Different number of categories and \
-                    correspondig tags specified')
+                correspondig tags specified')
         self.cat_names.append('total')
         if 'source_url' not in self.config:
             raise hf.exceptions.ConfigError('No source URL specified')
@@ -120,7 +117,6 @@ class CMSJobResults(hf.module.ModuleBase):
   
     def extractData(self):
 
-        import matplotlib
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from matplotlib.font_manager import FontProperties
@@ -130,7 +126,7 @@ class CMSJobResults(hf.module.ModuleBase):
         data["filename_plot"] = ""
         webpage = open(self.source.getTmpPath())
         strwebpage = webpage.read()
-        tree = lxml.html.parse(StringIO.StringIO(strwebpage))
+        tree = parse(StringIO.StringIO(strwebpage))
         rowlist = tree.findall(".//item")
 
         StartDates = []
@@ -153,7 +149,6 @@ class CMSJobResults(hf.module.ModuleBase):
         JobFractions = [[0 for t in range(len(StartDates))] for c in range(
                 len(self.cat_names))]
         AggrJobsEval = 0
-        EvalFraction = 0.0
         JobsEval = [0 for c in range(len(self.cat_names))]
         JobFractionsEval = [0 for c in range(len(self.cat_names))]
         JobsEvalColor = ['' for c in range(len(self.cat_names))]
@@ -227,7 +222,6 @@ class CMSJobResults(hf.module.ModuleBase):
             return(Date.strftime(OutFormatString))
 
         # Change times from utc to local
-        StartDatesRaw = StartDates[:]
         for t in range(len(StartDates)):
             StartDates[t] = ChangeTimeZone(StartDates[t], "%d-%b-%y %H:%M:%S",
                     "%d-%b-%y %H:%M:%S")
@@ -297,8 +291,8 @@ class CMSJobResults(hf.module.ModuleBase):
             p_leg = []
             cat_leg = []
             for i in range(len(p)-1,-1,-1):
-               p_leg.append(p[i][0])
-               cat_leg.append(self.cat_names[i])
+                p_leg.append(p[i][0])
+                cat_leg.append(self.cat_names[i])
 
             # Configure plot layout
             fontTitle = FontProperties()
