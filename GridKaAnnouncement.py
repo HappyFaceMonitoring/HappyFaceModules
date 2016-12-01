@@ -15,10 +15,9 @@
 #   limitations under the License.
 
 import hf
-from lxml import etree
 import lxml.html
 import StringIO
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 
 class GridKaAnnouncement(hf.module.ModuleBase):
     
@@ -78,7 +77,7 @@ class GridKaAnnouncement(hf.module.ModuleBase):
             self.nWarnInterventionsInfo = int(self.config['warn_interventions_info'])
         except KeyError, ex:
             raise hf.exceptions.ConfigError(
-                    'Required parameter "%s" not specified' % str(e))
+                    'Required parameter "%s" not specified' % str(ex))
         if 'source_url' not in self.config:
             raise hf.exceptions.ConfigError('No source URL specified')
         self.source = hf.downloadService.addDownload(self.config['source_url'])
