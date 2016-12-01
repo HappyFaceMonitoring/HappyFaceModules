@@ -14,15 +14,19 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 import json
 
 class DDM_Deletion(hf.module.ModuleBase):
     config_keys = {
         'site_name': ('Site name', 'GOEGRID'),
         'source_url': ('Source URL of the JSON file', 'both||http://bourricot.cern.ch/dq2/deletion/site/%s/period/1/format/json/'),
-        'deletion_errors_warning_threshold': ('Warning threshold for deletion errors: If this threshold is reached, the status of the module will be warning', '80'),
-        'deletion_errors_critical_threshold': ('Critical threshold for deletion errors: If this threshold is reached, the status of the module will be critical', '100'),
+        'deletion_errors_warning_threshold': ('Warning threshold for deletion errors: \
+            If this threshold is reached, \
+            the status of the module will be warning', '80'),
+        'deletion_errors_critical_threshold': ('Critical threshold for deletion errors: \
+            If this threshold is reached, \
+            the status of the module will be critical', '100'),
     }
 
     config_hint = ''
@@ -94,11 +98,13 @@ class DDM_Deletion(hf.module.ModuleBase):
         return data
 
     def fillSubtables(self, parent_id):
-        self.subtables['space_tokens_details_table'].insert().execute([dict(parent_id=parent_id, **row) for row in self.space_tokens_details_table_db_value_list])
+        self.subtables['space_tokens_details_table'].insert().\
+            execute([dict(parent_id=parent_id, **row) for row in self.space_tokens_details_table_db_value_list])
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        space_tokens_details = self.subtables['space_tokens_details_table'].select().where(self.subtables['space_tokens_details_table'].c.parent_id==self.dataset['id']).execute().fetchall()
+        space_tokens_details = self.subtables['space_tokens_details_table'].select().\
+            where(self.subtables['space_tokens_details_table'].c.parent_id==self.dataset['id']).execute().fetchall()
         data['details'] = map(dict, space_tokens_details)
 
         # make config settings available in html template
