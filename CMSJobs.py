@@ -15,28 +15,26 @@
 #   limitations under the License.
 
 import hf
-import lxml.html
-from lxml.html.clean import clean_html
+from  lxml.html import parse
 import StringIO
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 import numpy as np
-from numpy import array
 from datetime import datetime
 import pytz
 
 state_colors = {
-	'cleanup': '#909090',
-	'production':   '#009933',
-	'logcollect':   '#9D5CDE',
-	'merge':      '#AA0000',
-	'processing': '#5CADFF'
+    'cleanup': '#909090',
+    'production':   '#009933',
+    'logcollect':   '#9D5CDE',
+    'merge':      '#AA0000',
+    'processing': '#5CADFF'
 }
 
 def getcolor(label):
-	for k in state_colors.keys():
-		if k in label.lower():
-			return state_colors[k]
-	return None  # None makes way for the Colors defined during plotting
+    for k in state_colors.keys():
+        if k in label.lower():
+            return state_colors[k]
+    return None  # None makes way for the Colors defined during plotting
 
 
 
@@ -82,7 +80,7 @@ class CMSJobs(hf.module.ModuleBase):
             self.cat_names = filter(lambda x: x != '', self.config['categories'].split('|'))
             self.pledge = self.config['pledge']
         except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
         if self.pledge == '':
             self.pledge_mode = 0 # no pledge given -> ignore
         elif '<' in self.pledge:
@@ -99,9 +97,7 @@ class CMSJobs(hf.module.ModuleBase):
         self.statistics_db_value_list = []
 
     def extractData(self):
-        import matplotlib
         import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
         from matplotlib.font_manager import FontProperties
         self.plt = plt
 
@@ -109,7 +105,7 @@ class CMSJobs(hf.module.ModuleBase):
         data["filename_plot"] = ""
         webpage = open(self.source.getTmpPath())
         strwebpage = webpage.read()
-        tree = lxml.html.parse(StringIO.StringIO(strwebpage))
+        tree = parse(StringIO.StringIO(strwebpage))
 
         # Function to convert raw time data given in UTC to local time zone
         def ChangeTimeZone(TimeStringIn, InFormatString, OutFormatString):
@@ -172,7 +168,7 @@ class CMSJobs(hf.module.ModuleBase):
             yhlinetext = tree.find(".//{}".format(self.pledge)).text_content()
             try:
                 yhline = int(yhlinetext)
-            except:
+            except Exception:
                 yhline = 0
         elif self.pledge_mode == 2:
             yhline = self.pledge
@@ -228,8 +224,8 @@ class CMSJobs(hf.module.ModuleBase):
             p_leg = []
             cat_leg = []
             for i in range(len(p)-1,-1,-1):
-               p_leg.append(p[i][0])
-               cat_leg.append(self.cat_names[i])
+                p_leg.append(p[i][0])
+                cat_leg.append(self.cat_names[i])
             if self.pledge_mode > 0:
                 p_leg.append(l)
                 cat_leg.append('pledge: {} jobs'.format(yhline))
