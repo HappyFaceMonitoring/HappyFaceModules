@@ -1,0 +1,60 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th > Jobs running </th>
+		<th > Jobs idle </th>
+		<th > Remoteable Jobs  </th>
+		<th > Average Efficiency </th>
+		<th > Cores </th>
+		<th > RAM </th>
+		<th > Average Queue Time</th>
+	</tr>
+	<tr>
+		<td >${module.dataset['running']}</td>
+		<td >${module.dataset['idle']}</td>
+		<td >${module.dataset['remote']}</td>
+		<td >${module.dataset['efficiency']} </td>
+		<td >${module.dataset['cores']}</td>
+		<td >${module.dataset['ram']} GiB</td>
+		<td >${module.dataset['qtime']}</td>
+	</tr>
+	</table>
+	<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+	<div>
+		<input type="button" value="show user statistics" onfocus="this.blur()" onclick="$('#${module.instance_name}_plot').toggle()" />
+	</div>
+
+	<div class="DetailedInfo" id="${module.instance_name}_plot" style="display:none;">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th> User </th>
+		<th> Sites </th>
+		<th> Idle Jobs </th>
+		<th> Running Jobs </th>
+		<th> Held Jobs</th>
+		<th> Suspended Jobs </th>
+		<th> Requested Cores </th>
+		<th> Used RAM </th>
+		<!-- <th> Average Requested Walltime </th> -->
+		<th> Average User Efficiency </th>
+	</tr>
+	%for entry in statistics:
+		<tr>
+		<td>${entry['user']}</td>
+		<td>${entry['sites']}</td>
+		<td>${entry['idle']}</td>
+		<td>${entry['running']}</td>
+		<td>${entry['held']}</td>
+		<td>${entry['suspended']}</td>
+		<td>${entry['cores']}</td>
+		<td>${entry['ram']} GiB</td>
+		<!-- <td>${entry['walltime']} </td> -->
+		<td>${entry['efficiency']}</td>
+		</tr>
+	%endfor
+	</table>
+	</div>
+</%def>
