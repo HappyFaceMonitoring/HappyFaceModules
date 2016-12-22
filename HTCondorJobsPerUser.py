@@ -21,11 +21,20 @@ import re
 import copy
 import time
 import numpy as np
-from math import log
 from datetime import timedelta
 class HTCondorJobsPerUser(hf.module.ModuleBase):
 
-	config_keys = {'source_url' : ('Not used, but filled to avoid errors','http://google.com')}
+	config_keys = {
+		'source_url' : ('Not used, but filled to avoid errors','http://google.com'),
+		'plotsize_x' : ('Size of the plot in x', '10.9'),
+		'plotsize_y' : ('Size of the plot in y', '5.8'),
+		'log_limit' : ('Upper threshold for the amount of jobs with certain status, above which log scale is used', '500'),
+		'efficiency_warning' : ('Lower threshold for the averaged efficiencies, below which a warning is given', '0.9'),
+		'efficiency_critical': ('Lower threshold for the averaged efficiencies, below which the status is critical', '0.5'),
+		'n_held_warning' : ('Upper threshold for the number of held jobs, above which which a warning is given', '10'),
+		'n_held_critical' : ('Upper threshold for the number of held jobs, above which which the status is critical', '20'),
+		'ram_n_cores_ratio' : ('Upper threshold for the ratio between the ram and n_cores, above which a warning is given','5')
+	}
 
 	table_columns = [
 		Column('running', INT),
@@ -56,6 +65,8 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			Column("ram", INT)], [])
 	}
 
+	diskspace_units_dict = {"B" : 0, "KiB" : 1, "MiB" : 2, "GiB" : 3, "TiB" : 4}
+
 	def prepareAcquisition(self):
 
 		# Setting defaults
@@ -85,8 +96,6 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			".*ekps(?:g|m)\d+.*" : "ekpsupermachines"
 		}
 
-		HTCondorJobsPerUser.diskspace_units_dict = {"B" : 0, "KiB" : 1, "MiB" : 2, "GiB" : 3, "TiB" : 4}
-
 		self.quantities_list = [quantity for quantity in self.condor_projection if quantity != "GlobalJobId"]
 		self.condor_jobs_information = {}
 		self.user_statistics_dict = {
@@ -106,12 +115,6 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"ram" : 0
 		}
 		self.user_statistics = {}
-
-		self.default_plot_config = {
-			"plotsize_x" : 10.,
-			"plotsize_y" : 5.8,
-			"log_limit" : 500
-		}
 
 		# Prepare htcondor queries
 		self.collector = htcondor.Collector()
@@ -165,7 +168,10 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 				data[status] += 1
 			# Calculate the time in the queue for all jobs in seconds
 			if status == "running": 
-				data["qtime"].append(max(0, job["JobStartDate"] - job["QDate"]))
+				try:
+					data["qtime"].append(max(0, job["JobStartDate"] - job["QDate"]))
+				except Exception:
+					pass
 			# Determine the sites the user is running his jobs on
 			job["RemoteHost"] = "Undefined" if job["RemoteHost"] is None else job["RemoteHost"]
 			for site_regex in self.sites_dict:
@@ -195,8 +201,20 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		data["efficiency"] = round(np.mean(all_efficiencies),2) if len(all_efficiencies)> 0 else 1.0
 		data["ram"] = self.determine_diskspace(data["ram"])
 		data["qtime"] = str(timedelta(seconds=int(np.mean(data["qtime"]))))
+
+		# Plot creation for user statistics
 		data["filename_plot"] = self.plot()
 
+		# Overall status calculation
+		efficiency_status = 0.0
+		if data["efficiency"] >= float(self.config["efficiency_warning"]):
+			efficiency_status = 1.0
+		elif data["efficiency"] >= float(self.config["efficiency_critical"]):
+			efficiency_status = 0.5
+		ram_status = 0.5 if float(data["ram"])/float(data["cores"]) > float(self.config["ram_n_cores_ratio"]) else 1.0
+		queue_time_status = 0.0 if "day" in data["qtime"] else 1.0
+		print efficiency_status, ram_status, queue_time_status
+		data["status"] = min(efficiency_status, ram_status, queue_time_status)
 		return data
 
 
@@ -221,16 +239,16 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		import matplotlib.pyplot as plt
 		import matplotlib.patches as mpatches
 		# initializing figure
-		fig = plt.figure(figsize=(self.default_plot_config["plotsize_x"], self.default_plot_config["plotsize_y"]))
+		fig = plt.figure(figsize=(float(self.config["plotsize_x"]), float(self.config["plotsize_y"])))
 		axis = fig.add_subplot(111)
 		# determining, whether log x-axis i needed
 		max_number = max([user_stats[status] for user_stats in self.user_statistics.itervalues() for status in self.jobs_status_dict.itervalues()])
-		log_needed = max_number > self.default_plot_config["log_limit"]
+		log_needed = max_number > float(self.config["log_limit"])
 		# creating bar entries for each status and user
-		offset = 0.1 if log_needed else 0
+		offset = 0.9 if log_needed else 0
 		for index,user in enumerate(self.user_statistics):
 			user_info = user + " - " + str(sum([self.user_statistics[user][st] for st in self.jobs_status_dict.itervalues()])) + " Jobs"
-			axis.text(0.2, index+0.45, user_info, ha="left", va="center")
+			axis.text(offset+0.1, index+0.45, user_info, ha="left", va="center")
 			previous_status_value = offset
 			for color,jobstatus in zip(self.jobs_status_colors,self.jobs_status_dict.itervalues()):
 				if self.user_statistics[user][jobstatus] != 0:
@@ -240,14 +258,14 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 					previous_status_value += float(self.user_statistics[user][jobstatus])
 		# Creating figure legend
 		status_label_objects = []
-		x_min,x_max = axis.get_xlim()
+		x_max = axis.get_xlim()[1]
 		axis.set_ylim(-1,len(self.user_statistics))
 		for color,jobstatus in zip(self.jobs_status_colors,self.jobs_status_dict.itervalues()):
 			status_label_objects.append(mpatches.Patch(facecolor=color, label=jobstatus, edgecolor="black"))
 		axis.legend(status_label_objects, [o.get_label() for o in status_label_objects], loc="upper right")
 		# Optimizing figure
-		x_max *=30 if log_needed else 1.2
-		axis.set_xlim(x_min, x_max)
+		x_max *=30 if log_needed else 1.3
+		axis.set_xlim(offset, x_max)
 		axis.set_title("jobs per user")
 		axis.set_xlabel("number of jobs")
 		axis.set_ylabel("user")
