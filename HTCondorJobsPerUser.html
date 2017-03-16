@@ -4,12 +4,12 @@
 <%def name="content()">
 	<table class="TableData">
 	<tr class="TableHeader">
-		<th >Jobs running</th>
-		<th >Jobs idle</th>
-		<th >Remoteable Jobs</th>
+		<th >Running Jobs</th>
+		<th >Idle Jobs</th>
+		<th >Requested Remote Jobs</th>
 		<th >Average Efficiency</th>
-		<th >Cores </th>
-		<th >RAM </th>
+		<th >Requested Cores</th>
+		<th >Used RAM </th>
 		<th >Average Queue Time</th>
 	</tr>
 	<tr>
@@ -25,7 +25,7 @@
 		%endif
 		${module.dataset['efficiency']}</td>
 		<td >${module.dataset['cores']}</td>
-		%if float(module.dataset['ram'])/float(module.dataset['cores']) > float(module.config['ram_n_cores_ratio']):
+		%if float(module.dataset['ram'])/float(module.dataset['requested_memory']) > float(module.config['ram_requested_memory_ratio']):
 			<td class = warning>
 		%else:
 			<td class = ok>
@@ -47,15 +47,16 @@
 	<div class="DetailedInfo" id="${module.instance_name}_user_statistics" style="display:none;">
 	<table class="TableData">
 	<tr class="TableHeader">
-		<th> User </th>
-		<th> Sites </th>
-		<th> Idle Jobs </th>
-		<th> Running Jobs </th>
-		<th> Held Jobs</th>
-		<th> Suspended Jobs </th>
-		<th> Requested Cores </th>
-		<th> Used RAM </th>
-		<th> Average User Efficiency </th>
+		<th>User</th>
+		<th>Sites</th>
+		<th>Idle Jobs</th>
+		<th>Running Jobs</th>
+		<th>Held Jobs</th>
+		<th>Suspended Jobs</th>
+		<th>Requested Cores</th>
+		<th>Used RAM</th>
+		<th>Average User Efficiency</th>
+		<th>User Priority</th>
 	</tr>
 	%for entry in statistics:
 		<tr>
@@ -73,7 +74,7 @@
 		${entry['held']}</td>
 		<td>${entry['suspended']}</td>
 		<td>${entry['cores']}</td>
-		%if float(entry['ram'])/float(entry['cores']) > float(module.config['ram_n_cores_ratio']):
+		%if float(entry['ram'])/float(entry['requested_memory']) > float(module.config['ram_requested_memory_ratio']):
 			<td class = warning>
 		%else:
 			<td class = ok>
@@ -87,6 +88,7 @@
 			<td class = critical>
 		%endif
 		${entry['efficiency']}</td>
+		<td>${entry['priority']}</td>
 		</tr>
 	%endfor
 	</table>

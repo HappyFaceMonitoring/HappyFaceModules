@@ -33,7 +33,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		'efficiency_critical': ('Lower threshold for the averaged efficiencies, below which the status is critical', '0.5'),
 		'n_held_warning' : ('Upper threshold for the number of held jobs, above which which a warning is given', '10'),
 		'n_held_critical' : ('Upper threshold for the number of held jobs, above which which the status is critical', '20'),
-		'ram_n_cores_ratio' : ('Upper threshold for the ratio between the ram and n_cores, above which a warning is given','5')
+		'ram_requested_memory_ratio' : ('Upper threshold for the ratio between the ram and requested memory, above which a warning is given','1.2')
 	}
 
 	table_columns = [
@@ -41,6 +41,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		Column('idle', INT),
 		Column('cores', INT),
 		Column('ram', INT),
+		Column('requested_memory', INT),
 		Column('efficiency', FLOAT),
 		Column('qtime', TEXT),
 		Column('remote', INT),
@@ -59,10 +60,13 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			Column("suspended", INT),
 			Column("cores", INT),
 			Column("efficiency", FLOAT),
+			Column("priority", FLOAT),
 			Column("walltime", INT),
 			Column("runtime", INT),
 			Column("sites", TEXT),
-			Column("ram", INT)], [])
+			Column("ram", INT),
+			Column('requested_memory', INT)], [])
+
 	}
 
 	diskspace_units_dict = {"B" : 0, "KiB" : 1, "MiB" : 2, "GiB" : 3, "TiB" : 4}
@@ -77,6 +81,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"JobStatus",
 			"User",
 			"ImageSize_raw",
+			"RequestMemory",
 			"RequestCpus",
 			"RemoteJob",
 			"GlobalJobId",
@@ -112,7 +117,8 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"cputimes" : [],
 			"walltimes" : [],
                         "sites" : [],
-			"ram" : 0
+			"ram" : 0,
+			"requested_memory" : 0
 		}
 		self.user_statistics = {}
 
@@ -122,6 +128,10 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		self.queries = []
 		for schedd in self.schedds:
 			self.queries.append(schedd.xquery(requirements = "RoutedToJobId =?= undefined", projection = self.condor_projection))
+
+		# Prepare retrieval of user priority information from htcondor
+		self.negotiator = htcondor.Negotiator()
+		self.priorities = {}
 
 		# Prepare subtable list for database
 		self.statistics_db_value_list = []
@@ -134,11 +144,16 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
                 	'idle': 0,
                 	'cores': 0,
                 	'ram': 0,
+			'requested_memory' : 0,
                 	'efficiency': 0,
                 	'qtime': [], # format changed to 'int' in the end
                 	'remote': 0,
 			'filename_plot' : ''
 		}
+
+		# Retrieve user priority information
+		for ad in self.negotiator.getPriorities():
+			self.priorities[ad.get("Name")] = ad.get("Priority")
 
 		# Extract job information using htcondor python bindings
 		for query in htcondor.poll(self.queries):
@@ -158,6 +173,9 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			# Count used RAM in KiB
 			self.user_statistics[user]["ram"] += job["ImageSize_raw"]
 			data["ram"] += job["ImageSize_raw"]
+			# Count requested RAM in MiB
+			self.user_statistics[user]["requested_memory"] += job["RequestMemory"]
+			data["requested_memory"] += job["RequestMemory"]
 			# Count used cores
 			self.user_statistics[user]["cores"] += job["RequestCpus"]
 			data["cores"] += job["RequestCpus"]
@@ -179,12 +197,15 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 					self.user_statistics[user]["sites"].append(self.sites_dict[site_regex])
 			# Calculate runtimes, cputimes and efficiencies of each job of a user
 			if status == "running":
-				cputime = job["RemoteUserCpu"] + job["RemoteSysCpu"]
-				runtime = int(time.time())- job["JobCurrentStartDate"]
-				efficiency = float(cputime)/float(runtime)
-				# Avoiding not up to date values of JobCurrentStartDate, that result in efficiencies bigger than 1
-				if efficiency <= 1.:
-					self.user_statistics[user]["efficiencies"].append(efficiency)
+				try:	
+					cputime = job["RemoteUserCpu"] + job["RemoteSysCpu"]
+					runtime = int(time.time())- job["JobCurrentStartDate"]
+					efficiency = float(cputime)/float(runtime)
+					# Avoiding not up to date values of JobCurrentStartDate, that result in efficiencies bigger than 1
+					if efficiency <= 1.:
+						self.user_statistics[user]["efficiencies"].append(efficiency)
+				except Exception:
+					pass
 
 		all_efficiencies = []
 		for user in self.user_statistics:
@@ -192,14 +213,17 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			for status in self.jobs_status_dict.itervalues():
 				user_data[status] = self.user_statistics[user][status]
 			user_data["cores"],user_data["ram"] = self.user_statistics[user]["cores"], self.determine_diskspace(self.user_statistics[user]["ram"])
+			user_data["requested_memory"] = max(1,self.determine_diskspace(self.user_statistics[user]["requested_memory"], given_unit = "MiB"))
 			user_data["efficiency"] = round(np.mean(self.user_statistics[user]["efficiencies"]),2) \
 				if len(self.user_statistics[user]["efficiencies"]) > 0 else 1.0
 			all_efficiencies += self.user_statistics[user]["efficiencies"]
 			user_data["sites"] = ",\n".join(self.user_statistics[user]["sites"])
+			user_data["priority"] = round(self.priorities[user],1)
 			self.statistics_db_value_list.append(user_data)
 
 		data["efficiency"] = round(np.mean(all_efficiencies),2) if len(all_efficiencies)> 0 else 1.0
 		data["ram"] = self.determine_diskspace(data["ram"])
+		data["requested_memory"] = max(1,self.determine_diskspace(data["requested_memory"], given_unit = "MiB"))
 		data["qtime"] = str(timedelta(seconds=int(np.mean(data["qtime"]))))
 
 		# Plot creation for user statistics
@@ -211,9 +235,8 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			efficiency_status = 1.0
 		elif data["efficiency"] >= float(self.config["efficiency_critical"]):
 			efficiency_status = 0.5
-		ram_status = 0.5 if float(data["ram"])/float(data["cores"]) > float(self.config["ram_n_cores_ratio"]) else 1.0
+		ram_status = 0.5 if float(data["ram"])/float(data["cores"]) > float(self.config["ram_requested_memory_ratio"]) else 1.0
 		queue_time_status = 0.0 if "day" in data["qtime"] else 1.0
-		print efficiency_status, ram_status, queue_time_status
 		data["status"] = min(efficiency_status, ram_status, queue_time_status)
 		return data
 
@@ -241,7 +264,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		# initializing figure
 		fig = plt.figure(figsize=(float(self.config["plotsize_x"]), float(self.config["plotsize_y"])))
 		axis = fig.add_subplot(111)
-		# determining, whether log x-axis i needed
+		# determining, whether log x-axis is needed
 		max_number = max([user_stats[status] for user_stats in self.user_statistics.itervalues() for status in self.jobs_status_dict.itervalues()])
 		log_needed = max_number > float(self.config["log_limit"])
 		# creating bar entries for each status and user
@@ -259,7 +282,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		# Creating figure legend
 		status_label_objects = []
 		x_max = axis.get_xlim()[1]
-		axis.set_ylim(-1,len(self.user_statistics))
+		axis.set_ylim(-1, max(3,len(self.user_statistics)))
 		for color,jobstatus in zip(self.jobs_status_colors,self.jobs_status_dict.itervalues()):
 			status_label_objects.append(mpatches.Patch(facecolor=color, label=jobstatus, edgecolor="black"))
 		axis.legend(status_label_objects, [o.get_label() for o in status_label_objects], loc="upper right")
