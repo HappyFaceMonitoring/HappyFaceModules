@@ -130,7 +130,13 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			self.queries.append(schedd.xquery(requirements = "RoutedToJobId =?= undefined", projection = self.condor_projection))
 
 		# Prepare retrieval of user priority information from htcondor
-		self.negotiator = htcondor.Negotiator()
+		self.negotiator = None
+		for negotiator_ad in self.collector.query(htcondor.AdTypes.Negotiator):
+			if negotiator_ad.get("Machine") == "ekpcondorcentral.ekp.kit.edu":
+				self.negotiator = htcondor.Negotiator(negotiator_ad)
+				break
+		if not self.negotiator:
+			self.negotiator = htcondor.Negotiator()
 		self.priorities = {}
 
 		# Prepare subtable list for database

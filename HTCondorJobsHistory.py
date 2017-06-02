@@ -127,8 +127,6 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 				if job["CommittedTime"] - job["CommittedSuspensionTime"] >= 0 and job["ExitCode"] == 0 and job["RequestWalltime"]:
 					self.walltime_runtime_statistics[user].setdefault(job["RequestWalltime"], []).\
 						append(job["CommittedTime"] - job["CommittedSuspensionTime"])
-					if  job["ExitBySignal"]:
-						print "Exited by signal"
 			if job["EnteredCurrentStatus"]:
 				self.jobs_history_statistics[status].append(job["EnteredCurrentStatus"])
 
@@ -189,7 +187,6 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 					capthick = 1.5, 
 					capsize = 10
 				)
-				print timedelta(seconds=int(per_down)), timedelta(seconds=int(per_50)), timedelta(seconds=int(per_up)) 
 				outlier_runtimes = [runtime for runtime in self.walltime_runtime_statistics[user][walltime] if (runtime < per_down or runtime > per_up)]
 				outlier_walltimes = [walltime for i in range(len(outlier_runtimes))]
 				user_outliers_walltimes += outlier_walltimes
