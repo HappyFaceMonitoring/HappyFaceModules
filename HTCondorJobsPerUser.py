@@ -159,7 +159,10 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 
 		# Retrieve user priority information
 		for ad in self.negotiator.getPriorities():
-			self.priorities[ad.get("Name")] = ad.get("Priority")
+			name = ad.get("Name").replace(ad.get("AccountingGroup")+".","")
+			print name
+			last_prio = self.priorities.setdefault(name,500.0)
+			self.priorities[name]= max(ad.get("Priority"),last_prio)
 
 		# Extract job information using htcondor python bindings
 		for query in htcondor.poll(self.queries):
