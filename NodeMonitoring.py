@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 #
 # Copyright 2013 Institut für Experimentelle Kernphysik - Karlsruher Institut für Technologie
@@ -16,12 +15,8 @@
 #   limitations under the License.
 
 import hf
-import lxml.html
-from lxml.html.clean import clean_html
-import StringIO
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 import numpy as np 
-from numpy import array
 from datetime import datetime,timedelta
 import pytz
 import json
@@ -67,10 +62,6 @@ class NodeMonitoring(hf.module.ModuleBase):
                 warning, set to -1 to disable warning', ''),
         'eval_threshold_critical_percentage': ('number of jobs above which status is set to \
                 critical, set to -1 to disable critical', ''),
-        'plot_left': ('left plot margin [relative to figure]', '0.05'),
-        'plot_width': ('plot width [relative to figure]', '0.78'),
-        'image_width': ('image width [inches]', '11.0'),
-        'image_height': ('image width [inches]', '5.6'),
         'plot_filter_node_number': ('maximum number of worker nodes that are to \
                 appear in the plot', ''),
         'plot_filter_attribute_value': ('attribute value according to which the \
@@ -90,7 +81,7 @@ class NodeMonitoring(hf.module.ModuleBase):
         'eval_time': ('time to be evaluated (in h)', '24')
     }
     config_hint = ''
-    
+
     table_columns = ([
         Column("InstanceTitle", TEXT),
         Column("filename_plot", TEXT),
@@ -135,12 +126,12 @@ class NodeMonitoring(hf.module.ModuleBase):
             self.image_height = float(self.config['image_height'])
             self.table_link_url = self.config['table_link_url']
         except KeyError, ex:
-            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(e))
+            raise hf.exceptions.ConfigError('Required parameter "%s" not specified' % str(ex))
         try:
             self.eval_time = int(self.config['eval_time'])
-        except:
-            raise hf.exceptions.ConfigError('Parameter "eval_time" not specified, set to 24 hrs' % str(e))
-            self.eval_time = int(24)
+        except Exception:
+            self.eval_time = 24
+            raise hf.exceptions.ConfigError('Parameter "eval_time" not specified, set to 24 hrs')
         self.use_secondary_key = self.secondary_key <> ''
         if 'source_url' not in self.config:
             raise hf.exceptions.ConfigError('No source URL specified')
@@ -169,7 +160,6 @@ class NodeMonitoring(hf.module.ModuleBase):
             'clusters': map(lambda x: '%03d' % (x+1), range(110,120))}
         racks = [rack_001_010, rack_011_020, rack_021_030, rack_101_110, rack_111_120]
 
-        import matplotlib
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from matplotlib.font_manager import FontProperties
@@ -177,16 +167,16 @@ class NodeMonitoring(hf.module.ModuleBase):
 
         data = {}
         data["filename_plot"] = ""
-        
+
         with open(self.source.getTmpPath()) as webpage:
             rawdata = json.load(webpage)
-        
+
         # Function to convert raw time data given in UTC to local time zone
         def ChangeTimeZone(TimeStringIn, InFormatString, OutFormatString):
             Date = datetime.strptime(TimeStringIn, InFormatString).replace(
                     tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
             return(Date.strftime(OutFormatString))
-        
+
         data['IntervalEnd'] = ChangeTimeZone(rawdata['meta']['date2'][0], 
                 "%Y-%m-%d %H:%M:%S", "%d-%b-%y %H:%M:%S")
         IntervalEnd = datetime.strptime(data['IntervalEnd'], "%d-%b-%y %H:%M:%S")
@@ -201,9 +191,9 @@ class NodeMonitoring(hf.module.ModuleBase):
                             tzinfo=pytz.utc).astimezone(pytz.timezone('Europe/Berlin'))
                     if date < IntervalStart:
                         rawdata['jobs'].remove(item)
-                except:
+                except Exception:
                     pass
-        
+
         # Prepare different attribute values (either use those indicated in
         # config file or loop over data and get all different categories)
         AttributeValues = []
@@ -430,8 +420,8 @@ class NodeMonitoring(hf.module.ModuleBase):
             p_leg = []
             cat_leg = []
             for i in range(len(p)-1,-1,-1):
-               p_leg.append(p[i][0])
-               cat_leg.append(AttributeValues[i])
+                p_leg.append(p[i][0])
+                cat_leg.append(AttributeValues[i])
 
             # Configure plot layout
             fontTitle = FontProperties()
@@ -490,7 +480,7 @@ class NodeMonitoring(hf.module.ModuleBase):
             try:
                 if entry['PrimaryKey'] != statistics_dict[i+1]['PrimaryKey']:
                     restructured_details_list.append(current_entry)
-            except:
+            except Exception:
                 restructured_details_list.append(current_entry)
 
         data['statistics'] = restructured_details_list

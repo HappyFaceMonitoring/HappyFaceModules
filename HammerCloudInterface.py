@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, FLOAT, Column
 import lxml.html as lh
 import urllib2 as ul
 
@@ -58,7 +58,11 @@ class HammerCloudInterface(hf.module.ModuleBase):
 					if p.text == "No entries":
 						noentries = True
 						break
-				if noentries: continue # if there are currently no tests for a certain test type, then no further search is done and the module continues with the next test type
+
+				# if there are currently no tests for a certain test type,
+				# then no further search is done and the module continues with the next test type
+				if noentries: continue
+
 				test_type_value = 'no information'
 				test_id_value = 'no information'
 				submitted_jobs_value = 'no information'
@@ -76,7 +80,8 @@ class HammerCloudInterface(hf.module.ModuleBase):
 							test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
 							siteinfo = test.find(".//td[@style]").text
 							site = site_name if (siteinfo.find(site_name) > -1) else "Anysite"
-							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
+							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".\
+								format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
 							readout = ul.urlopen(json_url).read()
 							# finding and calculating several detailed information on the jobs of the test
 							gsc = readout.count('"ganga_status": "c"')
@@ -93,9 +98,10 @@ class HammerCloudInterface(hf.module.ModuleBase):
 							jobs_in_total_value = gsc+gss+gsk+gsr+gsf
 
 							if efficiency_value < float(self.config['critical_threshold']): efficiency_status_list.append(0.0)
-							elif efficiency_value >= float(self.config['critical_threshold']) and efficiency_value < float(self.config['warning_threshold']): efficiency_status_list.append(0.5)
+							elif efficiency_value >= float(self.config['critical_threshold']) and \
+								efficiency_value < float(self.config['warning_threshold']):
+								efficiency_status_list.append(0.5)
 							else: efficiency_status_list.append(1.0)
-
 
 							# passing the calculated values to the list used to fill the subtables
 							cat_data = {

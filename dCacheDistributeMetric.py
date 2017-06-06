@@ -14,19 +14,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-import numpy as np
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, FLOAT, Column
 from lxml.html import parse
-from string import strip
-from string import replace
 
 class dCacheDistributeMetric(hf.module.ModuleBase):
     config_keys = {
         'lower_variance_limit': ('variance limit at highest number of files', '0.07'),
         'upper_variance_limit': ('variance limit at lowest number of files', '0.4'),
-        'distribute_source': ('link to the distribute imbalance metric source file', 'both||http://ekphappyface.ekp.kit.edu/upload/gridka/dcache_distribute_imbalance_metric'),
-        'pool_source_xml': ('link to the pool source file', 'both||http://cmsdcacheweb-kit.gridka.de:2288/info/pools'),
+        'distribute_source': ('link to the distribute imbalance metric source file', \
+            'both||http://ekphappyface.ekp.kit.edu/upload/gridka/dcache_distribute_imbalance_metric'),
+        'pool_source_xml': ('link to the pool source file', \
+            'both||http://cmsdcacheweb-kit.gridka.de:2288/info/pools'),
     }
     #'categories': ('name of the categories to be extracted, poolname and status will always be generated', 'total,free,precious,removable'),
     config_hint = ''
@@ -48,24 +47,25 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             Column('dist_metric', FLOAT),
         ], []),
     }
+
     def max_value(self, val):
         return min(1.0, 0.04 + (2.0 * max(0, 1.0 / val))**0.5)
-    
+
     def ideal_value(self, val, num_pools):
         return max(0.0, 1.0 / val - 1.0 / num_pools)**0.5
-    
+
     def topfunc(self, xlist):
-            ylist = []
-            for item in xlist:
-                ylist.append(self.max_value(item))
-            return ylist
-    
+        ylist = []
+        for item in xlist:
+            ylist.append(self.max_value(item))
+        return ylist
+
     def lowfunc(self, xlist, num_of_pools):
-            ylist = []
-            for item in xlist:
-                ylist.append(self.ideal_value(item, num_of_pools))
-            return ylist
-    
+        ylist = []
+        for item in xlist:
+            ylist.append(self.ideal_value(item, num_of_pools))
+        return ylist
+
     def prepareAcquisition(self):
         self.lower_variance_limit = self.config['lower_variance_limit']
         self.upper_variance_limit = self.config['upper_variance_limit']
@@ -93,7 +93,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
                 if 'disk-only-pools' in group.attrib['name']:
                     data['num_pools'] += 1
                     break
-        
+
         #extract name an file distribution
         dist_file = open(self.distribute_source.getTmpPath())
         namelist = []
@@ -116,18 +116,17 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
             if float(number) not in single_xlist:
                 single_xlist.append(float(number))
         srtd_xlist = sorted(single_xlist + [1e5])
-        
+
         #plotting
-	import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt
         self.plt = plt
         fig = self.plt.figure()
         axis = fig.add_subplot(111)
-        width = 1.0
-        p1 = axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='green')
-        p2 = axis.plot(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), 'g-', label="optimal")
-        p3 = axis.plot(srtd_xlist, self.topfunc(srtd_xlist), '-', color='red', label="warning")
-        p4 = axis.axhline(0.997, color="DarkRed")  # 0.997 instead of 1.0 to make it visible below 1.0 axis limit
-        p5 = axis.plot(xlist, ylist, 'bx')
+        axis.fill_between(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), self.topfunc(srtd_xlist), alpha=0.2, color='green')
+        axis.plot(srtd_xlist, self.lowfunc(srtd_xlist, data['num_pools']), 'g-', label="optimal")
+        axis.plot(srtd_xlist, self.topfunc(srtd_xlist), '-', color='red', label="warning")
+        axis.axhline(0.997, color="DarkRed")  # 0.997 instead of 1.0 to make it visible below 1.0 axis limit
+        axis.plot(xlist, ylist, 'bx')
         axis.set_ylabel('Imbalance Metric $m$')
         axis.set_xlabel('Number of Files')
         axis.set_title('Distribute Imbalance Metric')
@@ -138,7 +137,7 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + '_dist_metric.png'), dpi=100)
         data['filename_plot'] = self.instance_name + '_dist_metric.png'
-        
+
         return data
 
     def fillSubtables(self, parent_id):
@@ -147,13 +146,13 @@ class dCacheDistributeMetric(hf.module.ModuleBase):
 
     def getTemplateData(self):
         data = hf.module.ModuleBase.getTemplateData(self)
-        
+
         too_low_list = self.subtables['too_low'].select().where(self.subtables['too_low'].c.parent_id==self.dataset['id']).execute().fetchall()
-        too_low_list = map(lambda x: dict(x), too_low_list)
+        too_low_list = map(dict, too_low_list)
         data['too_low'] = sorted(too_low_list, key = lambda k: k['number_of_files'])
-        
+
         too_high_list = self.subtables['too_high'].select().where(self.subtables['too_high'].c.parent_id==self.dataset['id']).execute().fetchall()
-        too_high_list = map(lambda x: dict(x), too_high_list)
+        too_high_list = map(dict, too_high_list)
         data['too_high'] = sorted(too_high_list, key = lambda k: k['number_of_files'])
-        
+
         return data

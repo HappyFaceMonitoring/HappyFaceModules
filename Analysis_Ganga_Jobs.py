@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, INT, Column
 from BeautifulSoup import BeautifulSoup
 import re
 
@@ -73,7 +73,15 @@ class Analysis_Ganga_Jobs(hf.module.ModuleBase):
         content = open(self.source.getTmpPath()).read()
 
         # fetch the table from the html input, identify the beginning of the table
-        table_start_identifier = re.compile('<table border=0 cellpadding=3><tr align=center bgcolor=lightblue style\=\'font-weight: bold\'><td>Analysis Sites</td><td>Job<br>Nodes</td><td>Jobs</td><td>Latest</td><td>defined</td><td>assigned</td><td>waiting</td><td>activated</td><td>sent</td><td>running</td><td>holding</td><td>transferring</td><td>finished</td><td colspan=2>failed tot trf other</td></tr>(?!</table>)')
+        table_start_identifier = re.compile(('<table border=0 cellpadding=3>'
+            '<tr align=center bgcolor=lightblue style\=\'font-weight: bold\'>'
+            '<td>Analysis Sites</td><td>Job<br>Nodes</td>'
+            '<td>Jobs</td><td>Latest</td><td>defined</td>'
+            '<td>assigned</td><td>waiting</td>'
+            '<td>activated</td><td>sent</td>'
+            '<td>running</td><td>holding</td>'
+            '<td>transferring</td><td>finished</td>'
+            '<td colspan=2>failed tot trf other</td></tr>(?!</table>)'))
         table_end_identifier = re.compile('</table>')
         table_start = table_start_identifier.search(content).span()[1]
         table_end = table_end_identifier.search(content[table_start:]).span()[0]

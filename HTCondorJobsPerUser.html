@@ -1,0 +1,96 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th >Running Jobs</th>
+		<th >Idle Jobs</th>
+		<th >Requested Remote Jobs</th>
+		<th >Average Efficiency</th>
+		<th >Requested Cores</th>
+		<th >Used RAM </th>
+		<th >Average Queue Time</th>
+	</tr>
+	<tr>
+		<td >${module.dataset['running']}</td>
+		<td >${module.dataset['idle']}</td>
+		<td >${module.dataset['remote']}</td>
+		%if module.dataset['efficiency'] >= float(module.config['efficiency_warning']):
+			<td class = ok>
+		%elif module.dataset['efficiency'] >= float(module.config['efficiency_critical']):
+			<td class = warning>
+		%else:
+			<td class = critical>
+		%endif
+		${module.dataset['efficiency']}</td>
+		<td >${module.dataset['cores']}</td>
+		%if float(module.dataset['ram'])/float(module.dataset['requested_memory']) > float(module.config['ram_requested_memory_ratio']):
+			<td class = warning>
+		%else:
+			<td class = ok>
+		%endif
+		${module.dataset['ram']} GiB</td>
+		% if "day" in module.dataset['qtime']:
+			<td class = critical>
+		% else:
+			<td class = ok>
+		% endif
+		${module.dataset['qtime']}</td>
+	</tr>
+	</table>
+	<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+	<div>
+		<input type="button" value="show user statistics" onfocus="this.blur()" onclick="$('#${module.instance_name}_user_statistics').toggle()" />
+	</div>
+
+	<div class="DetailedInfo" id="${module.instance_name}_user_statistics" style="display:none;">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th>User</th>
+		<th>Sites</th>
+		<th>Idle Jobs</th>
+		<th>Running Jobs</th>
+		<th>Held Jobs</th>
+		<th>Suspended Jobs</th>
+		<th>Requested Cores</th>
+		<th>Used RAM</th>
+		<th>Average User Efficiency</th>
+		<th>User Priority</th>
+	</tr>
+	%for entry in statistics:
+		<tr>
+		<td>${entry['user']}</td>
+		<td>${entry['sites']}</td>
+		<td>${entry['idle']}</td>
+		<td>${entry['running']}</td>
+		%if entry['held'] > int(module.config['n_held_critical']):
+			<td class = critical>
+		%elif entry['held'] > int(module.config['n_held_warning']):
+			<td class = warning>
+		%else:
+			<td class = ok>
+		%endif
+		${entry['held']}</td>
+		<td>${entry['suspended']}</td>
+		<td>${entry['cores']}</td>
+		%if float(entry['ram'])/float(entry['requested_memory']) > float(module.config['ram_requested_memory_ratio']):
+			<td class = warning>
+		%else:
+			<td class = ok>
+		%endif
+		${entry['ram']} GiB</td>
+		%if entry['efficiency'] >= float(module.config['efficiency_warning']):
+			<td class = ok>
+		%elif entry['efficiency'] >= float(module.config['efficiency_critical']):
+			<td class = warning>
+		%else:
+			<td class = critical>
+		%endif
+		${entry['efficiency']}</td>
+		<td>${entry['priority']}</td>
+		</tr>
+	%endfor
+	</table>
+	</div>
+</%def>

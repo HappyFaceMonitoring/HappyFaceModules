@@ -14,11 +14,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import hf, lxml, logging, datetime
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, FLOAT, Column
 from lxml.html import parse
 from string import strip
 from string import replace
+import parser
 
 class dCacheInfoPool(hf.module.ModuleBase):
     config_keys = {
@@ -33,7 +34,9 @@ class dCacheInfoPool(hf.module.ModuleBase):
         'poolgroups': ('name of the pools, a list is possible', 'rT_ops, rT_cms'),
         'unit': ('This should be GiB or TiB', 'TiB'),
         'source_xml': ('link to the source file', 'both||http://adm-dcache.gridka.de:2286/info/pools'),
-        'special_overview': ('this parameter allows you to add several new lines to the overview, you have 4 variables(total, free, precious, removable) you can use to define the new line. this adds the line example with the value calculated the way described after =', 'example[%]=(r+t)/(f-p)*100'),
+        'special_overview': ('this parameter allows you to add several new lines to the overview, \
+            you have 4 variables(total, free, precious, removable) you can use to define the new line. \
+            this adds the line example with the value calculated the way described after =', 'example[%]=(r+t)/(f-p)*100'),
         'special_details': ('it is equal to special_overview but adds a new column for details', 'example=(r+t)/(f-p)'),
     }
     #'categories': ('name of the categories to be extracted, poolname and status will always be generated', 'total,free,precious,removable'),
@@ -62,7 +65,6 @@ class dCacheInfoPool(hf.module.ModuleBase):
             Column('status', FLOAT),
         ], []),
     }
-
 
     def prepareAcquisition(self):
         # read configuration
@@ -108,18 +110,21 @@ class dCacheInfoPool(hf.module.ModuleBase):
         #take first tbody as table body with the information
         root = root.findall('.//tbody')[0]
         for tr in root.findall('.//tr'):
-	  spans = tr.findall('.//span')
-	  bools = [group in spans[0].text for group in self.poolgroups]
-	  if True in bools:
-	    append = {'poolname': spans[0].text, 'total': float(spans[3].text)/self.unit, 'free': float(spans[4].text)/self.unit, 'precious': float(spans[5].text)/self.unit}
-	    for div in spans[-1].findall('.//div'):
-	      if div.get('class') == 'removable':
-		removable = div.get('style') # style = 'width: X.X%'
-		removable = replace(removable, 'width:', ' ')
-		removable = replace(removable, '%', ' ')
-		removable = float(removable) / 100.0 * append['total']
-		append['removable'] = removable
-	    self.details_db_value_list.append(append)
+            spans = tr.findall('.//span')
+            bools = [group in spans[0].text for group in self.poolgroups]
+            if True in bools:
+                append = {'poolname': spans[0].text,
+                    'total': float(spans[3].text)/self.unit,
+                    'free': float(spans[4].text)/self.unit,
+                    'precious': float(spans[5].text)/self.unit}
+            for div in spans[-1].findall('.//div'):
+                if div.get('class') == 'removable':
+                    removable = div.get('style') # style = 'width: X.X%'
+                    removable = replace(removable, 'width:', ' ')
+                    removable = replace(removable, '%', ' ')
+                    removable = float(removable) / 100.0 * append['total']
+                    append['removable'] = removable
+            self.details_db_value_list.append(append)
         data['num_pools'] = 0
         data['crit_pools'] = 0
         data['warn_pools'] = 0
@@ -135,7 +140,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
             data['removable'] += pool['removable']
 
             if pool['total'] < 1e-12:
-		pool['status'] = 0.0
+                pool['status'] = 0.0
                 data['crit_pools'] += 1
             elif (pool['free'] + pool['removable']) / pool['total'] <= self.local_critical_ratio:
                 pool['status'] = 0.0
@@ -146,11 +151,15 @@ class dCacheInfoPool(hf.module.ModuleBase):
             else:
                 pool['status'] = 1.0
 
-        if (data['free'] + data['removable']) / data['total'] <= self.global_critical_ratio or data['crit_pools'] > self.global_critical_poolcriticals or data['warn_pools'] > self.global_critical_poolwarnings:
+        if (data['free'] + data['removable']) / data['total'] <= self.global_critical_ratio or \
+            data['crit_pools'] > self.global_critical_poolcriticals or \
+            data['warn_pools'] > self.global_critical_poolwarnings:
             data['status'] = 0.0
-        elif (data['free'] + data['removable']) / data['total'] <= self.global_warning_ratio or data['crit_pools'] > self.global_warning_poolcriticals or data['warn_pools'] > self.global_warning_poolwarnings:
+        elif (data['free'] + data['removable']) / data['total'] <= self.global_warning_ratio or \
+            data['crit_pools'] > self.global_warning_poolcriticals or \
+            data['warn_pools'] > self.global_warning_poolwarnings:
             data['status'] = 0.5
-        
+
         return data
 
     def fillSubtables(self, parent_id):
@@ -160,17 +169,17 @@ class dCacheInfoPool(hf.module.ModuleBase):
         data = hf.module.ModuleBase.getTemplateData(self)
 
         details_list = self.subtables['details'].select().where(self.subtables['details'].c.parent_id==self.dataset['id']).execute().fetchall()
-        details_list = map(lambda x: dict(x), details_list)
-        
+        details_list = map(dict, details_list)
+
         try:
-	    special_overview = self.dataset['special_overview'].split(',')
-	except AttributeError:
-	    special_overview = []
-	try:
-	    special_details = self.dataset['special_details'].split(',')
+            special_overview = self.dataset['special_overview'].split(',')
         except AttributeError:
-	    special_details = []
-	    
+            special_overview = []
+        try:
+            special_details = self.dataset['special_details'].split(',')
+        except AttributeError:
+            special_details = []
+
         for i,special in enumerate(special_overview):
             if '=' in special:
                 special_overview[i] = special.split('=')
@@ -213,40 +222,54 @@ class dCacheInfoPool(hf.module.ModuleBase):
         help_appending = []
         help_appending.append('none')
         help_appending.append('Poolname')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_0' value='total' checked='checked' />" + 'Total Space [' + self.dataset['unit'] + ']')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_1' value='free' checked='checked' />" + 'Free Space [' + self.dataset['unit'] + ']')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_2' value='total-free' checked='checked' />" + 'Used Space [%]')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_3' value='precious' checked='checked' />" + 'Precious Space [' + self.dataset['unit'] + ']')
-        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_4' value='removable' checked='checked' />" + 'Removable Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + \
+            "_variable_0' value='total' checked='checked' />" + 'Total Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + \
+            "_variable_1' value='free' checked='checked' />" + 'Free Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + \
+            "_variable_2' value='total-free' checked='checked' />" + 'Used Space [%]')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + \
+            "_variable_3' value='precious' checked='checked' />" + 'Precious Space [' + self.dataset['unit'] + ']')
+        help_appending.append("<input type='checkbox' id='" +self.dataset['instance'] + \
+            "_variable_4' value='removable' checked='checked' />" + 'Removable Space [' + self.dataset['unit'] + ']')
 
         if special_details is not None:
-          for i,special in enumerate(special_details):
-            helpstring = str(special[1])
-            helpstring = helpstring.replace('r', 'removable')
-            helpstring = helpstring.replace('t', 'total')
-            helpstring = helpstring.replace('f', 'free')
-            helpstring = helpstring.replace('p', 'precious')
-            help_appending.append(str("<input type='checkbox' id='" +self.dataset['instance'] + "_variable_%i' value="%int(i + 5)) + str(helpstring) + " checked='checked' />" + str(special[0]))
+            for i,special in enumerate(special_details):
+                helpstring = str(special[1])
+                helpstring = helpstring.replace('r', 'removable')
+                helpstring = helpstring.replace('t', 'total')
+                helpstring = helpstring.replace('f', 'free')
+                helpstring = helpstring.replace('p', 'precious')
+                help_appending.append(str("<input type='checkbox' id='" +self.dataset['instance'] + \
+                    "_variable_%i' value="%int(i + 5)) + str(helpstring) + " checked='checked' />" + str(special[0]))
 
         details_finished_list.append(help_appending)
 
         help_appending = []
         help_appending.append('none')
-        help_appending.append(str("<input id='" +self.dataset['instance'] + "_toggle_button' type='button' value='Toggle Selection' onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_toggle('a')\"/>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('total')\">Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('free')\">Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('total-free')\">Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('precious')\">Plot Col</button>"))
-        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + "_col_button('removable')\">Plot Col</button>"))
+        help_appending.append(str("<input id='" +self.dataset['instance'] + \
+            "_toggle_button' type='button' value='Toggle Selection' onfocus='this.blur()' onclick=\"" + \
+            self.dataset['instance'] + "_toggle('a')\"/>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + \
+            "_col_button('total')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + \
+            "_col_button('free')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + \
+            "_col_button('total-free')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + \
+            "_col_button('precious')\">Plot Col</button>"))
+        help_appending.append(str("<button onfocus='this.blur()' onclick=\"" +self.dataset['instance'] + \
+            "_col_button('removable')\">Plot Col</button>"))
 
         if special_details is not None:
-          for i,special in enumerate(special_details):
-            helpstring = special[1]
-            helpstring = helpstring.replace('r', 'removable')
-            helpstring = helpstring.replace('t', 'total')
-            helpstring = helpstring.replace('f', 'free')
-            helpstring = helpstring.replace('p', 'precious')
-            help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + "_col_button('" + helpstring + "')>Plot Col</button>"))
+            for i,special in enumerate(special_details):
+                helpstring = special[1]
+                helpstring = helpstring.replace('r', 'removable')
+                helpstring = helpstring.replace('t', 'total')
+                helpstring = helpstring.replace('f', 'free')
+                helpstring = helpstring.replace('p', 'precious')
+                help_appending.append(str("<button onfocus='this.blur()' onclick=" +self.dataset['instance'] + \
+                    "_col_button('" + helpstring + "')>Plot Col</button>"))
         details_finished_list.append(help_appending)
 
         for i,pool in enumerate(sorted(details_list, key = lambda p: p['poolname'])):
@@ -267,7 +290,7 @@ class dCacheInfoPool(hf.module.ModuleBase):
                 perc = 100.0 * float(t-f) / float(t)
             except ZeroDivisionError:
                 perc = -100. * (t - f)
-            except:
+            except Exception:
                 perc = -200.
 
             help_appending.append(pool['poolname'])

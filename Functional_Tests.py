@@ -14,7 +14,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import *
+from sqlalchemy import TEXT, FLOAT, Column
 
 class Functional_Tests(hf.module.ModuleBase):
     config_keys = {
@@ -91,7 +91,7 @@ class Functional_Tests(hf.module.ModuleBase):
         content_pft_list = content_pft.split('\n')
 
         # parse information
-        for index, line in enumerate(content_aft_list):
+        for line in content_aft_list:
             line_list = line.split(' ')
             if len(line_list) != 6:
                 continue
@@ -103,7 +103,7 @@ class Functional_Tests(hf.module.ModuleBase):
                     'link': line_list[5],
                     })
 
-        for index, line in enumerate(content_pft_list):
+        for line in content_pft_list:
             line_list = line.split(' ')
             if len(line_list) != 6:
                 continue

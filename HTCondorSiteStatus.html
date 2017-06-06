@@ -1,0 +1,51 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th >Machines Available</th>
+		<th >Total Slots</th>
+		<th >Claimed Slots</th>
+		<th >Unclaimed Slots</th>
+		<th >Slots with Load below 50 %</th>
+		<th >Average Load</th>
+	</tr>
+	<tr>
+		<td >${module.dataset['machines']}</td>
+		<td >${module.dataset['total']}</td>
+		<td >${module.dataset['claimed']}</td>
+		<td >${module.dataset['unclaimed']}</td>
+		<td >${module.dataset['underused']}</td>
+		<td >${module.dataset['average_load']} %</td>
+	</tr>
+	</table>
+	<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+	<div>
+		<input type="button" value="show site statistics" onfocus="this.blur()" onclick="$('#${module.instance_name}_site_statistics').toggle()" />
+	</div>
+
+	<div class="DetailedInfo" id="${module.instance_name}_site_statistics" style="display:none;">
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th >Site</th>
+		<th >Machines Available</th>
+		<th >Idle Slots</th>
+		<th >Busy Slots</th>
+		<th >Suspended Slots</th>
+		<th >Retiring Slots</th>
+	</tr>
+	%for entry in statistics:
+		<tr>
+		<td>${entry['cloudsite']}</td>
+		<td>${entry['machines']}</td>
+		<td>${entry['idle']}</td>
+		<td>${entry['busy']}</td>
+		<td>${entry['suspended']}</td>
+		<td>${entry['retiring']}</td>
+		</tr>
+	%endfor
+	</table>
+	</div>
+
+</%def>

@@ -1,5 +1,6 @@
-import hf, logging
-from sqlalchemy import *
+import hf
+from sqlalchemy import TEXT, INT, FLOAT, Column
+from sqlalchemy.sql import and_
 from lxml import etree
 
 def rare_to_GiB(rare_value):
@@ -26,7 +27,7 @@ class dCacheDataManagement(hf.module.ModuleBase):
 
 
     table_columns = [
-        Column('chimera_timestamp', INT),   
+        Column('chimera_timestamp', INT),
         Column('latest_data_id', INT),
         Column('bare_total_files', INT),
         Column('bare_total_size', FLOAT),
@@ -72,13 +73,15 @@ class dCacheDataManagement(hf.module.ModuleBase):
         cur_timestamp = 0
         try:
             cur_timestamp = int(root.find('time').text)
-        except:
+        except Exception:
             cur_timestamp = -1
         data['chimera_timestamp'] = cur_timestamp
 
         is_new=1
         data['latest_data_id']= -1
-        timestamp_is_in_database = self.module_table.select(and_(self.module_table.c.chimera_timestamp >= cur_timestamp, self.module_table.c.latest_data_id == -1 )).execute().fetchall()
+        timestamp_is_in_database = self.module_table.\
+            select(and_(self.module_table.c.chimera_timestamp >= cur_timestamp, self.module_table.c.latest_data_id == -1 )).\
+            execute().fetchall()
         if len(timestamp_is_in_database) > 0:
             data['latest_data_id'] = timestamp_is_in_database[-1].id
             is_new=0
