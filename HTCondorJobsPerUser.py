@@ -50,7 +50,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 
 	subtable_columns = {
 		'statistics' : ([
-			Column("user", TEXT),
+			Column("batchsystem_user", TEXT),
 			Column("idle", INT),
 			Column("running", INT),
 			Column("removed", INT),
