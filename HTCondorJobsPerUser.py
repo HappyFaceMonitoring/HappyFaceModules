@@ -160,7 +160,6 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		# Retrieve user priority information
 		for ad in self.negotiator.getPriorities():
 			name = ad.get("Name").replace(ad.get("AccountingGroup")+".","")
-			print name
 			last_prio = self.priorities.setdefault(name,500.0)
 			self.priorities[name]= max(ad.get("Priority"),last_prio)
 
