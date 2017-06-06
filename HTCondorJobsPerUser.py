@@ -217,7 +217,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 
 		all_efficiencies = []
 		for user in self.user_statistics:
-			user_data = {"user": user}
+			user_data = {"batchsystem_user": user}
 			for status in self.jobs_status_dict.itervalues():
 				user_data[status] = self.user_statistics[user][status]
 			user_data["cores"],user_data["ram"] = self.user_statistics[user]["cores"], self.determine_diskspace(self.user_statistics[user]["ram"])
