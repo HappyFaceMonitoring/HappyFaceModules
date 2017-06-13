@@ -49,6 +49,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			"CommittedSuspensionTime",
 			"RequestWalltime",
 			"LastRemoteHost",
+                        "MachineAttrCloudSite0",
 			"QDate",
 			"CommittedTime",
 			"EnteredCurrentStatus",
@@ -66,11 +67,6 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			"transferred" : "slategrey",
 			"suspended" : "#e69f00"
 		}
-		self.sites_dict = {
-			".*ekp(?:blus|condor|lx\d+).+" : "condocker",
-			".*bwforcluster.*" : "bwforcluster",
-			".*ekps(?:g|m)\d+.*" : "ekpsupermachines"
-		}
 
 		self.quantities_list = [quantity for quantity in self.condor_projection if quantity != "GlobalJobId"]
 		self.condor_jobs_information = {}
@@ -79,17 +75,16 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			"completed" : []
 		}
 		self.sites_statistics = {}
-		for site in self.sites_dict.itervalues():
-			self.sites_statistics[site] = 0
 		self.walltime_runtime_statistics = {}
 
 		# Prepare htcondor queries
 		self.collector = htcondor.Collector()
 		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
+		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.histories = []
 		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 86400)".format(NOW = int(time.time()))
 		for schedd in self.schedds:
-			self.histories.append(schedd.history(requirement, self.condor_projection,-1))
+			self.histories.append(schedd.history(requirement, self.condor_projection,20000))
 
 	def extractData(self):
 
@@ -99,15 +94,16 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		}
 
 		# Extract job information using htcondor python bindings
-		for index,history in enumerate(self.histories):
+		for scheddname,history in zip(self.schedd_names,self.histories):
 			ad_index = 0
+			job_id = "undefined"
 			try:
 				for ads in history:
 					job_id = ads.get("GlobalJobId")
 					self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
 					ad_index += 1
-			except Exception:
-				print "Failed to get ad for scheduler",index, "at ad", ad_index
+			except RuntimeError:
+				print "Failed to get ad for scheduler", scheddname, "after Job ID", job_id,"number",ad_index," --> Aborting"
 
 		# Fill the main table and the user statistics information
 		for job in self.condor_jobs_information.itervalues():
@@ -117,10 +113,9 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			status = self.jobs_status_dict.get(job["JobStatus"])
 			if status == "completed":
 				# Determine the site where the job was completed
-				for site_regex in self.sites_dict:
-					if job["LastRemoteHost"]:
-						if re.match(re.compile(site_regex), job["LastRemoteHost"]):
-							self.sites_statistics[self.sites_dict[site_regex]] += 1
+				if job["MachineAttrCloudSite0"]:
+					self.sites_statistics.setdefault(job["MachineAttrCloudSite0"].lower(),0)
+					self.sites_statistics[job["MachineAttrCloudSite0"].lower()] += 1
 				# Determine the runtime and requested walltime of the completed job
 				if user not in self.walltime_runtime_statistics:
 					self.walltime_runtime_statistics[user] = {}
@@ -144,8 +139,8 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 
 		# Create job history plot
 		axis_jobhistory = fig.add_subplot(311)
-		data = [status_list for status_list in self.jobs_history_statistics.itervalues()]
-		labels = [status for status in self.jobs_history_statistics]
+		data = [status_list for status_list in self.jobs_history_statistics.itervalues() if len(status_list) > 0]
+		labels = [status for status in self.jobs_history_statistics if len(self.jobs_history_statistics[status]) > 0]
 		colors = [self.jobs_status_colors[status] for status in labels]
 		axis_jobhistory.hist(data, 30, stacked=True, histtype = 'bar', rwidth=1., fill=True, label=labels, color = colors)
 

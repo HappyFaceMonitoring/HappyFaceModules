@@ -89,17 +89,13 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"RemoteUserCpu",
 			"CurrentTime",
 			"RemoteHost",
+			"MachineAttrCloudSite0",
 			"QDate",
 			"JobCurrentStartDate",
 			"JobStartDate"
 	        ]
 		self.jobs_status_dict = {1 : "idle", 2 : "running", 3 : "removed", 4 : "completed", 5 : "held", 6 : "transferred", 7 : "suspended"}
 		self.jobs_status_colors = ["#56b4e9", "#009e73", "firebrick", "slateblue", "#d55e00", "slategrey", "#e69f00"]
-		self.sites_dict = {
-			".*ekp(?:blus|condor|lx\d+).+" : "condocker",
-			".*bwforcluster.*" : "bwforcluster",
-			".*ekps(?:g|m)\d+.*" : "ekpsupermachines"
-		}
 
 		self.quantities_list = [quantity for quantity in self.condor_projection if quantity != "GlobalJobId"]
 		self.condor_jobs_information = {}
@@ -199,10 +195,9 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 				except Exception:
 					pass
 			# Determine the sites the user is running his jobs on
-			job["RemoteHost"] = "Undefined" if job["RemoteHost"] is None else job["RemoteHost"]
-			for site_regex in self.sites_dict:
-				if re.match(re.compile(site_regex), job["RemoteHost"]) and self.sites_dict[site_regex] not in self.user_statistics[user]["sites"]:
-					self.user_statistics[user]["sites"].append(self.sites_dict[site_regex])
+			job["MachineAttrCloudSite0"] = "Undefined" if job["MachineAttrCloudSite0"] is None else job["MachineAttrCloudSite0"]
+			if job["MachineAttrCloudSite0"].lower() not in self.user_statistics[user]["sites"] and status == "running":
+					self.user_statistics[user]["sites"].append(job["MachineAttrCloudSite0"].lower())
 			# Calculate runtimes, cputimes and efficiencies of each job of a user
 			if status == "running":
 				try:	
