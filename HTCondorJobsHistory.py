@@ -134,11 +134,10 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		import matplotlib.pyplot as plt
 		import matplotlib.patches as mpatches
 		import matplotlib.markers as markers
-		# initializing figure
-		fig = plt.figure(figsize=(float(self.config["plotsize_x"]), float(self.config["plotsize_y"])*4.))
 
 		# Create job history plot
-		axis_jobhistory = fig.add_subplot(311)
+		fig_jobhistory = plt.figure(figsize=(float(self.config["plotsize_x"]), float(self.config["plotsize_y"])*1.15))
+		axis_jobhistory = fig_jobhistory.add_subplot(111)
 		data = [status_list for status_list in self.jobs_history_statistics.itervalues() if len(status_list) > 0]
 		labels = [status for status in self.jobs_history_statistics if len(self.jobs_history_statistics[status]) > 0]
 		colors = [self.jobs_status_colors[status] for status in labels]
@@ -156,7 +155,8 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		# Create runtime vs requested walltime plot
 		colormap = plt.get_cmap('gist_rainbow')
 		colors = [colormap(1.*i/len(self.walltime_runtime_statistics)) for i in range(len(self.walltime_runtime_statistics))]
-		axis_walltime_runtime = fig.add_subplot(312)
+		fig_walltime_runtime = plt.figure(figsize=(float(self.config["plotsize_x"]), float(self.config["plotsize_y"])))
+		axis_walltime_runtime = fig_walltime_runtime.add_subplot(111) 
 		axis_walltime_runtime.set_xlim(-3*60*60,27*60*60)
 		axis_walltime_runtime.set_ylim(-3*60*60,27*60*60)
 		axis_walltime_runtime.grid(True)
@@ -194,7 +194,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 					color = c,
 					s = 150,
 					marker = m)
-		axis_walltime_runtime.plot([-3*60*60,27*60*60], [-3*60*60,27*60*60], marker="", color="green")
+		axis_walltime_runtime.plot([-2.75*60*60,27*60*60], [-3*60*60,27*60*60], marker="", color="green")
 		time_ticks = [3*60*60*i for i in range(-1,10)]
 		axis_walltime_runtime.set_xticks(time_ticks)
 		axis_walltime_runtime.set_yticks(time_ticks)
@@ -205,11 +205,12 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_walltime_runtime.set_xlabel('requested walltime')
 		axis_walltime_runtime.set_ylabel('runtime')
 		axis_walltime_runtime.set_title('Runtime vs. requested Walltime for jobs successfully completed within last 24 hours')
-		axis_walltime_runtime.text(-2.5*60*60,60*60*22.5, '50 +/- 47.5% percentiles\nfor jobs grouped by user &\nrequested walltime with\nexplicitly shown outliers')
+		axis_walltime_runtime.text(-2*60*60,60*60*20, '50 +/- 47.5% percentiles\nfor jobs grouped by user &\nrequested walltime with\nexplicitly shown outliers')
 
 		# Create plot of completed jobs per site
 		max_njobs = max([n_jobs for n_jobs in self.sites_statistics.itervalues()])
-		axis_completedjobs_site = fig.add_subplot(313)
+		fig_completedjobs_site = plt.figure(figsize=(float(self.config["plotsize_x"])*0.9, float(self.config["plotsize_y"])))
+		axis_completedjobs_site = fig_completedjobs_site.add_subplot(111) 
 		axis_completedjobs_site.set_xlim(-0.5, len(self.sites_statistics)-0.5)
 		for index,site in enumerate(self.sites_statistics):
 			axis_completedjobs_site.bar(index, float(self.sites_statistics[site]), color = self.jobs_status_colors["completed"], align = 'center', width=0.5)
@@ -222,8 +223,11 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		y_min, y_max = axis_completedjobs_site.get_ylim()
 		axis_completedjobs_site.set_ylim(y_min, y_max*1.2)
 
-		# save figure
-		plotname = hf.downloadService.getArchivePath( self.run, self.instance_name + "_jobshistory.png")
+		# save figures
+		plotname = hf.downloadService.getArchivePath(self.run, self.instance_name) 
 		plt.tight_layout()
-		fig.savefig(plotname, dpi=91, bbox_inches="tight")
+		fig_jobhistory.savefig(plotname + "_jobs_terminated.png", dpi=91, bbox_inches="tight")
+		fig_walltime_runtime.savefig(plotname + "_walltime_runtime.png", dpi=91, bbox_inches="tight")
+		fig_completedjobs_site.savefig(plotname + "_jobs_site.png", dpi=91, bbox_inches="tight")
+		
 		return plotname
