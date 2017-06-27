@@ -65,7 +65,8 @@ class HTCondorSiteStatus(hf.module.ModuleBase):
                         "State",
                         "Activity",
                         "Machine",
-                        "LoadAvg"
+                        "LoadAvg",
+			"Cpus"
                 ]
 		self.quantities_list = [quantity for quantity in self.condor_projection if quantity != "Name"]
 		self.condor_cloudsites_information = {}
@@ -120,19 +121,19 @@ class HTCondorSiteStatus(hf.module.ModuleBase):
 				self.cloudsite_statistics[cloudsite] = copy.deepcopy(self.cloudsite_statistics_dict)
 			# Summarize cloud site activity information
 			activity = slot["Activity"].lower()
-			self.cloudsite_statistics[cloudsite][activity] += 1
+			self.cloudsite_statistics[cloudsite][activity] += slot["Cpus"] 
 			# Summarize the different slot states of interest
-			data['total'] += 1
+			data['total'] += slot["Cpus"]
 			slotstate = slot["State"].lower()
 			if slotstate in data:
-				data[slotstate] += 1
+				data[slotstate] += slot["Cpus"]
 			# Determine unique machine names of the slots and add them to the corresponding set of the cloudsite
 			self.cloudsite_statistics[cloudsite]["machines"].add(slot["Machine"])
 			# Determine the average load of the slot
-			load = slot["LoadAvg"]
+			load = slot["LoadAvg"] / slot["Cpus"]
 			data['average_load'].append(load) 
 			if load < 0.5 and activity == 'busy':
-				data['underused'] += 1
+				data['underused'] += slot["Cpus"]
 
 		for cloudsite,cloudsite_stats in self.cloudsite_statistics.iteritems():
 			cloudsite_data = {
@@ -180,7 +181,7 @@ class HTCondorSiteStatus(hf.module.ModuleBase):
 		# creating bar entries for each status and user
 		offset = 0.9 if log_needed else 0
 		for index,cloudsite in enumerate(self.cloudsite_statistics):
-			cloudsite_info = cloudsite + " - " + str(sum([self.cloudsite_statistics[cloudsite][act] for act in self.cloudsite_activity_colordict])) + " Slots"
+			cloudsite_info = cloudsite + " - " + str(sum([self.cloudsite_statistics[cloudsite][act] for act in self.cloudsite_activity_colordict])) + " Cores"
 			axis.text(offset+0.1, index+0.45, cloudsite_info, ha="left", va="center")
 			previous_status_value = offset
 			for activity,color in self.cloudsite_activity_colordict.iteritems():
@@ -199,8 +200,8 @@ class HTCondorSiteStatus(hf.module.ModuleBase):
 		# Optimizing figure
 		x_max *=30 if log_needed else 1.3
 		axis.set_xlim(offset, x_max)
-		axis.set_title("slots per site")
-		axis.set_xlabel("number of slots")
+		axis.set_title("cores per site")
+		axis.set_xlabel("number of cores")
 		axis.set_ylabel("site")
 		axis.set_yticks([])
 		# save figure

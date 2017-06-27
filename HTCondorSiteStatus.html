@@ -5,11 +5,11 @@
 	<table class="TableData">
 	<tr class="TableHeader">
 		<th >Machines Available</th>
-		<th >Total Slots</th>
-		<th >Claimed Slots</th>
-		<th >Unclaimed Slots</th>
-		<th >Slots with Load below 50 %</th>
-		<th >Average Load</th>
+		<th >Total Cores</th>
+		<th >Claimed Cores</th>
+		<th >Unclaimed Cores</th>
+		<th >Cores with Load below 50 %</th>
+		<th >Average Load per Core</th>
 	</tr>
 	<tr>
 		<td >${module.dataset['machines']}</td>
@@ -30,10 +30,10 @@
 	<tr class="TableHeader">
 		<th >Site</th>
 		<th >Machines Available</th>
-		<th >Idle Slots</th>
-		<th >Busy Slots</th>
-		<th >Suspended Slots</th>
-		<th >Retiring Slots</th>
+		<th >Idle Cores</th>
+		<th >Busy Cores</th>
+		<th >Suspended Cores</th>
+		<th >Retiring Cores</th>
 	</tr>
 	%for entry in statistics:
 		<tr>
