@@ -88,11 +88,11 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"RemoteSysCpu",
 			"RemoteUserCpu",
 			"CurrentTime",
-			"RemoteHost",
 			"MachineAttrCloudSite0",
 			"QDate",
 			"JobCurrentStartDate",
-			"JobStartDate"
+			"JobStartDate",
+			"ServerTime"
 	        ]
 		self.jobs_status_dict = {1 : "idle", 2 : "running", 3 : "removed", 4 : "completed", 5 : "held", 6 : "transferred", 7 : "suspended"}
 		self.jobs_status_colors = ["#56b4e9", "#009e73", "firebrick", "slateblue", "#d55e00", "slategrey", "#e69f00"]
@@ -202,7 +202,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			if status == "running":
 				try:	
 					cputime = job["RemoteUserCpu"] + job["RemoteSysCpu"]
-					runtime = int(time.time())- job["JobCurrentStartDate"]
+					runtime = job["RequestCpus"] * (job["ServerTime"] - job["JobStartDate"])
 					efficiency = float(cputime)/float(runtime)
 					# Avoiding not up to date values of JobCurrentStartDate, that result in efficiencies bigger than 1
 					if efficiency <= 1.:
