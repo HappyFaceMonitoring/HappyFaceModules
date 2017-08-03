@@ -18,7 +18,9 @@ import hf
 from sqlalchemy import TEXT, Column
 import json
 import time
-
+import socket
+import logging
+import urllib2
 
 class CacheDetails(hf.module.ModuleBase):
     config_keys = {'sourceurl': ('Source Url', ''),
@@ -54,45 +56,79 @@ class CacheDetails(hf.module.ModuleBase):
         self.plotsize_y = float(self.config['plotsize_y'])
         self.nbins = float(self.config['nbins'])
         self.score_limit = int(self.config['score_limit'])
-        # Download the file
-        self.source = hf.downloadService.addDownload(link)
-        # Get URL
-        self.source_url = self.source.getSourceUrl()
         self.statistics_db_value_list = []
         self.overscore_db_value_list = []
-        # Set up Container for subtable data
+	
+	self.logger = logging.getLogger(__name__)
+	self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
+        self.machine_data = {}
+
 
     def extractData(self):
         import matplotlib.pyplot as plt
         from matplotlib.font_manager import FontProperties
+	
+	# read details for every file from filelist
+        self.logger.info("Script to acquire details data form Cache.")
+        for machine in self.machines:
+            self.machine_data[machine] = {}
+            file_count = 0
+            status = ""
+            self.logger.info("Reading detailed data from " + machine  + '...')
+            url = "http://" + machine + ".ekp.kit.edu:8080/cache/content/*"
+            # html request + error handling
+            req = urllib2.Request(url)
+            try:
+                response = urllib2.urlopen(req, timeout=2)
+                html = response.read()
+                status = "Aquisition successful"
+                services = json.loads(html)
+                filenames = services.keys()
+                file_count = len(filenames)
+                for filename in filenames:
+                    self.machine_data[machine][filename] = {
+                        'size': services[filename]['size'],
+                        'allocated': services[filename]['allocated'],
+                        'score': services[filename]['score'],
+                        'maintained': services[filename]['maintained']
+                    }
+                self.logger.info("Sucessful")
+            except urllib2.URLError as e:
+                self.logger.error(str(e.reason) + " " + machine)
+                status = "Aquisition failed"
+            except socket.timeout, e:
+                self.logger.error(("There was an error while reading the file details: %r " % e) + machine)
+                status = "Aquisition failed"
+            except socket.timeout:
+                self.logger.error("socket timeout " + machine)
+                status = "Aquisition failed"
+            # load json file and dump data into lists
+            self.machine_data[machine]["status"] = status
+            self.machine_data[machine]["file_count"] = file_count
+            self.machine_data[machine]["error_count"] = 0		
+	
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
-        path = self.source.getTmpPath()
         plot_alloc = []
         plot_score = []
         plot_size = []
         plot_maint = []
-        # open file
-        with open(path, 'r') as f:
-            # fix the JSON-File, so the file is valid
-            content = f.read()
-            services = json.loads(content)
-        machines = services.keys()
+        machines = self.machine_data.keys()
         for machine in machines:
-            filenames = services[machine].keys()
+            filenames = self.machine_data[machine].keys()
             filenames.remove('status')  # fix filenames list
             filenames.remove('file_count')
             filenames.remove('error_count')
-            allocated = list(services[machine][id]['allocated'] for id in filenames)
+            allocated = list(self.machine_data[machine][id]['allocated'] for id in filenames)
             allocated = filter(lambda x: x >= 0, allocated)
             alloc = list(map(lambda x: round((time.time()-float(x))/(60*60), 2), allocated))
-            score = list(services[machine][id]['score']for id in filenames)
+            score = list(self.machine_data[machine][id]['score']for id in filenames)
             for k in xrange(len(score)):
                 if score[k] is None:
                     score[k] = 0
-            sizes = list(int(services[machine][id]['size']) for id in filenames)
-            maintained = list(services[machine][id]['maintained']for id in filenames)
+            sizes = list(int(self.machine_data[machine][id]['size']) for id in filenames)
+            maintained = list(self.machine_data[machine][id]['maintained']for id in filenames)
             maintained = filter(lambda x: x != 0, maintained)
             maint = list(map(lambda x: round((time.time()-float(x))/(60*60*24), 2), maintained))
             # find data with higher score than threshold in config and fill Subtable
@@ -110,9 +146,9 @@ class CacheDetails(hf.module.ModuleBase):
             plot_score.append(score)
             plot_maint.append(maint)
 
-        file_count = list(services[id]['file_count']for id in machines)
-        status = list(services[id]['status'] for id in machines)
-        error_count = list(services[id]['error_count'] for id in machines)
+        file_count = list(self.machine_data[id]['file_count']for id in machines)
+        status = list(self.machine_data[id]['status'] for id in machines)
+        error_count = list(self.machine_data[id]['error_count'] for id in machines)
         #  Error handling for acquisition of data
         for i in xrange(len(machines)):
             details_data = {'machine': machines[i]}
@@ -129,12 +165,12 @@ class CacheDetails(hf.module.ModuleBase):
         if failed == len(machines):
             data['status'] = 0
             data['error_msg'] = "No data to display!"
-            print data
+            print "failed: ", data
             return data
         if sum(file_count) == 0:
             data['status'] = 0.5
             data['error_msg'] = "No files on caches found"
-            print data
+            print "sum(file_count)== 0:", data
             return data
         ###############
         # Make   plot #
@@ -200,7 +236,7 @@ class CacheDetails(hf.module.ModuleBase):
             self.run, self.instance_name + "_filesize.png"), dpi=91)
         data["filename_plot"] = self.instance_name + "_filesize.png"
         # fill subtables
-        print data
+        print "subtables:", data
         return data
 
     def fillSubtables(self, parent_id):
