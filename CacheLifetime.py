@@ -19,6 +19,10 @@ from sqlalchemy import TEXT, Column
 import json
 import time
 
+import datetime
+import logging
+import socket
+import urllib2
 
 class CacheLifetime(hf.module.ModuleBase):
     config_keys = {'sourceurl': ('Source Url', ''),
@@ -38,10 +42,46 @@ class CacheLifetime(hf.module.ModuleBase):
         self.plotsize_y = float(self.config['plotsize_y'])
         self.nbins = float(self.config['nbins'])
         self.time_limit = int(self.config['time_limit'])
-        # Download the file
-        self.source = hf.downloadService.addDownload(link)
-        # Get URL
-        self.source_url = self.source.getSourceUrl()
+
+	self.logger = logging.getLogger(__name__)
+        self.inp_data = {}
+        self.inp_data['error'] = ""
+        self.date = time.time()-(2592000)  # tlimit = 2592000
+        life_time = {'time': 0,
+		     'life_time':0
+		    }
+        # function to load the filelists from ekpsg-machines
+        url = "http://ekpsg03.ekp.kit.edu:8082/coordinator/stats/"
+        # read data from every file in filelists
+        self.logger.info("Script to acquire job and life_time information from coordinator.")
+        urltotal = url + "life_time" + "?fields=" + \
+            "&fields=".join(life_time.keys())  # build url for request
+        self.logger.info("url: " + urltotal)
+        req = urllib2.Request(urltotal)
+        try:
+            response = urllib2.urlopen(req, timeout=30)
+            # handle url error and timeout errors
+        except urllib2.URLError as e:
+            self.logger.error(e.reason)
+            self.inp_data['error'] += " Connection problems"
+        except socket.timeout, e:
+            self.logger.error("There was an error while reading " + url + ": %r" % e)
+            self.inp_data['error'] += " Connection problems"
+        except socket.timeout:
+            self.logger.error("socket timeout")
+            self.inp_data['error'] += " Connection problems"
+        html = response.read()
+        services = json.loads(html)
+	self.inp_data['life_time'] = [] 
+	for service in services:
+	    if service[1] > int(self.date):
+		self.inp_data[parameter].append(
+					{
+		    			 'time': service[1],
+		    			 'life_time': service[0]
+					}
+				       )
+
 
     def extractData(self):
         import matplotlib.pyplot as plt
@@ -49,25 +89,18 @@ class CacheLifetime(hf.module.ModuleBase):
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
-        path = self.source.getTmpPath()
-        # open file
-        with open(path, 'r') as f:
-            # fix the JSON-File, so the file is valid
-            content = f.read()
-            services = json.loads(content)
-        if services['error'] != "":
+        if self.inp_data['error'] != "":
             data['status'] = 0
             data['error_msg'] = "Connection to Coordinator failed"
             return data
-        jobs_id = services['life_time'].keys()
-        time_list = list(int(services['life_time'][id]['time']) for id in jobs_id)
-        lifetime_list = list(int(services['life_time'][id]['life_time']) for id in jobs_id)
+        time_list = list(int(entry['time']) for entry in self.inp_data['life_time'])
+        lifetime_list = list(int(entry['life_time']) for entry in self.inp_data['life_time'])
         lifetime_list = map(lambda x: x/(60*60), lifetime_list)
         # TODO if data gets newer, constrain dataset von data from last 7 days etc.
         plot_lifetime_list = []
-        for i in xrange(len(time_list)):
-            if time_list[i] > time.time() - (self.time_limit*60*60*24):
-                plot_lifetime_list.append(lifetime_list[i])
+        for time in time_list:
+            if time > time.time() - (self.time_limit*60*60*24):
+                plot_lifetime_list.append(time)
         if len(plot_lifetime_list) == 0:
             data['status'] = 0.5
             data['error_msg'] = "No files removed in the last " + str(self.time_limit) + " days."
