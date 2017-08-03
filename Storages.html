@@ -1,0 +1,23 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<!--<div class="DetailedInfo" id="${module.instance_name}_storage_statistics" style="display:none;">-->
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th>Storage</th>
+		<th>Available memory in GB</th>
+		<th>Total memory in GB</th>
+		<th>Use percentage</th>
+	</tr>
+	%for entry in statistics:
+		<tr>
+		<td>${entry['Storage']}</td>
+		<td>${entry['available']}</td>
+		<td>${entry['total']}</td>
+		<td>${entry['rate']}</td>
+		</tr>
+	%endfor
+	</table>
+	<!--</div>-->
+</%def>
