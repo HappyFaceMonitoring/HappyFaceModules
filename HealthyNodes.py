@@ -63,6 +63,10 @@ class HealthyNodes(hf.module.ModuleBase):
 				pass
 			else:
 				self.statistics_db_value_list.append(node_dict)
+		if len(self.statistics_db_value_list) == 0:
+			data["status"] = 1.
+		else:
+			data["status"] = 0.
 		return data
 					
 		
