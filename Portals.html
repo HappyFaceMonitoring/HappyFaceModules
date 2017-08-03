@@ -1,0 +1,36 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<!--<div class="DetailedInfo" id="${module.instance_name}_portals_statistics" style="display:none;">-->
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th>Portal</th>
+		<th>Used memory in GB</th>
+		<th>Shared memory in GB</th>
+		<th>CPUs</th>
+		<th>1-min</th>
+	</tr>
+	% for entry in statistics:
+		% if entry['Portal'] != 'all':
+			<tr>
+			<td>${entry['Portal']}</td>
+			<td>${entry['use']}</td>
+			<td>${entry['share']}</td>
+			<td>${entry['CPUs']}</td>
+			<td>${entry['1-min']}</td>
+			</tr>
+		% endif
+	% endfor
+	% if entry['Portal'] == 'all':
+		<tr>
+		<td>${entry['Portal']}</td>
+		<td>${entry['use']}</td>
+		<td>${entry['share']}</td>
+		<td>${entry['CPUs']}</td>
+		<td>${entry['1-min']}</td>
+		</tr>
+	% endif
+	</table>
+	<!--</div>-->
+</%def>
