@@ -1,0 +1,25 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<!--<div class="DetailedInfo" id="${module.instance_name}_portals_statistics" style="display:none;">-->
+	% if len(statistics) == 0:
+		<td class="ok">
+          		All nodes are healthy.</td>
+	% else:
+		<table class="TableData">
+		<tr class="TableHeader">
+			<th>Machine</th>
+			<th>Error message</th>
+		</tr>
+		% for entry in statistics:
+			<tr>
+			<td>${entry['machine']}</td>
+			<td class="critical">
+			${entry['message']}</td>
+			</tr>
+		% endfor
+	% endif
+	</table>
+	<!--</div>-->
+</%def>
