@@ -82,9 +82,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.histories = []
-		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 86400)".format(NOW = int(time.time()))
-		for schedd in self.schedds:
-			self.histories.append(schedd.history(requirement, self.condor_projection,20000))
+		# timeold = 86400
 
 	def extractData(self):
 
@@ -93,6 +91,10 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			'filename_plot' : ''
 		}
 
+		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 604800)".format(NOW = int(time.time()))
+		for schedd in self.schedds:
+			self.histories.append(schedd.history(requirement, self.condor_projection,20000))
+		
 		# Extract job information using htcondor python bindings
 		for scheddname,history in zip(self.schedd_names,self.histories):
 			ad_index = 0
