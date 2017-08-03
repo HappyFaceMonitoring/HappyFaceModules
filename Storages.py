@@ -49,7 +49,7 @@ class Storages(hf.module.ModuleBase):
         self.infos = ['disk_total', 'disk_free']
         top_url = 'http://ekpmonitor.ekp.kit.edu/ganglia/'
 	cfg_parser = RawConfigParser()
-	cfg_parser.read('ganglia.cfg')
+	cfg_parser.read('config/ganglia.cfg')
         username = cfg_parser.get('login', 'username')
         passwd = cfg_parser.get('login', 'passwd')
         pass_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
