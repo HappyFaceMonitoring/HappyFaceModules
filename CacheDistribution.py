@@ -19,6 +19,15 @@ from sqlalchemy import TEXT, INT, Column
 import json
 import numpy as np
 
+import urllib2
+import urllib
+import itertools
+import socket
+import os
+#from counter import Counter # using a backport of collections.Counter for 2.6 
+from collections import Counter
+import logging
+
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature."""
     def __getitem__(self, item):
@@ -49,9 +58,10 @@ class CacheDistribution(hf.module.ModuleBase):
 
     def ideal_dist(self, x, n):
         try:
-            return np.sqrt(max(0.0, 1.0/x-1.0/n))
+            dist =  np.sqrt(max(0.0, 1.0/x-1.0/n))
         except RuntimeWarning:
-            return 0.0
+            dist = 0.0
+	return dist
 
     def prepareAcquisition(self):
         link = self.config['sourceurl']
@@ -61,10 +71,90 @@ class CacheDistribution(hf.module.ModuleBase):
         self.nbinsy = int(self.config['nbinsy'])
         self.x_min = float(self.config['x_min'])
         self.x_max = float(self.config['x_max'])
-        # Download the file
-        self.source = hf.downloadService.addDownload(link)
-        # Get URL
-        self.source_url = self.source.getSourceUrl()
+	
+	self.logger = logging.getLogger(__name__) 
+        self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01'] 
+        self.in_data = {}
+	
+	def load_dslist(url):
+            # to http requests
+            req = urllib2.Request(url)
+            try:
+                response = urllib2.urlopen(req, timeout=2)
+            # handle url error and timeout errors
+            except urllib2.URLError as e:
+                self.logger.error(str(e.reason) + " for " + url)
+                return None
+            except socket.timeout, e:
+                self.logger.error("There was an error while reading " + url + ": %r" % e)
+                return None
+            except socket.timeout:
+                self.logger.error("socket timeout for " + url)
+                return None
+            html = response.read()
+            services = json.loads(html)
+            dslist = list(itertools.chain(*services.values()))
+            for k, entry in enumerate(dslist):
+                dslist[k] = urllib.quote_plus(os.path.dirname(entry))
+            # make list of unique datasets
+            dataset = Counter(dslist)
+            return dataset
+	
+	self.logger.info("Script to acquire datasets form Cache.")
+        for machine in self.machines:
+	    url = "http://" + machine + ".ekp.kit.edu:8080/cache/content/"
+            error_count = 0
+            self.in_data[machine] = {}
+            self.logger.info("Reading detailed data from " + machine + '...')
+            try:
+                dslist = load_dslist(url).keys()
+                dssize = load_dslist(url).values()
+            except AttributeError:
+                dslist = load_dslist(url)
+                dssize = load_dslist(url)
+            # handle error if dslist is empty
+            if dslist == None:
+                status = "Aquisition failed"
+                self.logger.error(status + " for " + machine)
+                dslist = []
+                set_count = 0
+            else:
+                set_count = len(dslist)
+                status = "Aquisition successful"
+            # loop over every element in dslist
+            for i, entry in enumerate(dslist):
+                url += entry 
+                # html request + error handling
+                dsname = urllib.unquote_plus(entry)
+                req = urllib2.Request(url)
+                try:
+                    response = urllib2.urlopen(req, timeout=1)
+                    html = response.read()
+                except urllib2.URLError as e:
+                    self.logger.error("URLError" + dsname)
+                    error_count += 1
+                    continue
+		except socket.timeout, e:
+                    self.logger.error(("There was an error while reading the dataset details: %r" % e) + ": " + dsname)
+                    error_count += 1
+                    continue
+                except socket.timeout:
+                    self.logger.error("socket timeout for " + dsname)
+                    error_count += 1
+                    continue
+                # load json file and dump data into lists
+                services = json.loads(html)
+                self.in_data[machine][dsname] = {
+                    'size': services['size'],
+                    'file_count': dssize[i],
+                    'score': services['score']}
+            self.logger.info("Dataset Details Completed")
+        # generate Output file
+            self.in_data[machine]['status'] = status
+            self.in_data[machine]['ds_count'] = set_count
+            self.in_data[machine]['error_count'] = error_count
+
+	
 
     def extractData(self):
         import matplotlib.pyplot as plt
@@ -72,27 +162,21 @@ class CacheDistribution(hf.module.ModuleBase):
         data['filename_plot'] = ""
         data['error_msg'] = ""
         data['failed_machines'] = ""
-        path = self.source.getTmpPath()
-        # open file
         dataset = AutoVivification()
-        with open(path, 'r') as f:
-            # fix the JSON-File, so the file is valid
-            content = f.read()
-            services = json.loads(content)
-        machines = services.keys()
+        machines = self.in_data.keys()
         for machine in machines:
-            dsnames = services[machine].keys()
+            dsnames = self.in_data[machine].keys()
             dsnames.remove('status')
             dsnames.remove('error_count')
             dsnames.remove('ds_count')
             for name in dsnames:
                 dataset[name][machine] = {
-                    'size': services[machine][name]['size'],
-                    'file_count': services[machine][name]['file_count']
+                    'size': self.in_data[machine][name]['size'],
+                    'file_count': self.in_data[machine][name]['file_count']
                 }
-        status = list(services[id]['status'] for id in machines)
-        ds_count = list(int(services[id]['ds_count']) for id in machines)
-        error_count = list(int(services[id]['error_count']) for id in machines)
+        status = list(self.in_data[id]['status'] for id in machines)
+        ds_count = list(int(self.in_data[id]['ds_count']) for id in machines)
+        error_count = list(int(self.in_data[id]['error_count']) for id in machines)
         removals = []
         for k in xrange(len(machines)):
             if "failed" in status[k] or ds_count[k]+error_count[k] == 0:
@@ -160,7 +244,7 @@ class CacheDistribution(hf.module.ModuleBase):
         H = np.flipud(H)
         plt.pcolor(xedges, yedges, H, cmap='Blues')
         cbar = plt.colorbar(ticks=np.arange(0, np.amax(H), 1))
-        x = np.linspace(0, len(machines), 20*len(machines))
+        x = np.linspace(1, len(machines), 20*len(machines))
         y = map(lambda x: self.ideal_dist(x, len(machines)), x)
         plt.plot(x, y, linestyle='dotted')
         # cuten plot
