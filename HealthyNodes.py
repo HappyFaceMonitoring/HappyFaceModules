@@ -23,7 +23,7 @@ class HealthyNodes(hf.module.ModuleBase):
 	
 	
 	config_keys = {
-			'source_url': ('Source URL', ''),
+			'source_url': ('Not used, but filled to avoid warnings', 'www.google.com'),
 			}
 	
 	table_columns = [], []
@@ -35,6 +35,8 @@ class HealthyNodes(hf.module.ModuleBase):
 			   }
 	
 	def prepareAcquisition(self):
+		# Setting defaults
+                self.source_url = self.config["source_url"]
 		# Define basic structures
                 self.condor_projection = [
 			'NODE_IS_HEALTHY',
@@ -63,8 +65,10 @@ class HealthyNodes(hf.module.ModuleBase):
 				pass
 			else:
 				self.statistics_db_value_list.append(node_dict)
-		if len(self.statistics_db_value_list) == 0:
+		if len(self.statistics_db_value_list) <= 3:
 			data["status"] = 1.
+		elif len(self.statistics_db_value_list) <= 5:
+			data["status"] = 0.5
 		else:
 			data["status"] = 0.
 		return data
