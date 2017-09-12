@@ -77,10 +77,6 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		self.sites_statistics = {}
 		self.walltime_runtime_statistics = {}
 
-		# Prepare htcondor queries
-		self.collector = htcondor.Collector()
-		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
-		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.histories = []
 		# timeold = 86400
 
@@ -90,6 +86,10 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		data = {
 			'filename_plot' : ''
 		}
+		# Prepare htcondor queries
+		self.collector = htcondor.Collector()
+		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
+		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 
 		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 604800)".format(NOW = int(time.time()))
 		for schedd in self.schedds:
