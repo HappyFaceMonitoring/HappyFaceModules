@@ -25,7 +25,7 @@ import datetime
 import urllib2
 
 class CacheHitMiss(hf.module.ModuleBase):
-    config_keys = {'sourceurl': ('Source Url', ''),
+    config_keys = {'source_url': ('Not used, but filled to avoid warnings', 'http://ekpsg03.ekp.kit.edu:8082/coordinator/stats/'),
                    'plotsize_x': ('size of the plot in x', '8.9'),
                    'plotsize_y': ('size of plot in y', '5'),
                    'time_limit': ('in days max 30 days', '7'),
@@ -38,7 +38,8 @@ class CacheHitMiss(hf.module.ModuleBase):
     
 
     def prepareAcquisition(self):
-        link = self.config['sourceurl']
+	# Setting defaults
+	self.source_url = self.config["source_url"]
         self.plotsize_x = float(self.config['plotsize_x'])
         self.plotsize_y = float(self.config['plotsize_y'])
         self.nbins = int(self.config['nbins'])
@@ -120,5 +121,4 @@ class CacheHitMiss(hf.module.ModuleBase):
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + "_filesize.png"), dpi=91)
         data["filename_plot"] = self.instance_name + "_filesize.png"
-        print data
         return data

@@ -190,7 +190,6 @@ class CacheDistribution(hf.module.ModuleBase):
             failed = 0
             if "failed" in status[i]:
                 failed += 1
-                print failed
         if len(machines) == 0:
             data['status'] = 0
             data['error_msg'] = "No Cache available"
@@ -198,7 +197,6 @@ class CacheDistribution(hf.module.ModuleBase):
         if failed == len(machines):
             data['status'] = 0
             data['error_msg'] = "No data to display!"
-            print data
             return data
         # calculate the metric of the Dataset
         # sum over all nodes - optimum minus real value, normed with 1-1/(number of nodes)
@@ -224,7 +222,6 @@ class CacheDistribution(hf.module.ModuleBase):
         if sum(file_count) == 0:
             data['status'] = 0.5
             data['error_msg'] = "No files on caches found"
-            print data
             return data
         ###############
         # Make   plot #
@@ -262,5 +259,4 @@ class CacheDistribution(hf.module.ModuleBase):
         data["filename_plot"] = self.instance_name + "_filesize.png"
         data['datasets'] = len(file_count)
         data['failed_datasets'] = sum(error_count)
-        print data
         return data

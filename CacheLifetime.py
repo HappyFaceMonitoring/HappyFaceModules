@@ -25,7 +25,7 @@ import socket
 import urllib2
 
 class CacheLifetime(hf.module.ModuleBase):
-    config_keys = {'sourceurl': ('Source Url', ''),
+    config_keys = {'source_url': ('Source Url', 'http://ekpsg03.ekp.kit.edu:8082/coordinator/stats/'),
                    'plotsize_x': ('size of the plot in x', '10'),
                    'plotsize_y': ('size of plot in y', '5'),
                    'time_limit': ('in days max 30 days', '7'),
@@ -37,7 +37,8 @@ class CacheLifetime(hf.module.ModuleBase):
     ], ['filename_plot']
 
     def prepareAcquisition(self):
-        link = self.config['sourceurl']
+	# Setting defaults
+	self.source_url = self.config["source_url"]
         self.plotsize_x = float(self.config['plotsize_x'])
         self.plotsize_y = float(self.config['plotsize_y'])
         self.nbins = float(self.config['nbins'])
@@ -104,7 +105,6 @@ class CacheLifetime(hf.module.ModuleBase):
         if len(plot_lifetime_list) == 0:
             data['status'] = 0.5
             data['error_msg'] = "No files removed in the last " + str(self.time_limit) + " days."
-            print data
             return data
         fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
         axis = fig.add_subplot(111)
@@ -119,5 +119,4 @@ class CacheLifetime(hf.module.ModuleBase):
         fig.savefig(hf.downloadService.getArchivePath(
             self.run, self.instance_name + ".png"), dpi=91)
         data["filename_plot"] = self.instance_name + ".png"
-        print data
         return data

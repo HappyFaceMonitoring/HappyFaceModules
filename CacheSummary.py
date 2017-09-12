@@ -24,7 +24,7 @@ import logging
 
 
 class CacheSummary(hf.module.ModuleBase):
-    config_keys = {'sourceurl': ('Source Url', '')
+    config_keys = {'source_url': ('Not used, but filled to avoid warnings', 'http://ekpsg01.ekp.kit.edu:8080/cache/backends/cache')
                    }
     table_columns = [
         Column('size', INT),
@@ -38,40 +38,38 @@ class CacheSummary(hf.module.ModuleBase):
     
 
     def prepareAcquisition(self):
+	# Setting defaults
+	self.source_url = self.config["source_url"]
 	self.logger = logging.getLogger(__name__)
         self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
-        self.summary_url = ['http://ekpsg01.ekp.kit.edu:8080/cache/backends/cache',
-			    'http://ekpsg02.ekp.kit.edu:8080/cache/backends/cache',
-			    'http://ekpsg03.ekp.kit.edu:8080/cache/backends/cache',
-			    'http://ekpsg04.ekp.kit.edu:8080/cache/backends/cache',
-			    'http://ekpsm01.ekp.kit.edu:8080/cache/backends/cache']
         self.summary_data = {}
 
     def extractData(self):
 	# generate data for summary module
         self.logger.info("Script to acquire summary data form Cache.")
-        for i in xrange(len(self.summary_url)):
+        for machine in self.machines:
             # handle url request + errors
-            self.logger.info("Reading summary data from " + self.machines[i] + '...')
-            req = urllib2.Request(self.summary_url[i])
+            self.logger.info("Reading summary data from " + machine + '...')
+	    url = 'http://' + machine + '.ekp.kit.edu:8080/cache/backends/cache'
+            req = urllib2.Request(url)
             try:
                 response = urllib2.urlopen(req, timeout=2)
                 html = response.read()
             except urllib2.URLError as e:
-                self.logger.error(str(e.reason) + ' ' + self.summary_url[i])
-                self.summary_data[self.machines[i]] = 'no data'
+                self.logger.error(str(e.reason) + ' ' + url)
+                self.summary_data[machine] = 'no data'
                 continue
             except socket.timeout, e:
-                self.logger.error("There was an error while reading " + self.summary_url[i] + ": %r" % e)
-                self.summary_data[self.machines[i]] = 'no data'
+                self.logger.error("There was an error while reading " + url + ": %r" % e)
+                self.summary_data[machine] = 'no data'
                 continue
             except socket.timeout:
-                self.logger.error("socket timeout" + ' ' + self.summary_url[i])
-                self.summary_data[self.machines[i]] = 'no data'
+                self.logger.error("socket timeout" + ' ' + url)
+                self.summary_data[machine] = 'no data'
                 continue
             html_fix = html.replace("Infinity", "0")  # fix unreadable value in dict
             services = json.loads(html_fix)[0]
-            self.summary_data[self.machines[i]] = services  # save data in dict
+            self.summary_data[machine] = services  # save data in dict
             self.logger.info("Sucessful")
 	
         data = {}

@@ -23,7 +23,7 @@ import logging
 import urllib2
 
 class CacheDetails(hf.module.ModuleBase):
-    config_keys = {'sourceurl': ('Source Url', ''),
+    config_keys = {'source_url': ('Not used, but filled to avoid warnings', 'http://ekpsg01.ekp.kit.edu:8080/cache/content/'),
                    'plotsize_x': ('size of the plot in x', '10'),
                    'plotsize_y': ('size of plot in y', '5'),
                    'score_limit': ('maximum score', '1000'),
@@ -51,7 +51,8 @@ class CacheDetails(hf.module.ModuleBase):
         }
 
     def prepareAcquisition(self):
-        link = self.config['sourceurl']
+	# Setting defaults
+	self.source_url = self.config["source_url"]
         self.plotsize_x = float(self.config['plotsize_x'])
         self.plotsize_y = float(self.config['plotsize_y'])
         self.nbins = float(self.config['nbins'])
@@ -165,12 +166,10 @@ class CacheDetails(hf.module.ModuleBase):
         if failed == len(machines):
             data['status'] = 0
             data['error_msg'] = "No data to display!"
-            print "failed: ", data
             return data
         if sum(file_count) == 0:
             data['status'] = 0.5
             data['error_msg'] = "No files on caches found"
-            print "sum(file_count)== 0:", data
             return data
         ###############
         # Make   plot #
