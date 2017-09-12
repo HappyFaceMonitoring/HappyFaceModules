@@ -1,0 +1,16 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+    <table class="TableData">
+      <tr class="TableHeader">
+        <th> Used Cpu hours </th>
+        <th> Unused Cpu hours </th>
+	<th> Unused resources</th>
+      </tr>
+      <tr>
+        <td>${module.dataset['Cpu_hours']}</td>
+        <td>${module.dataset['empty_Cpu_hours']}</td>
+	<td>${module.dataset['unused_resources']} %</td>
+    </table>
+</%def>
