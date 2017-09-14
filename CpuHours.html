@@ -2,15 +2,21 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
+    <!--<div class="DetailedInfo" id="${module.instance_name}_cpu_hours_statistics" style="display:none;">-->
     <table class="TableData">
       <tr class="TableHeader">
+	<th> Cloudsite </th>
         <th> Used Cpu hours </th>
         <th> Unused Cpu hours </th>
-	<th> Unused resources</th>
+	<th> Usage in %</th>
       </tr>
-      <tr>
-        <td>${module.dataset['Cpu_hours']}</td>
-        <td>${module.dataset['empty_Cpu_hours']}</td>
-	<td>${module.dataset['unused_resources']} %</td>
+      % for entry in statistics:
+	      <tr>
+		<td>${entry['cloudsite']}</td>
+		<td>${entry['cpu_hours']}</td>
+		<td>${entry['unused_cpu_hours']}</td>
+		<td>${entry['usage']} %</td>
+	      </tr>
+      % endfor
     </table>
 </%def>

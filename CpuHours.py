@@ -15,60 +15,67 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import INT, Column
-import json
-import time
-import socket
-import logging
-import urllib2
-from ConfigParser import RawConfigParser
-import numpy as np
+from sqlalchemy import INT, TEXT, FLOAT, Column, create_engine, MetaData, Table
+from sqlalchemy.orm import mapper, sessionmaker
+
+class SiteStatus(object):
+    pass
+
 
 class CpuHours(hf.module.ModuleBase):
     config_keys = {'source_url' : ('Not used, but filled to avoid warnings', 'http://monitor.ekp.kit.edu/ganglia/')
                   }
-    table_columns = [
-	Column("Cpu_hours", INT),
-	Column("empty_Cpu_hours", INT),
-	Column("unused_resources", INT)
-    ], []
+    table_columns = [],[]
+    subtable_columns = {
+		'statistics' : ([
+			Column("cloudsite", TEXT),
+			Column("cpu_hours", FLOAT),
+			Column("unused_cpu_hours", FLOAT),
+			Column("usage", FLOAT)], [])
+	}
 
     
     def prepareAcquisition(self):
 	# Setting defaults
 	self.source_url = self.config["source_url"]
-        #prepare acqusition function.
-        self.logger = logging.getLogger(__name__)
-        self.infos = ['disk_total', 'disk_free']
-        top_url = 'http://monitor.ekp.kit.edu/ganglia/'
-	cfg_parser = RawConfigParser()
-	cfg_parser.read('config/ganglia.cfg')
-        username = cfg_parser.get('login', 'username')
-        passwd = cfg_parser.get('login', 'passwd')
-        pass_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pass_mgr.add_password(None, top_url, username, passwd)
-        authhandler = urllib2.HTTPBasicAuthHandler(pass_mgr)
-	opener = urllib2.build_opener(authhandler)
-	urllib2.install_opener(opener)
-	
+	self.cloudsites = ['bwforcluster', 'condocker', 'ekpsupermachines']	
+	# Prepare subtable list for database
+        self.statistics_db_value_list = []
     
     def extractData(self):
 	# Create data dictionary.
 	data = {}
-	# Set url of the plot in ganglia.
-	url = "http://monitor.ekp.kit.edu/ganglia/graph.php?hreg[]=ekpcondorcentral.ekp.kit.edu" \
-	      + "&mreg[]=BWFORCLUSTER-%28Cpus%28%3F%3ANot%29%3FInUse%29&vl=cores&aggregate=1&r=year&json=1"
-	handle = urllib2.urlopen(url)
-	html = handle.read()
-	in_file = json.loads(html)
-	# Create two arrays out of the datapoints with zeros instead of NaN.
-	used_cpus = np.array([entry[0] if entry[0] != "NaN" else 0. for entry in in_file[0]["datapoints"]])
-	not_used_cpus = np.array([entry[0] if entry[0] != "NaN" else 0. for entry in in_file[1]["datapoints"]])
-	# Calculate hours per data point.
-	hours_per_point = 365. / used_cpus.size * 24
-	data["Cpu_hours"] = int(np.sum(used_cpus * hours_per_point))
-	data["empty_Cpu_hours"] = int(np.sum(not_used_cpus * hours_per_point))
-	data["unused_resources"] = int(float(data["empty_Cpu_hours"])/(data["Cpu_hours"] + data["empty_Cpu_hours"])*100)
+	with open('config/password', 'r') as f:
+		engine = create_engine('postgres://hf3_ekplocal:'+ f.read()[:-1] +'@127.0.0.1/hf3_ekplocal', echo=False)
 
-	return data	
-				
+        metadata = MetaData(engine)
+        subtable = Table('sub_ht_condor_site_status_statistics', metadata, autoload=True)
+        mapper(SiteStatus, subtable)
+
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        res = session.query(SiteStatus).all()
+        max_parent_id = res[-1].parent_id
+        num_of_parent_ids = 4
+        for cloudsite in self.cloudsites:
+	    cloudsite_dict = {'cloudsite': cloudsite, 'cpu_hours': 0., 'unused_cpu_hours': 0.}
+	    for entry in reversed(res):
+	        if entry.cloudsite == cloudsite and entry.parent_id > max_parent_id - num_of_parent_ids:
+		    cloudsite_dict['cpu_hours'] += 0.25 * entry.busy
+		    cloudsite_dict['unused_cpu_hours'] += 0.25 * entry.idle
+	    cloudsite_dict['usage'] = round(cloudsite_dict['cpu_hours'] *100 / (cloudsite_dict['unused_cpu_hours'] + cloudsite_dict['cpu_hours']),2)
+	    self.statistics_db_value_list.append(cloudsite_dict)
+	return data
+
+    def fillSubtables(self, parent_id):
+                self.subtables['statistics'].insert().execute([dict(parent_id=parent_id, **row) for row in self.statistics_db_value_list])
+
+    def getTemplateData(self):
+
+                data = hf.module.ModuleBase.getTemplateData(self)
+                statistics_list = self.subtables['statistics'].select().\
+                        where(self.subtables['statistics'].c.parent_id == self.dataset['id']).execute().fetchall()
+                data["statistics"] = map(dict, statistics_list)
+                return data
+
