@@ -114,6 +114,7 @@ class Portals(hf.module.ModuleBase):
 				sum_dict[key] += dictionary[key]
 	sum_dict['total'] = float("{0:.2f}".format(sum_dict['total']))
 	sum_dict['use'] = float("{0:.2f}".format(sum_dict['use']))
+	sum_dict['1-min'] = round(sum_dict['1-min'],2)
 	red_1min = [1 for dictionary in self.statistics_db_value_list if dictionary['1-min'] >= dictionary['CPUs']] 
 	yellow_1min = [1 for dictionary in self.statistics_db_value_list if dictionary['1-min'] >= 0.75 * dictionary['CPUs']] 
 	red_use = [1 for dictionary in self.statistics_db_value_list if dictionary['use_perc'] >= self.config['use_perc_critical']]
