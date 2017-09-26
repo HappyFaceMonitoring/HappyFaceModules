@@ -47,7 +47,7 @@ class Portals(hf.module.ModuleBase):
         self.logger = logging.getLogger(__name__)
         self.portals = ['ekpams2', 'ekpams3',
                         'ekpbms1', 'ekpbms2', 'ekpbms3',
-                        'ekpcms5', 'ekpcms6'
+                        'ekpcms6'
                        ]
         self.infos = ['mem', 'load']
         top_url = 'http://monitor.ekp.kit.edu/ganglia/'

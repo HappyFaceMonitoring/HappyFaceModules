@@ -84,13 +84,13 @@ class Storages(hf.module.ModuleBase):
 		in_file = json.loads(html)[0]
 		for datapoint in reversed(in_file['datapoints']):
 			if datapoint[0] != 'NaN':
-				storage_dict[entry_dict[info]] = datapoint[0]
+				storage_dict[entry_dict[info]] = datapoint[0] / 1024.
 	    # Add a zero by hand to the dictionary if all values in json file are 'NaN'.
 	    for value in entry_dict.itervalues():
 		if value in storage_dict.keys():
 			pass
 		else:
-			storage_dict[value] = 0
+			storage_dict[value] = 0.
 	    storage_dict['used'] = float('{0:.2f}'.format(storage_dict['total'] - storage_dict['available']))
 	    del storage_dict['available']
 	    storage_dict['total'] = float('{0:.2f}'.format(storage_dict['total']))
