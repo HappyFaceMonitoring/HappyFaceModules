@@ -3,12 +3,43 @@
 
 <%def name="content()">
     <!--<div class="DetailedInfo" id="${module.instance_name}_cpu_hours_statistics" style="display:none;">-->
+    <script type="text/javascript">
+    function ${module.instance_name}_row_button_statistics(site) {
+	$('#${module.instance_name}_plot_form :hidden').remove();
+	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="filter" value="cloudsite,'+site+'" />');
+	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="legend" value="1" />');
+	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="title" value="${module.instance_name}_'+site+'" />');
+//	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_1" value="${module.instance_name},statistics,cpu_hours,CPU hours" />');
+//	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_2" value="${module.instance_name},statistics,unused_cpu_hours,Unused CPU hours" />');
+	$('#${module.instance_name}_plot_form').append('<input type="hidden" name="curve_3" value="${module.instance_name},statistics,usage,Usage" />');
+	$('#${module.instance_name}_plot_form').submit();
+    }
+    </script>
+    <form id="${module.instance_name}_plot_form" method="get" action="${hf.plotgenerator.getTimeseriesUrl()}" target="_blank">
+        <table style="font: bold 0.7em sans-serif; width:800px; background-color: #ddd; border: 1px #999 solid;">
+             <tr>
+             <td>Start:</td>
+             <td>
+              <%
+              import datetime
+              backintime = run['time']-datetime.timedelta(days=1)
+              %>
+              <input name="start_date" type="text" size="10" style="text-align:center;" value="${backintime.strftime('%Y-%m-%d')}" />
+              <input name="start_time" type="text" size="5" style="text-align:center;" value="${backintime.strftime('%H:%M')}" />
+             </td>
+             <td>End:</td>
+             <td>
+               <input name="end_date" type="text" size="10" style="text-align:center;" value="${run['time'].strftime('%Y-%m-%d')}" />
+               <input name="end_time" type="text" size="5" style="text-align:center;" value="${run['time'].strftime('%H:%M')}" />
+             </td>
+             </tr>
+    </table>
     <table class="TableData">
       <tr class="TableHeader">
 	<th> Cloudsite </th>
         <th> Used Cpu hours </th>
         <th> Unused Cpu hours </th>
-	<th> Usage in %</th>
+	<th> Usage in % </th>
       </tr>
       % for entry in statistics:
 	      <tr>
@@ -16,6 +47,7 @@
 		<td>${entry['cpu_hours']}</td>
 		<td>${entry['unused_cpu_hours']}</td>
 		<td>${entry['usage']} %</td>
+		<td><input type="button" value="Plot" id="${entry['cloudsite']}" onclick="${module.instance_name}_row_button_statistics(this.id)"/></td>
 	      </tr>
       % endfor
     </table>

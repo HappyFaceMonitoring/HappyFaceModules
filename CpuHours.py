@@ -57,7 +57,8 @@ class CpuHours(hf.module.ModuleBase):
 
         res = session.query(SiteStatus).all()
         max_parent_id = res[-1].parent_id
-        num_of_parent_ids = 4
+	past_hours = 24
+        num_of_parent_ids = past_hours * 4
         for cloudsite in self.cloudsites:
 	    cloudsite_dict = {'cloudsite': cloudsite, 'cpu_hours': 0., 'unused_cpu_hours': 0.}
 	    for entry in reversed(res):
