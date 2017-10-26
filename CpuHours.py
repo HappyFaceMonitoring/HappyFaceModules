@@ -65,7 +65,10 @@ class CpuHours(hf.module.ModuleBase):
 	        if entry.cloudsite == cloudsite and entry.parent_id > max_parent_id - num_of_parent_ids:
 		    cloudsite_dict['cpu_hours'] += 0.25 * entry.busy
 		    cloudsite_dict['unused_cpu_hours'] += 0.25 * entry.idle
-	    cloudsite_dict['usage'] = round(cloudsite_dict['cpu_hours'] *100 / (cloudsite_dict['unused_cpu_hours'] + cloudsite_dict['cpu_hours']),2)
+	    if cloudsite_dict['unused_cpu_hours'] + cloudsite_dict['cpu_hours'] == 0:
+		cloudsite_dict['usage'] = 0.00
+	    else:
+	        cloudsite_dict['usage'] = round(cloudsite_dict['cpu_hours'] *100 / (cloudsite_dict['unused_cpu_hours'] + cloudsite_dict['cpu_hours']),2)
 	    self.statistics_db_value_list.append(cloudsite_dict)
 	return data
 
