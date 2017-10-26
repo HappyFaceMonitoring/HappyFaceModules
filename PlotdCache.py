@@ -43,6 +43,7 @@ class PlotdCache(hf.module.ModuleBase):
 		self.pool_data = {}
 		self.sum_prot = {}
 		self.sum_pool = {}
+		self.difference = []
 		response = urllib.urlopen(self.source_url)
 		for entry in sorted(json.loads(response.read()), key = lambda x: x.get('moverStart')):
 			for element in self.config['pool'].split(','):
@@ -56,6 +57,8 @@ class PlotdCache(hf.module.ModuleBase):
 					throughput = entry.get('transferRate')
 					if pool == '<unknown>':
 						continue
+					# Calculate the difference between waiting and start time.
+					self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
 					if pool and direction and prot and throughput:
 						self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(throughput)
 						self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
@@ -136,7 +139,17 @@ class PlotdCache(hf.module.ModuleBase):
 			ax[direction].grid(axis = 'x')
 		
 		ax['in'].legend(patches, labels, labelspacing = 1, prop = matplotlib.font_manager.FontProperties(size = 9), loc = 'best')
+		
+		fig_diff = matplotlib.pyplot.figure(figsize=(7,7))
+		ax_diff = fig_diff.add_subplot(111)
+		n, bins,_ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5,max(self.difference)+0.5),color="slateblue",fill=True,histtype='bar',align='mid')
+		ax_diff.set_xlabel('difference in s')
+		ax_diff.set_ylabel('number of transfers')
+		ax_diff.set_title('Difference between waiting and starting time of transfers')			
+		ax_diff.set_xlim(min(bins),max(bins))
+
 		# save figure
                 plotname = hf.downloadService.getArchivePath( self.run, self.instance_name + "_dcacheinfo.png")
                 fig.savefig(plotname, dpi=91, bbox_inches="tight")
+		fig_diff.savefig(plotname.replace(".png","_timedifferences.png"), dpi=91, bbox_inches="tight")
                 return plotname
