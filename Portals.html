@@ -1,0 +1,69 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<!--<div class="DetailedInfo" id="${module.instance_name}_portals_statistics" style="display:none;">-->
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th>Portal</th>
+		<th>Used memory in GB</th>
+		<th>Total memory in GB</th>
+		<th>use percentage</th>
+		<th>number of logical cores</th>
+		<th>load(1-min)</th>
+	</tr>
+	% for entry in statistics:
+		% if entry['Portal'] != 'all':
+			<tr>
+			<td>${entry['Portal']}</td>
+			<td>${entry['use']}</td>
+			<td>${entry['total']}</td>
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
+			    <td class="critical">
+			% elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
+			    <td class="warning">
+			% else:
+			    <td class="ok">
+			% endif
+			${entry['use_perc']} %</td>
+			<td>${entry['CPUs']}</td>
+			% if float(entry['1-min']) >= float(entry['CPUs']):
+			    <td class="critical">
+			% elif float(entry['1-min']) >= 0.75*float(entry['CPUs']):
+			    <td class="warning">
+			% else:
+			    <td class="ok">
+			% endif
+			${entry['1-min']}</td>
+			</tr>
+		% endif
+	% endfor
+	% for entry in statistics:
+		% if entry['Portal'] == 'all':
+			<tr>
+			<td>${entry['Portal']}</td>
+			<td>${entry['use']}</td>
+			<td>${entry['total']}</td>
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
+                            <td class="critical">
+                        % elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
+                            <td class="warning">
+                        % else:
+                            <td class="ok">
+                        % endif
+			${entry['use_perc']} %</td>
+			<td>${entry['CPUs']}</td>
+			% if float(entry['1-min']) >= float(entry['CPUs']):
+                            <td class="critical">
+                        % elif float(entry['1-min']) >= 0.75*float(entry['CPUs']):
+                            <td class="warning">
+                        % else:
+                            <td class="ok">
+			% endif
+			${entry['1-min']}</td>
+			</tr>
+		% endif
+	% endfor
+	</table>
+	<!--</div>-->
+</%def>

@@ -117,14 +117,14 @@ class dCacheInfoPool(hf.module.ModuleBase):
                     'total': float(spans[3].text)/self.unit,
                     'free': float(spans[4].text)/self.unit,
                     'precious': float(spans[5].text)/self.unit}
-            for div in spans[-1].findall('.//div'):
-                if div.get('class') == 'removable':
-                    removable = div.get('style') # style = 'width: X.X%'
-                    removable = replace(removable, 'width:', ' ')
-                    removable = replace(removable, '%', ' ')
-                    removable = float(removable) / 100.0 * append['total']
-                    append['removable'] = removable
-            self.details_db_value_list.append(append)
+                for div in spans[-1].findall('.//div'):
+                    if div.get('class') == 'removable':
+                        removable = div.get('style') # style = 'width: X.X%'
+                        removable = replace(removable, 'width:', ' ')
+                        removable = replace(removable, '%', ' ')
+                        removable = float(removable) / 100.0 * append['total']
+                        append['removable'] = removable
+                self.details_db_value_list.append(append)
         data['num_pools'] = 0
         data['crit_pools'] = 0
         data['warn_pools'] = 0

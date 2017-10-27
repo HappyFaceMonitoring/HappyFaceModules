@@ -50,6 +50,7 @@ class HammerCloudInterface(hf.module.ModuleBase):
 		data = {}
 		hammercloud = lh.parse(self.source_url).getroot()
 		testtypelist = hammercloud.findall(".//div[@class='runningjobs']") # extracting test types
+		efficiency_status_list = []
 		for site_name in self.site_names:
 			for testtype in testtypelist:
 				noentries = False
@@ -58,30 +59,29 @@ class HammerCloudInterface(hf.module.ModuleBase):
 					if p.text == "No entries":
 						noentries = True
 						break
-
-				# if there are currently no tests for a certain test type,
-				# then no further search is done and the module continues with the next test type
-				if noentries: continue
-
-				test_type_value = 'no information'
-				test_id_value = 'no information'
-				submitted_jobs_value = 'no information'
-				running_jobs_value = 'no information'
-				completed_jobs_value = 'no information'
-				failed_jobs_value = 'no information'
-				jobs_with_status_k_value = 'no information'
-				efficiency_value = 'no information'
-				jobs_in_total_value = 'no information'
-				efficiency_status_list = []
+				if noentries: continue # if there are currently no tests for a certain test type, then no further search is done and the module continues with the next test type
+				test_type_value = testtype.find(".//h3").text
 				for test in testtype.findall(".//tr[@onmouseover]"):
+					test_id_value = 'no information'
+					submitted_jobs_value = 'no information'
+					running_jobs_value = 'no information'
+					completed_jobs_value = 'no information'
+					failed_jobs_value = 'no information'
+					jobs_with_status_k_value = 'no information'
+					efficiency_value = 'no information'
+					jobs_in_total_value = 'no information'
 					for td in test.findall(".//td"):
-						if td.text.find(site_name) > -1: # looking for tests on the site of interest
-							test_type_value = testtype.find(".//h3").text
-							test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
-							siteinfo = test.find(".//td[@style]").text
-							site = site_name if (siteinfo.find(site_name) > -1) else "Anysite"
-							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".\
-								format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
+						site = "Anysite"
+						if td.text:
+							if td.text.find(site_name) > -1: # looking for tests on the site of interest
+								test_id_value = test.get("onclick").replace("DoNav('/hc/app/cms/test/","").replace("/');","") # retrieving ID of the test
+								siteinfo = test.find(".//td[@style]").text
+								site = site_name if (siteinfo.find(site_name) > -1) else "Anysite"
+						else:
+							if td.findall(".//a")[0].text.find(site_name) > -1:
+								test_id_value = td.findall(".//a")[0].get("href").replace("/hc/app/cms/test/","").replace("/","")
+						if test_id_value != 'no information':
+							json_url = self.source_url + "xhr/json/?action=results_at_site&test={IDNUMBER}&site={SITE}".format(IDNUMBER = test_id_value, SITE = site) # building appropriate .json url to get detailed information on the test
 							readout = ul.urlopen(json_url).read()
 							# finding and calculating several detailed information on the jobs of the test
 							gsc = readout.count('"ganga_status": "c"')
@@ -117,7 +117,8 @@ class HammerCloudInterface(hf.module.ModuleBase):
 								'jobs_in_total' : jobs_in_total_value
 							}
 							self.running_tests_db_value_list.append(cat_data)
-		data['status'] = min(efficiency_status_list)
+							break
+		data['status'] = min(efficiency_status_list) if len(efficiency_status_list) > 0 else 1.0
 		return data
 	def fillSubtables(self, module_entry_id):
 		self.subtables['running_tests'].insert().execute([dict(parent_id=module_entry_id, **row) for row in self.running_tests_db_value_list])

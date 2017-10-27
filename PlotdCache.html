@@ -1,0 +1,7 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+<img src=${module.dataset["filename_plot"].getArchiveUrl().replace(".png","_timedifferences.png")} />
+</%def>

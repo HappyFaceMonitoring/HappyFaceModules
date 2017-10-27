@@ -1,0 +1,50 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+	<!--<div class="DetailedInfo" id="${module.instance_name}_storage_statistics" style="display:none;">-->
+	<table class="TableData">
+	<tr class="TableHeader">
+		<th>Storage</th>
+		<th>Used disk space in TB</th>
+		<th>Total disk space in TB</th>
+		<th>Use percentage</th>
+	</tr>
+	%for entry in statistics:
+		% if entry['Storage'] != 'all':
+			<tr>
+			<td>${entry['Storage']}</td>
+			<td>${entry['used']}</td>
+			<td>${entry['total']}</td>
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
+			    <td class="critical">
+			% elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
+			    <td class="warning">
+			% else:
+			    <td class="ok">
+			% endif
+			${entry['use_perc']} %</td>
+			</tr>
+		% endif
+	%endfor
+	%for entry in statistics:
+		% if entry['Storage'] == 'all':
+			<tr>
+			<td>${entry['Storage']}</td>
+			<td>${entry['used']}</td>
+			<td>${entry['total']}</td>
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
+			    <td class="critical">
+			% elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
+			    <td class="warning">
+			% else:
+			    <td class="ok">
+			% endif
+			${entry['use_perc']} %</td>
+			</tr>
+		% endif
+	%endfor
+
+	</table>
+	<!--</div>-->
+</%def>

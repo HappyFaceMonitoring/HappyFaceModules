@@ -22,6 +22,7 @@ import copy
 import time
 import numpy as np
 from datetime import timedelta
+import types
 class HTCondorJobsPerUser(hf.module.ModuleBase):
 
 	config_keys = {
@@ -65,7 +66,10 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			Column("runtime", INT),
 			Column("sites", TEXT),
 			Column("ram", INT),
-			Column('requested_memory', INT)], [])
+			Column("requested_memory", INT),
+			Column("transfer", INT),
+			Column("NetworkInputMb", FLOAT),
+			Column("NetworkOutputMb", FLOAT)], [])
 
 	}
 
@@ -88,11 +92,14 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"RemoteSysCpu",
 			"RemoteUserCpu",
 			"CurrentTime",
-			"RemoteHost",
 			"MachineAttrCloudSite0",
 			"QDate",
 			"JobCurrentStartDate",
-			"JobStartDate"
+			"JobStartDate",
+			"ServerTime",
+			"NetworkInputMb",
+			"NetworkOutputMb",
+			"TransferInputSizeMB"
 	        ]
 		self.jobs_status_dict = {1 : "idle", 2 : "running", 3 : "removed", 4 : "completed", 5 : "held", 6 : "transferred", 7 : "suspended"}
 		self.jobs_status_colors = ["#56b4e9", "#009e73", "firebrick", "slateblue", "#d55e00", "slategrey", "#e69f00"]
@@ -114,7 +121,10 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			"walltimes" : [],
                         "sites" : [],
 			"ram" : 0,
-			"requested_memory" : 0
+			"requested_memory" : 0,
+			"NetworkInputMb" : 0.,
+			"NetworkOutputMb" : 0.,
+			"transfer" : 0
 		}
 		self.user_statistics = {}
 
@@ -183,6 +193,14 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			# Count used cores
 			self.user_statistics[user]["cores"] += job["RequestCpus"]
 			data["cores"] += job["RequestCpus"]
+			# Get information on network traffic.
+			if type(job["NetworkInputMb"]) == types.NoneType:
+				pass
+			else:
+				self.user_statistics[user]["NetworkInputMb"] += job["NetworkInputMb"]
+				self.user_statistics[user]["NetworkOutputMb"] += job["NetworkOutputMb"]
+			# Get information on input files.
+			self.user_statistics[user]["transfer"] += job["TransferInputSizeMB"]
 			# Summarize the status information
 			status = self.jobs_status_dict.get(job["JobStatus"])
 			self.user_statistics[user][status] +=1
@@ -202,7 +220,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			if status == "running":
 				try:	
 					cputime = job["RemoteUserCpu"] + job["RemoteSysCpu"]
-					runtime = int(time.time())- job["JobCurrentStartDate"]
+					runtime = job["RequestCpus"] * (job["ServerTime"] - job["JobStartDate"])
 					efficiency = float(cputime)/float(runtime)
 					# Avoiding not up to date values of JobCurrentStartDate, that result in efficiencies bigger than 1
 					if efficiency <= 1.:
@@ -222,6 +240,9 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			all_efficiencies += self.user_statistics[user]["efficiencies"]
 			user_data["sites"] = ",\n".join(self.user_statistics[user]["sites"])
 			user_data["priority"] = round(self.priorities[user],1)
+			user_data["NetworkInputMb"] = round(self.user_statistics[user]["NetworkInputMb"],2)
+			user_data["NetworkOutputMb"] = round(self.user_statistics[user]["NetworkOutputMb"],2)
+			user_data["transfer"] = self.user_statistics[user]["NetworkOutputMb"]
 			self.statistics_db_value_list.append(user_data)
 
 		data["efficiency"] = round(np.mean(all_efficiencies),2) if len(all_efficiencies)> 0 else 1.0

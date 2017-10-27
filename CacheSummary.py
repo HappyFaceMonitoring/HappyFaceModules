@@ -18,9 +18,13 @@ import hf
 from sqlalchemy import TEXT, INT, Column
 import json
 
+import urllib2
+import socket
+import logging
+
 
 class CacheSummary(hf.module.ModuleBase):
-    config_keys = {'sourceurl': ('Source Url', '')
+    config_keys = {'source_url': ('Not used, but filled to avoid warnings', 'http://ekpsg01.ekp.kit.edu:8080/cache/backends/cache')
                    }
     table_columns = [
         Column('size', INT),
@@ -31,38 +35,57 @@ class CacheSummary(hf.module.ModuleBase):
         Column('error', INT),
         Column('total_files', INT)
     ], []
+    
 
     def prepareAcquisition(self):
-        link = self.config['sourceurl']
-        # Download the file
-        self.source = hf.downloadService.addDownload(link)
-        # Get URL
-        self.source_url = self.source.getSourceUrl()
-        # Set up Container for subtable data
+	# Setting defaults
+	self.source_url = self.config["source_url"]
+	self.logger = logging.getLogger(__name__)
+        self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
+        self.summary_data = {}
 
     def extractData(self):
+	# generate data for summary module
+        self.logger.info("Script to acquire summary data form Cache.")
+        for machine in self.machines:
+            # handle url request + errors
+            self.logger.info("Reading summary data from " + machine + '...')
+	    url = 'http://' + machine + '.ekp.kit.edu:8080/cache/backends/cache'
+            req = urllib2.Request(url)
+            try:
+                response = urllib2.urlopen(req, timeout=2)
+                html = response.read()
+            except urllib2.URLError as e:
+                self.logger.error(str(e.reason) + ' ' + url)
+                self.summary_data[machine] = 'no data'
+                continue
+            except socket.timeout, e:
+                self.logger.error("There was an error while reading " + url + ": %r" % e)
+                self.summary_data[machine] = 'no data'
+                continue
+            except socket.timeout:
+                self.logger.error("socket timeout" + ' ' + url)
+                self.summary_data[machine] = 'no data'
+                continue
+            html_fix = html.replace("Infinity", "0")  # fix unreadable value in dict
+            services = json.loads(html_fix)[0]
+            self.summary_data[machine] = services  # save data in dict
+            self.logger.info("Sucessful")
+	
         data = {}
         data['error_msg'] = 0
         data['error'] = 0
         volume_size, volume_used, file_number, score_average, volume_avail = [], [], [], [], []
-        path = self.source.getTmpPath()
-        # open file
-        with open(path, 'r') as f:
-            # fix the JSON-File, so the file is valid
-            content = f.read()
-            content_fixed = content.replace("]", " ")
-            content_fixed = content_fixed.replace("[", " ")
-            services = json.loads(content_fixed)
-            ekpsg = list(services.keys())
-            for Id in ekpsg:
-                if services[Id] != 'no data':
-                    volume_size.append(int(services[Id]['volume']['total']))
-                    volume_avail.append(int(services[Id]['volume']['avail']))
-                    volume_used.append(int(services[Id]['volume']['used']))
-                    file_number.append(int(services[Id]['allocation']['files_total']))
-                    score_average.append(float(services[Id]['allocation']['score_average']))
-                else:
-                    data['error'] += 1
+	ekpsg = list(self.summary_data.keys())
+	for Id in ekpsg:
+	    if self.summary_data[Id] != 'no data':
+		volume_size.append(int(self.summary_data[Id]['volume']['total']))
+		volume_avail.append(int(self.summary_data[Id]['volume']['avail']))
+		volume_used.append(int(self.summary_data[Id]['volume']['used']))
+		file_number.append(int(self.summary_data[Id]['allocation']['files_total']))
+		score_average.append(float(self.summary_data[Id]['allocation']['score_average']))
+	    else:
+	        data['error'] += 1
         data['size'] = sum(volume_size)/(1024*1024*1024)
         data['avail'] = sum(volume_avail)/(1024*1024*1024)
         data['used'] = sum(volume_used)/(1024*1024*1024)
@@ -75,5 +98,4 @@ class CacheSummary(hf.module.ModuleBase):
             data['error_msg'] = "No data to display!"
             data['status'] = 0
         data['total_files'] = sum(file_number)
-        print data
         return data

@@ -9,7 +9,7 @@
 		<th >Requested Remote Jobs</th>
 		<th >Average Efficiency</th>
 		<th >Requested Cores</th>
-		<th >Used RAM </th>
+		<th >Requested Memory </th>
 		<th >Average Queue Time</th>
 	</tr>
 	<tr>
@@ -52,11 +52,14 @@
 		<th>Idle Jobs</th>
 		<th>Running Jobs</th>
 		<th>Held Jobs</th>
-		<th>Suspended Jobs</th>
-		<th>Requested Cores</th>
-		<th>Used RAM</th>
-		<th>Average User Efficiency</th>
+		<th>Susp. Jobs</th>
+		<th>Req. Cores</th>
+		<th>Req. Memory</th>
+		<th>Av. User Eff.</th>
 		<th>User Priority</th>
+		<th>Input Network Traffic</th>
+		<th>Output Network Traffic</th>
+		<th>Input Transfer Size</th>
 	</tr>
 	%for entry in statistics:
 		<tr>
@@ -89,6 +92,9 @@
 		%endif
 		${entry['efficiency']}</td>
 		<td>${entry['priority']}</td>
+		<td>${entry['NetworkInputMb']} MB</td>
+		<td>${entry['NetworkOutputMb']} MB</td>
+		<td>${entry['transfer']} MB</td>
 		</tr>
 	%endfor
 	</table>
