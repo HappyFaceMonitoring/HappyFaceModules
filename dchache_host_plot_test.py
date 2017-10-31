@@ -9,7 +9,7 @@ class PlotdCache(object):
 
     def prepareAcquisition(self):
         self.source_url = 'http://cmsdcacheweb-kit.gridka.de:2288/context/transfers.json'
-        self.config = {'pool': 'D_cms', 'category': 'pool', 'host': 'f01-124-127,f01-120-129,'
+        self.config = {'pool': 'D_cms', 'category': 'host', 'host': 'f01-124-127,f01-120-129,'
                                                                     'f01-120-127'}
 
     def extractData(self):
@@ -32,7 +32,7 @@ class PlotdCache(object):
                         pool = entry.get('pool')
                     else:
                         if self.config['category'] == 'host':
-                            host = hostRE.search(entry.get('pool')).group()
+                            pool = hostRE.search(entry.get('pool')).group()
                     if 'receiving' in entry.get('sessionStatus').lower():
                         direction = 'in'
                     else:
@@ -46,10 +46,10 @@ class PlotdCache(object):
                         self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool, 0) + throughput
                     else:
                         if self.config['category'] == 'host':
-                            if host == '<unknown>':
+                            if pool == '<unknown>':
                                 continue
-                            self.pool_data.setdefault(host, {}).setdefault(direction, {}).setdefault(prot, []).append(throughput)
-                            self.sum_pool[direction][host] = self.sum_pool.setdefault(direction, {}).get(host, 0) + throughput
+                            self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(throughput)
+                            self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool, 0) + throughput
                     # Calculate the difference between waiting and start time.
                     self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
                     self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
@@ -129,7 +129,7 @@ class PlotdCache(object):
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=45)
             else:
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=-45)
-            ax[direction].set_ylim((-0.5, len(self.plot_objects) - 0.5))
+            ax[direction].set_ylim((-1, len(self.plot_objects) - 1))
             ax[direction].grid(axis='x')
 
         ax['in'].legend(patches, labels, labelspacing=1, prop=matplotlib.font_manager.FontProperties(size=9),
@@ -137,7 +137,7 @@ class PlotdCache(object):
 
         fig_diff = matplotlib.pyplot.figure(figsize=(7, 7))
         ax_diff = fig_diff.add_subplot(111)
-        n, bins, _ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5, max(self.difference) + 0.5),
+        n, bins, _ = ax_diff.hist(self.difference, max(self.difference)+1, range=(-0.5, max(self.difference) + 0.5),
                                   color="slateblue", fill=True, histtype='bar', align='mid')
         ax_diff.set_xlabel('difference in s')
         ax_diff.set_ylabel('number of transfers')
