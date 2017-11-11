@@ -7,4 +7,5 @@ static/archive/*
 .svn/*
 modules/*
 config/*
-.idea
+# stuff of IDEs
+.idea/
