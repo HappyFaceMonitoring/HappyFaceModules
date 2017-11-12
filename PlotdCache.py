@@ -48,11 +48,11 @@ class PlotdCache(hf.module.ModuleBase):
         self.sum_pool = {}
         self.difference = []
         response = urllib.urlopen(self.source_url)
-        if self.config['category'] == 'pool':
-            objects_of_interest = [element for element in self.config['pool'].split(',')]
+        # decide if the data being gathered per host or per pool
+        if self.config['category'] == 'host':
+            objects_of_interest = [element for element in self.config['host'].split(',')]
         else:
-            if self.config['category'] == 'host':
-                objects_of_interest = [element for element in self.config['host'].split(',')]
+            objects_of_interest = [element for element in self.config['pool'].split(',')]
         for entry in sorted(json.loads(response.read()), key=lambda x: x.get('moverStart')):
             for element in objects_of_interest:
                 if (element in entry.get('pool')) or (element in hostRE.search(entry.get('pool')).group()):
@@ -78,12 +78,17 @@ class PlotdCache(hf.module.ModuleBase):
                         if self.config['category'] == 'host':
                             if pool == '<unknown>':
                                 continue
+                            # I use pool here, because it is the name of the data the plot routine looks for. In this
+                            # case the entry contains the name of the host instead of the pool
                             self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(
                                 throughput)
                             self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool,
                                                                                                          0) + throughput
                     # Calculate the difference between waiting and start time.
-                    self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
+                    # this data is only used to show up in the waiting time statistic, we will have to add in a
+                    # check so that it runs nicely
+                    if entry.get('moverStart') is not None:
+                        self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
                     self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
         if self.config['category'] == 'pool':
             self.plot_objects = sorted(self.pool_data, key=lambda p: (p.split('_')[1][1:], p))
