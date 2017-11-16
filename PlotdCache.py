@@ -166,7 +166,7 @@ class PlotdCache(hf.module.ModuleBase):
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=45)
             else:
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=-45)
-            ax[direction].set_ylim((-1, len(self.plot_objects) - 1))
+            ax[direction].set_ylim((-0.5, len(self.plot_objects) - 0.5))
             ax[direction].grid(axis='x')
 
         ax['in'].legend(patches, labels, labelspacing=1, prop=matplotlib.font_manager.FontProperties(size=9),
@@ -182,7 +182,7 @@ class PlotdCache(hf.module.ModuleBase):
         ax_diff.set_xlim(min(bins), max(bins))
 
         # save figure
-        plotname = './testbild.png'
+        plotname = hf.downloadService.getArchivePath( self.run, self.instance_name + "_dcacheinfo.png")
         fig.savefig(plotname, dpi=91, bbox_inches="tight")
         fig_diff.savefig(plotname.replace(".png", "_timedifferences.png"), dpi=91, bbox_inches="tight")
         return plotname
