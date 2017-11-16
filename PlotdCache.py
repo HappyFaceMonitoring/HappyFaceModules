@@ -182,7 +182,7 @@ class PlotdCache(hf.module.ModuleBase):
         ax_diff.set_xlim(min(bins), max(bins))
 
         # save figure
-        plotname = './testbild.png'
+        plotname = hf.downloadService.getArchivePath( self.run, self.instance_name + "_dcacheinfo.png")
         fig.savefig(plotname, dpi=91, bbox_inches="tight")
         fig_diff.savefig(plotname.replace(".png", "_timedifferences.png"), dpi=91, bbox_inches="tight")
         return plotname
