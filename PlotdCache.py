@@ -55,41 +55,43 @@ class PlotdCache(hf.module.ModuleBase):
             objects_of_interest = [element for element in self.config['pool'].split(',')]
         for entry in sorted(json.loads(response.read()), key=lambda x: x.get('moverStart')):
             for element in objects_of_interest:
-                if (element in entry.get('pool')) or (element in hostRE.search(entry.get('pool')).group()):
-                    if self.config['category'] == 'pool':
-                        pool = entry.get('pool')
-                    else:
-                        if self.config['category'] == 'host':
-                            pool = hostRE.search(entry.get('pool')).group()
-                    if 'receiving' in entry.get('sessionStatus').lower():
-                        direction = 'in'
-                    else:
-                        direction = 'out'
-                    prot = entry.get('protocol')
-                    throughput = entry.get('transferRate')
-                    if self.config['category'] == 'pool':
-                        if pool == '<unknown>':
-                            continue
-                        self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(
-                            throughput)
-                        self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool,
-                                                                                                     0) + throughput
-                    else:
-                        if self.config['category'] == 'host':
+                searchresult = hostRE.search(entry.get('pool'))
+                if searchresult is not None:
+                    if (element in entry.get('pool')) or (element in hostRE.search(entry.get('pool')).group()):
+                        if self.config['category'] == 'pool':
+                            pool = entry.get('pool')
+                        else:
+                            if self.config['category'] == 'host':
+                                pool = hostRE.search(entry.get('pool')).group()
+                        if 'receiving' in entry.get('sessionStatus').lower():
+                            direction = 'in'
+                        else:
+                            direction = 'out'
+                        prot = entry.get('protocol')
+                        throughput = entry.get('transferRate')
+                        if self.config['category'] == 'pool':
                             if pool == '<unknown>':
                                 continue
-                            # I use pool here, because it is the name of the data the plot routine looks for. In this
-                            # case the entry contains the name of the host instead of the pool
                             self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(
                                 throughput)
                             self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool,
                                                                                                          0) + throughput
-                    # Calculate the difference between waiting and start time.
-                    # this data is only used to show up in the waiting time statistic, we will have to add in a
-                    # check so that it runs nicely
-                    if entry.get('moverStart') is not None:
-                        self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
-                    self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
+                        else:
+                            if self.config['category'] == 'host':
+                                if pool == '<unknown>':
+                                    continue
+                                # I use pool here, because it is the name of the data the plot routine looks for. In this
+                                # case the entry contains the name of the host instead of the pool
+                                self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(
+                                    throughput)
+                                self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool,
+                                                                                                             0) + throughput
+                        # Calculate the difference between waiting and start time.
+                        # this data is only used to show up in the waiting time statistic, we will have to add in a
+                        # check so that it runs nicely
+                        if entry.get('moverStart') is not None:
+                            self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
+                        self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
         if self.config['category'] == 'pool':
             self.plot_objects = sorted(self.pool_data, key=lambda p: (p.split('_')[1][1:], p))
             self.plot_objects.reverse()
@@ -102,7 +104,7 @@ class PlotdCache(hf.module.ModuleBase):
         return data
 
     def plot(self):
-        import numpy
+        import numpy as np
         import matplotlib
         matplotlib.use("agg")
         import matplotlib.pyplot
@@ -131,7 +133,7 @@ class PlotdCache(hf.module.ModuleBase):
         ax['in'] = fig.add_subplot(121)
         ax['out'] = fig.add_subplot(122)
         ax['in'].yaxis.set_ticks([])
-        ax['out'].yaxis.set_ticks(range(len(self.plot_objects)))
+        ax['out'].yaxis.set_ticks(np.array(range(len(self.plot_objects)))-0.5)
         ax['out'].yaxis.set_ticklabels(self.plot_objects)
         ax['in'].set_xlabel('Incoming [MB/s]')
         ax['out'].set_xlabel('Outgoing [MB/s]')
@@ -166,7 +168,7 @@ class PlotdCache(hf.module.ModuleBase):
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=45)
             else:
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=-45)
-            ax[direction].set_ylim((-0.5, len(self.plot_objects) - 0.5))
+            ax[direction].set_ylim((-1, len(self.plot_objects) - 1))
             ax[direction].grid(axis='x')
 
         ax['in'].legend(patches, labels, labelspacing=1, prop=matplotlib.font_manager.FontProperties(size=9),
