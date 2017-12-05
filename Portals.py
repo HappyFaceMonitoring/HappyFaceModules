@@ -45,9 +45,12 @@ class Portals(hf.module.ModuleBase):
 	self.source_url = self.config["source_url"]
         #prepare acqusition function.
         self.logger = logging.getLogger(__name__)
-        self.portals = ['ekpams2', 'ekpams3',
-                        'ekpbms1', 'ekpbms2', 'ekpbms3',
-                        'ekpcms6'
+        self.portals = ['ams2.etp.kit.edu',
+			'ams3.etp.kit.edu',
+                        'ekpbms1.ekp.kit.edu',
+			'ekpbms2.ekp.kit.edu',
+			'bms3.etp.kit.edu',
+                        'cms6.etp.kit.edu'
                        ]
         self.infos = ['mem', 'load']
         top_url = 'http://monitor.ekp.kit.edu/ganglia/'
@@ -79,7 +82,7 @@ class Portals(hf.module.ModuleBase):
 	    portal_dict = {'Portal': portal}
             for info in self.infos:
                 url = 'http://monitor.ekp.kit.edu/ganglia/graph.php?h=' \
-                      + portal + '.ekp.kit.edu&m=load_one&r=hour&s=by%20name&hc=4&mc=2&g=' \
+                      + portal + '&m=load_one&r=hour&s=by%20name&hc=4&mc=2&g=' \
                       + info + '_report&z=large&c=Portals&json=1'
                 handle = urllib2.urlopen(url)
 		html = handle.read()
