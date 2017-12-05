@@ -58,11 +58,15 @@ class PlotdCache(hf.module.ModuleBase):
 					if pool == '<unknown>':
 						continue
 					# Calculate the difference between waiting and start time.
-					self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
+					if entry.get('moverStart'):
+						self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
 					if pool and direction and prot and throughput:
 						self.pool_data.setdefault(pool, {}).setdefault(direction, {}).setdefault(prot, []).append(throughput)
 						self.sum_prot[direction][prot] = self.sum_prot.setdefault(direction, {}).get(prot, 0) + throughput
 						self.sum_pool[direction][pool] = self.sum_pool.setdefault(direction, {}).get(pool, 0) + throughput
+						# Calculate the difference between waiting and start time.
+						self.difference.append(entry.get('moverStart') - entry.get('waitingSince'))
+
 
 		self.pool_list = sorted(self.pool_data, key = lambda p: (p.split('_')[1][1:], p))
 		self.pool_list.reverse()
@@ -92,7 +96,10 @@ class PlotdCache(hf.module.ModuleBase):
                         'NFSV4.1-0|1': '#ADFF2F',
                         }	
 		# Create Plot.
-		plot_height = len(self.pool_list) * 10./12
+		if self.pool_list:
+			plot_height = len(self.pool_list) * 10./12
+		else:
+			plot_height = 10./12
 		fig = matplotlib.pyplot.figure(figsize = (7,plot_height))
 		fig.subplots_adjust(left=0.03, right=0.97, top = 0.99, bottom = 0.075, wspace = 0.95)
 
@@ -142,12 +149,21 @@ class PlotdCache(hf.module.ModuleBase):
 		
 		fig_diff = matplotlib.pyplot.figure(figsize=(7,7))
 		ax_diff = fig_diff.add_subplot(111)
-		n, bins,_ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5,max(self.difference)+0.5),color="slateblue",fill=True,histtype='bar',align='mid')
+		try:
+			if len(self.difference) < 100:
+				n, bins,_ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5,max(self.difference)+0.5),color="slateblue",fill=True,histtype='bar',align='mid')
+			else:
+				n, bins,_ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5,max(self.difference)+0.5),color="slateblue",fill=True,histtype='bar',align='mid',log=True)
+			ax_diff.set_xlabel('difference in s')
+			ax_diff.set_ylabel('number of transfers')
+			ax_diff.set_title('Difference between waiting and starting time of transfers')			
+			ax_diff.set_xlim(min(bins),max(bins))
+		except ValueError:
+			ax_diff.text(0.3, 0.5, "No active transfers")
 		ax_diff.set_xlabel('difference in s')
 		ax_diff.set_ylabel('number of transfers')
-		ax_diff.set_title('Difference between waiting and starting time of transfers')			
-		ax_diff.set_xlim(min(bins),max(bins))
-
+		ax_diff.set_title('Difference between waiting and starting time of transfers')	
+		
 		# save figure
                 plotname = hf.downloadService.getArchivePath( self.run, self.instance_name + "_dcacheinfo.png")
                 fig.savefig(plotname, dpi=91, bbox_inches="tight")
