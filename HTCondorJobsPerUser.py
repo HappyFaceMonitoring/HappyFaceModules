@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 import hf
-from sqlalchemy import TEXT, INT, FLOAT, Column
+from sqlalchemy import TEXT, INT, FLOAT, BIGINT, Column
 import htcondor
 import re
 import copy
@@ -67,7 +67,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			Column("sites", TEXT),
 			Column("ram", INT),
 			Column("requested_memory", INT),
-			Column("transfer", INT),
+			Column("transfer", BIGINT),
 			Column("NetworkInputMb", FLOAT),
 			Column("NetworkOutputMb", FLOAT)], [])
 
@@ -84,7 +84,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 	        self.condor_projection = [
 			"JobStatus",
 			"User",
-			"ImageSize_raw",
+			"ResidentSetSize",
 			"RequestMemory",
 			"RequestCpus",
 			"RemoteJob",
@@ -133,7 +133,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.queries = []
 		for schedd in self.schedds:
-			self.queries.append(schedd.xquery(requirements = "RoutedToJobId =?= undefined", projection = self.condor_projection))
+			self.queries.append(schedd.xquery(requirements = "RoutedToJobId =?= undefined && JobUniverse =!= 9", projection = self.condor_projection))
 
 		# Prepare retrieval of user priority information from htcondor
 		self.negotiator = None
@@ -149,7 +149,6 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 		self.statistics_db_value_list = []
 
 	def extractData(self):
-
 		# Initialize the data for the main table
 		data = {
 			'running': 0,
@@ -176,7 +175,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 				self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
 
 		# Fill the main table and the user statistics information
-		for job in self.condor_jobs_information.itervalues():
+		for jobid, job in self.condor_jobs_information.iteritems():
 			# Count remotable jobs
 			if job["RemoteJob"]:
 				data["remote"] += 1
@@ -184,20 +183,27 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			user = job["User"]
 			if user not in self.user_statistics:
 				self.user_statistics[user] = copy.deepcopy(self.user_statistics_dict)
-			# Count used RAM in KiB
-			self.user_statistics[user]["ram"] += job["ImageSize_raw"]
-			data["ram"] += job["ImageSize_raw"]
+			# Count used RAM in MiB
+			if job["ResidentSetSize"] is None:
+				pass
+			else:
+				self.user_statistics[user]["ram"] += job["ResidentSetSize"]/1024.
+				data["ram"] += job["ResidentSetSize"]/1024.
 			# Count requested RAM in MiB
 			self.user_statistics[user]["requested_memory"] += job["RequestMemory"]
 			data["requested_memory"] += job["RequestMemory"]
 			# Count used cores
 			self.user_statistics[user]["cores"] += job["RequestCpus"]
 			data["cores"] += job["RequestCpus"]
+			
 			# Get information on network traffic.
 			if type(job["NetworkInputMb"]) == types.NoneType:
 				pass
 			else:
 				self.user_statistics[user]["NetworkInputMb"] += job["NetworkInputMb"]
+			if type(job["NetworkOutputMb"]) == types.NoneType:
+				pass
+			else:
 				self.user_statistics[user]["NetworkOutputMb"] += job["NetworkOutputMb"]
 			# Get information on input files.
 			self.user_statistics[user]["transfer"] += job["TransferInputSizeMB"]
@@ -215,7 +221,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			# Determine the sites the user is running his jobs on
 			job["MachineAttrCloudSite0"] = "Undefined" if job["MachineAttrCloudSite0"] is None else job["MachineAttrCloudSite0"]
 			if job["MachineAttrCloudSite0"].lower() not in self.user_statistics[user]["sites"] and status == "running":
-					self.user_statistics[user]["sites"].append(job["MachineAttrCloudSite0"].lower())
+				self.user_statistics[user]["sites"].append(job["MachineAttrCloudSite0"].lower())
 			# Calculate runtimes, cputimes and efficiencies of each job of a user
 			if status == "running":
 				try:	
@@ -233,7 +239,7 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			user_data = {"batchsystem_user": user}
 			for status in self.jobs_status_dict.itervalues():
 				user_data[status] = self.user_statistics[user][status]
-			user_data["cores"],user_data["ram"] = self.user_statistics[user]["cores"], self.determine_diskspace(self.user_statistics[user]["ram"])
+			user_data["cores"],user_data["ram"] = self.user_statistics[user]["cores"], self.determine_diskspace(self.user_statistics[user]["ram"], given_unit="MiB")
 			user_data["requested_memory"] = max(1,self.determine_diskspace(self.user_statistics[user]["requested_memory"], given_unit = "MiB"))
 			user_data["efficiency"] = round(np.mean(self.user_statistics[user]["efficiencies"]),2) \
 				if len(self.user_statistics[user]["efficiencies"]) > 0 else 1.0
@@ -246,9 +252,12 @@ class HTCondorJobsPerUser(hf.module.ModuleBase):
 			self.statistics_db_value_list.append(user_data)
 
 		data["efficiency"] = round(np.mean(all_efficiencies),2) if len(all_efficiencies)> 0 else 1.0
-		data["ram"] = self.determine_diskspace(data["ram"])
+		data["ram"] = self.determine_diskspace(data["ram"], given_unit="MiB")
 		data["requested_memory"] = max(1,self.determine_diskspace(data["requested_memory"], given_unit = "MiB"))
-		data["qtime"] = str(timedelta(seconds=int(np.mean(data["qtime"]))))
+		if len(data["qtime"]) != 0:
+			data["qtime"] = str(timedelta(seconds=int(np.mean(data["qtime"]))))
+		else:
+			 data["qtime"] = str(0)		
 
 		# Plot creation for user statistics
 		data["filename_plot"] = self.plot()
