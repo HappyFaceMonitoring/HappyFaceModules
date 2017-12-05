@@ -73,7 +73,7 @@ class CacheDistribution(hf.module.ModuleBase):
         self.x_max = float(self.config['x_max'])
 	
 	self.logger = logging.getLogger(__name__) 
-        self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01'] 
+        self.machines = ['ekpsg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01'] 
         self.in_data = {}
 	
 	def load_dslist(url):
