@@ -61,14 +61,11 @@ class CacheDetails(hf.module.ModuleBase):
         self.overscore_db_value_list = []
 	
 	self.logger = logging.getLogger(__name__)
-	self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
+	self.machines = ['ekpsg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
         self.machine_data = {}
 
 
     def extractData(self):
-        import matplotlib.pyplot as plt
-        from matplotlib.font_manager import FontProperties
-	
 	# read details for every file from filelist
         self.logger.info("Script to acquire details data form Cache.")
         for machine in self.machines:
@@ -111,10 +108,10 @@ class CacheDetails(hf.module.ModuleBase):
         data = {}
         data['filename_plot'] = ""
         data['error_msg'] = ""
-        plot_alloc = []
-        plot_score = []
-        plot_size = []
-        plot_maint = []
+        self.plot_alloc = []
+        self.plot_score = []
+        self.plot_size = []
+        self.plot_maint = []
         machines = self.machine_data.keys()
         for machine in machines:
             filenames = self.machine_data[machine].keys()
@@ -133,26 +130,26 @@ class CacheDetails(hf.module.ModuleBase):
             maintained = filter(lambda x: x != 0, maintained)
             maint = list(map(lambda x: round((time.time()-float(x))/(60*60*24), 2), maintained))
             # find data with higher score than threshold in config and fill Subtable
-            for k in xrange(len(filenames)):
+            for k, filename in enumerate(filenames):
                 if score[k] >= self.score_limit:
                     overscore = {
-                        'filename': filenames[k],
+                        'filename': filename,
                         'score': score[k],
                         'machine': machine,
                         'size': round(float(sizes[k]/(1024*1024)), 1)
                     }
                     self.overscore_db_value_list.append(overscore)
-            plot_size.append(list(map(lambda x: float(x)/(1024*1024), sizes)))
-            plot_alloc.append(alloc)
-            plot_score.append(score)
-            plot_maint.append(maint)
+            self.plot_size.append(list(map(lambda x: float(x)/(1024*1024), sizes)))
+            self.plot_alloc.append(alloc)
+            self.plot_score.append(score)
+            self.plot_maint.append(maint)
 
         file_count = list(self.machine_data[id]['file_count']for id in machines)
         status = list(self.machine_data[id]['status'] for id in machines)
         error_count = list(self.machine_data[id]['error_count'] for id in machines)
         #  Error handling for acquisition of data
-        for i in xrange(len(machines)):
-            details_data = {'machine': machines[i]}
+        for i, machine in enumerate(machines):
+            details_data = {'machine': machine}
             details_data['files'] = file_count[i]
             details_data['error_count'] = error_count[i]
             failed = 0
@@ -171,71 +168,7 @@ class CacheDetails(hf.module.ModuleBase):
             data['status'] = 0.5
             data['error_msg'] = "No files on caches found"
             return data
-        ###############
-        # Make   plot #
-        ###############
-        fig = plt.figure(figsize=(self.plotsize_x, self.plotsize_y*4))
-        axis = fig.add_subplot(411)
-        axis_2 = fig.add_subplot(412)
-        axis_3 = fig.add_subplot(413)
-        axis_4 = fig.add_subplot(414)
-        nbins = self.nbins
-        fontLeg = FontProperties()
-        fontLeg.set_size('small')
-        # fix arrays so matplotlib 1.3.1 can plot the histograms
-        machines_fix = []
-        plot_fix = []
-        for i in xrange(len(plot_size)):
-            if len(plot_size[i]) != 0:
-                plot_fix.append(plot_size[i])
-                machines_fix.append(machines[i])
-        axis.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True)
-        axis.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
-        axis.set_xlabel('FileSize in MiB')
-        axis.set_ylabel('Number of Files')
-        axis.set_title('File Size Distribution')
-        # fix arrays so matplotlib 1.3.1 can plot the histograms
-        machines_fix = []
-        plot_fix = []
-        for i in xrange(len(plot_alloc)):
-            if len(plot_alloc[i]) != 0:
-                plot_fix.append(plot_alloc[i])
-                machines_fix.append(machines[i])
-        axis_2.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
-        axis_2.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
-        axis_2.set_xlabel('Allocated since in hours')
-        axis_2.set_ylabel('Number of Files')
-        axis_2.set_title('Allocation Time Distribution')
-        # fix arrays so matplotlib 1.3.1 can plot the histograms
-        machines_fix = []
-        plot_fix = []
-        for i in xrange(len(plot_maint)):
-            if len(plot_maint[i]) != 0:
-                plot_fix.append(plot_maint[i])
-                machines_fix.append(machines[i])
-        axis_3.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
-        axis_3.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
-        axis_3.set_xlabel('Maintained since in days')
-        axis_3.set_ylabel('Number of Files')
-        axis_3.set_title('Maintain Time Distribution')
-        # fix arrays so matplotlib 1.3.1 can plot the histograms
-        machines_fix = []
-        plot_fix = []
-        for i in xrange(len(plot_score)):
-            if len(plot_score[i]) != 0:
-                plot_fix.append(plot_score[i])
-                machines_fix.append(machines[i])
-        axis_4.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
-        axis_4.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
-        axis_4.set_xlabel('Score ')
-        axis_4.set_ylabel('Number of Files')
-        axis_4.set_title('Score Distribution')
-        plt.tight_layout()
-        fig.savefig(hf.downloadService.getArchivePath(
-            self.run, self.instance_name + "_filesize.png"), dpi=91)
-        data["filename_plot"] = self.instance_name + "_filesize.png"
-        # fill subtables
-        print "subtables:", data
+        data["filename_plot"] = self.plot()
         return data
 
     def fillSubtables(self, parent_id):
@@ -254,3 +187,81 @@ class CacheDetails(hf.module.ModuleBase):
             self.subtables['overscore'].c.parent_id == self.dataset['id']).execute().fetchall()
         data["overscore"] = map(dict, details_list)
         return data
+
+    def plot(self):
+        import matplotlib.pyplot as plt
+        from matplotlib.font_manager import FontProperties
+	
+	# Create File Size Distribution plot.
+        fig_file_size = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
+        axis_file_size = fig_file_size.add_subplot(111)
+        nbins = self.nbins
+        fontLeg = FontProperties()
+        fontLeg.set_size('small')
+        # fix arrays so matplotlib 1.3.1 can plot the histograms
+        machines_fix = []
+        plot_fix = []
+        for i in xrange(len(self.plot_size)):
+            if len(self.plot_size[i]) != 0:
+                plot_fix.append(self.plot_size[i])
+                machines_fix.append(self.machines[i])
+        axis_file_size.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True)
+        axis_file_size.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+        axis_file_size.set_xlabel('FileSize in MiB')
+        axis_file_size.set_ylabel('Number of Files')
+        axis_file_size.set_title('File Size Distribution')
+	# Create Allocation Time Distribution plot.
+	fig_alloc = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
+        axis_alloc = fig_alloc.add_subplot(111)
+        # fix arrays so matplotlib 1.3.1 can plot the histograms
+        machines_fix = []
+        plot_fix = []
+        for i in xrange(len(self.plot_alloc)):
+            if len(self.plot_alloc[i]) != 0:
+                plot_fix.append(self.plot_alloc[i])
+                machines_fix.append(self.machines[i])
+        axis_alloc.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
+        axis_alloc.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+        axis_alloc.set_xlabel('Allocated since in hours')
+        axis_alloc.set_ylabel('Number of Files')
+        axis_alloc.set_title('Allocation Time Distribution')
+	# Create Maintain Time Distribution.
+	fig_maintain = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
+        axis_maintain = fig_maintain.add_subplot(111)
+        # fix arrays so matplotlib 1.3.1 can plot the histograms
+        machines_fix = []
+        plot_fix = []
+        for i in xrange(len(self.plot_maint)):
+            if len(self.plot_maint[i]) != 0:
+                plot_fix.append(self.plot_maint[i])
+                machines_fix.append(self.machines[i])
+        axis_maintain.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
+        axis_maintain.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop = fontLeg)
+        axis_maintain.set_xlabel('Maintained since in days')
+        axis_maintain.set_ylabel('Number of Files')
+        axis_maintain.set_title('Maintain Time Distribution')
+	# Create Score Distribution Plot.
+	fig_score = plt.figure(figsize=(self.plotsize_x, self.plotsize_y))
+        axis_score = fig_score.add_subplot(111)
+        # fix arrays so matplotlib 1.3.1 can plot the histograms
+        machines_fix = []
+        plot_fix = []
+        for i in xrange(len(self.plot_score)):
+            if len(self.plot_score[i]) != 0:
+                plot_fix.append(self.plot_score[i])
+                machines_fix.append(self.machines[i])
+        axis_score.hist([plot_fix[i] for i in xrange(len(machines_fix))], nbins, histtype='bar', stacked=True, log=True)
+        axis_score.legend(machines_fix, loc=6, bbox_to_anchor=(0.8, 0.88), borderaxespad=0., prop=fontLeg)
+        axis_score.set_xlabel('Score')
+        axis_score.set_ylabel('Number of Files')
+        axis_score.set_title('Score Distribution')
+	# Save figures.
+        #plt.tight_layout()
+	plotname = hf.downloadService.getArchivePath(self.run, self.instance_name)
+        fig_file_size.savefig(plotname + "_filesize.png", dpi=91)
+        fig_alloc.savefig(plotname + "_allocation.png", dpi=91)
+        fig_maintain.savefig(plotname + "_maintain.png", dpi=91)
+        fig_score.savefig(plotname + "_score.png", dpi=91)
+	
+        return plotname 
+

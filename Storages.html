@@ -16,14 +16,18 @@
 			<td>${entry['Storage']}</td>
 			<td>${entry['used']}</td>
 			<td>${entry['total']}</td>
-			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']) or float(entry['use_perc']) == 0.0:
 			    <td class="critical">
 			% elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
 			    <td class="warning">
 			% else:
 			    <td class="ok">
 			% endif
-			${entry['use_perc']} %</td>
+			% if float(entry['use_perc']) == 0.0:
+				down</td>
+			% else:
+				${entry['use_perc']} %</td>
+			% endif
 			</tr>
 		% endif
 	%endfor

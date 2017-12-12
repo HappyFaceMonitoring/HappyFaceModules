@@ -41,7 +41,7 @@ class CacheSummary(hf.module.ModuleBase):
 	# Setting defaults
 	self.source_url = self.config["source_url"]
 	self.logger = logging.getLogger(__name__)
-        self.machines = ['epksg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
+        self.machines = ['ekpsg01', 'ekpsg02', 'ekpsg03', 'ekpsg04', 'ekpsm01']
         self.summary_data = {}
 
     def extractData(self):

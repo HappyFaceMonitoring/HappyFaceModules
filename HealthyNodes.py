@@ -61,9 +61,7 @@ class HealthyNodes(hf.module.ModuleBase):
 				node_dict['message'] = node['NODE_IS_HEALTHY']
 				node_dict['machine'] = node['Machine']
 			# Save only filled dictionaries.
-			if len(node_dict) == 0:
-				pass
-			else:
+			if node_dict:
 				self.statistics_db_value_list.append(node_dict)
 		if len(self.statistics_db_value_list) <= 3:
 			data["status"] = 1.

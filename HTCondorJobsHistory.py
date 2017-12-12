@@ -21,7 +21,7 @@ import re
 import copy
 import time
 import numpy as np
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 class HTCondorJobsHistory(hf.module.ModuleBase):
 
 	config_keys = {
@@ -77,35 +77,30 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		self.sites_statistics = {}
 		self.walltime_runtime_statistics = {}
 
+		# Prepare htcondor queries
+		self.collector = htcondor.Collector()
+		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
 		self.histories = []
 		# timeold = 86400
 
 	def extractData(self):
-
 		# Initialize the data for the main table
 		data = {
 			'filename_plot' : ''
 		}
-		# Prepare htcondor queries
-		self.collector = htcondor.Collector()
-		self.schedds = [htcondor.Schedd(classAd) for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
-		self.schedd_names = [classAd.get("Name") for classAd in self.collector.query(htcondor.AdTypes.Schedd)]
-
-		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 604800)".format(NOW = int(time.time()))
-		for schedd in self.schedds:
-			self.histories.append(schedd.history(requirement, self.condor_projection,20000))
 		
+		requirement = "RoutedToJobId =?= undefined && JobStartDate > 0 && (EnteredCurrentStatus >= {NOW} - 604800)".format(NOW = int(time.time()))
 		# Extract job information using htcondor python bindings
-		for scheddname,history in zip(self.schedd_names,self.histories):
+		for classAd in self.collector.query(htcondor.AdTypes.Schedd):
 			ad_index = 0
 			job_id = "undefined"
 			try:
-				for ads in history:
+				for ads in htcondor.Schedd(classAd).history(requirement, self.condor_projection, 20000):
 					job_id = ads.get("GlobalJobId")
 					self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
 					ad_index += 1
 			except RuntimeError:
-				print "Failed to get ad for scheduler", scheddname, "after Job ID", job_id,"number",ad_index," --> Aborting"
+				print "Failed to get ad for scheduler", "after Job ID", job_id,"number",ad_index," --> Aborting"
 
 		# Fill the main table and the user statistics information
 		for job in self.condor_jobs_information.itervalues():
@@ -148,7 +143,9 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_jobhistory.legend()
 		axis_jobhistory.set_xlabel('date')
 		axis_jobhistory.set_ylabel('number of jobs')
-		axis_jobhistory.set_title('Jobs terminated within last 24 hours')
+		# Compute time range of displayed data.
+		days_past = abs(datetime.today() - datetime.fromtimestamp(min(axis_jobhistory.get_xticks()))).days + 1
+		axis_jobhistory.set_title('Jobs terminated within last {} days'.format(days_past))
 
 		y_min, y_max = axis_jobhistory.get_ylim()
 		axis_jobhistory.set_ylim(y_min,y_max*1.3)
@@ -206,7 +203,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_walltime_runtime.legend(loc = 'upper center')
 		axis_walltime_runtime.set_xlabel('requested walltime')
 		axis_walltime_runtime.set_ylabel('runtime')
-		axis_walltime_runtime.set_title('Runtime vs. requested Walltime for jobs successfully completed within last 24 hours')
+		axis_walltime_runtime.set_title('Runtime vs. requested Walltime for jobs successfully completed within last {} days'.format(days_past))
 		axis_walltime_runtime.text(-2*60*60,60*60*20, '50 +/- 47.5% percentiles\nfor jobs grouped by user &\nrequested walltime with\nexplicitly shown outliers')
 
 		# Create plot of completed jobs per site
@@ -221,7 +218,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_completedjobs_site.set_xticks(range(len(self.sites_statistics)))
 		axis_completedjobs_site.set_xticklabels([site for site in self.sites_statistics])
 		axis_completedjobs_site.set_ylabel("number of completed jobs")
-		axis_completedjobs_site.set_title("Jobs completed within last 24 hours for available sites")
+		axis_completedjobs_site.set_title("Jobs completed within last {} days for available sites".format(days_past))
 		y_min, y_max = axis_completedjobs_site.get_ylim()
 		axis_completedjobs_site.set_ylim(y_min, y_max*1.2)
 
