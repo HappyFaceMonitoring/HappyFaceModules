@@ -133,7 +133,7 @@ class PlotdCache(hf.module.ModuleBase):
         ax['in'] = fig.add_subplot(121)
         ax['out'] = fig.add_subplot(122)
         ax['in'].yaxis.set_ticks([])
-        ax['out'].yaxis.set_ticks(np.array(range(len(self.plot_objects)))-0.5)
+        ax['out'].yaxis.set_ticks(np.array(range(len(self.plot_objects))))
         ax['out'].yaxis.set_ticklabels(self.plot_objects)
         ax['in'].set_xlabel('Incoming [MB/s]')
         ax['out'].set_xlabel('Outgoing [MB/s]')
@@ -168,7 +168,7 @@ class PlotdCache(hf.module.ModuleBase):
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=45)
             else:
                 ax[direction].set_xticklabels(map(lambda x: '%d' % x, ax[direction].xaxis.get_ticklocs()), rotation=-45)
-            ax[direction].set_ylim((-1, len(self.plot_objects) - 1))
+            ax[direction].set_ylim((-0.5, len(self.plot_objects) - 0.5))
             ax[direction].grid(axis='x')
 
         ax['in'].legend(patches, labels, labelspacing=1, prop=matplotlib.font_manager.FontProperties(size=9),
