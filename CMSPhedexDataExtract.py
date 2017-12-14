@@ -55,7 +55,10 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         't0_eval_amount': ('minimum amount of links to eval status for this link group', 0),
         't1_eval_amount': ('minimum amount of links to eval status for this link group', 0),
         't2_eval_amount': ('minimum amount of links to eval status for this link group', 5),
-        't3_eval_amount': ('minimum amount of links to eval status for this link group', 5)
+        't3_eval_amount': ('minimum amount of links to eval status for this link group', 5),
+
+        #database related config
+        'MaxIntSize': ('The Size of the Int object in byte that is maximally allowed to be transfered into the database', 24)
     }
     config_hint = 'If you have problems downloading your source file, use: "source_url = both|--no-check-certificate|url"'
 
@@ -108,6 +111,12 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         self.button_pic_in = self.config['button_pic_path_in']
         self.button_pic_out = self.config['button_pic_path_out']
         self.qualitiy_broken_value = float(self.config['qualitiy_broken_value'])
+
+        #read databas Size
+        try:
+            self.max_int_size = int(self.config['MaxIntSize'])
+        except AttributeError:
+            self.max_int_size = 24
 
     def confirmLinkStatus(self, link_name):
         fobj1 = json.load(open(self.source1.getTmpPath(), 'r'))['phedex']['link']
@@ -229,11 +238,17 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 for transfer in links['transfer']:
                     help_append = {}
                     timebin = int(transfer['timebin'])
-                    print(sys.getsizeof(timebin))
+                    donefiles = int(transfer['done_files'])
+                    fail_files = int(transfer['fail_files'])
+                    rate = int(transfer['rate'])
+                    print('Timebin: ',sys.getsizeof(timebin))
+                    print('Donefiles: ', sys.getsizeof(donefiles))
+                    print('fail files: ',sys.getsizeof(fail_files))
+                    print('Rate: ',sys.getsizeof(rate))
                     help_append['timebin'] = timebin
-                    help_append['done_files'] = done = int(transfer['done_files'])
-                    help_append['fail_files'] = fail = int(transfer['fail_files'])
-                    help_append['rate'] = int(transfer['rate'])
+                    help_append['done_files'] = done = donefiles
+                    help_append['fail_files'] = fail = fail_files
+                    help_append['rate'] = rate
                     help_append['name'] = link_name
                     #quality = done_files/(done_files + fail_files), if else to catch ZeroDivisionError
                     if done != 0:
@@ -296,7 +311,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
         x0 = self.dataset['request_timestamp'] / 3600 * 3600 - self.dataset['time_range'] * 3600 #normalize the timestamps to the requested timerange
         y_value_map = {} # maps the name of a link to a y-value
         x_line = self.dataset['request_timestamp'] - self.eval_time * 3600
-        
+
         for values in details_list:
             if values['name'] not in y_value_map: #add a new entry if the link name is not in the value_map 
                 y_value_map[values['name']] = len(y_value_map)
@@ -323,7 +338,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 y_list[help_dict['y']][help_dict['x']] = help_dict['w']
             if (values['timebin'] >= x0):
                 x_list.setdefault(help_dict['x'], {}).setdefault('t%s' % values['name'][1], {}).setdefault(values['name'], []).append(help_append)
-        
+
         #create list for Summaries of the qualities of the links over different times
         y_summary = []
         for y_value in y_list:
@@ -337,9 +352,9 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             y_append_help['color'] = self.color_map[int(avg*100)]
             y_append_help['quality'] = str('%.2f' % avg)
             y_summary.append(y_append_help)
-        
+
         #create list for Summaries of the qualities of all links over one time
-        
+
         x_summary = []
         for link_list in x_list:
             x_append_help = {'x': link_list}
@@ -348,7 +363,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                 x_append_help[tier] = status[tier]
                 x_append_help['%s_color' % tier] = self.color_map[int(status[tier]*100)]
             x_summary.append(x_append_help)
-        
+
         name_mapper = []
 
         for i in range(len(y_value_map)):
