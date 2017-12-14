@@ -117,6 +117,7 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
             self.max_int_size = int(self.config['MaxIntSize'])
         except AttributeError:
             self.max_int_size = 24
+        self.max_int_val = 1073741823
 
     def confirmLinkStatus(self, link_name):
         fobj1 = json.load(open(self.source1.getTmpPath(), 'r'))['phedex']['link']
@@ -241,10 +242,15 @@ class CMSPhedexDataExtract(hf.module.ModuleBase):
                     donefiles = int(transfer['done_files'])
                     fail_files = int(transfer['fail_files'])
                     rate = int(transfer['rate'])
-                    print('Timebin: ',sys.getsizeof(timebin))
-                    print('Donefiles: ', sys.getsizeof(donefiles))
-                    print('fail files: ',sys.getsizeof(fail_files))
-                    print('Rate: ',sys.getsizeof(rate))
+                    #check the input data for oversize
+                    if sys.getsizeof(timebin) > self.max_int_size:
+                        timebin = self.max_int_val
+                    if sys.getsizeof(donefiles) > self.max_int_size:
+                        donefiles = self.max_int_val
+                    if sys.getsizeof(fail_files) > self.max_int_size:
+                        fail_files = self.max_int_size
+                    if sys.getsizeof(rate) > self.max_int_size:
+                        rate = self.max_int_val
                     help_append['timebin'] = timebin
                     help_append['done_files'] = done = donefiles
                     help_append['fail_files'] = fail = fail_files
