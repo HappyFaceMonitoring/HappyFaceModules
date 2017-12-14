@@ -1,0 +1,77 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+    <script type="text/javascript">
+        function toggle(element, button) {
+            if(button.val().indexOf("Show") !== -1) {
+                element.show();
+                button.val(button.val().replace("Show", "Hide"));
+            } else {
+                element.hide();
+                button.val(button.val().replace("Hide", "Show"));
+            }
+        }
+    </script>
+	<input id="down-toggler" type="button" value="Hide down hosts" onfocus="this.blur()" onclick='toggle($(".down-row"), $("#down-toggler"));' />
+	<input id="desk-toggler" type="button" value="Hide desktop hosts" onfocus="this.blur()" onclick='toggle($(".desktop"), $("#desk-toggler"));' />
+	<input id="non-desk-toggler" type="button" value="Hide non-desktop hosts" onfocus="this.blur()" onclick='toggle($(".non-desktop"), $("#non-desk-toggler"));' />
+	<div class="Up Hosts" id="${module.instance_name}_up_hosts" >
+	   <table class="TableData">
+		<tr class="TableHeader">
+		   <th>IP</th>
+		   <th>State</th>
+		   <th>Hostname</th>
+		   <th>Wiki Link</th>
+		   <th>ssh Hostname</th>
+		   <th>OS Version</th>
+		   <th>VM</th>
+		   <th>Vagrant</th>
+		   <th>Ansible Roles</th>
+		   <th>Last Users</th>
+		   <th>Nagios</th>
+		   <th>Notes</th>
+		</tr>
+		% for entry in statistics:
+		    <%
+			import string
+			if entry['state'] == 'Down':
+			    class_name = 'down-row'
+			    style_str = 'background-color: gray'
+			else:
+			    class_name = 'up-row'
+			    style_str = ''
+			endif
+			if 'lx' in entry['hostname']:
+			    class_name = class_name + ' desktop'
+			else:
+			    class_name = class_name + ' non-desktop'
+			endif
+		    %>
+		    <tr class='${class_name}' style='${style_str}'>
+			<td>${entry['ip']}</td>
+			<td>${entry['state']}</td>
+			<td>${entry['hostname']}</td>
+			<td><a href="${entry['wiki_link']}">&#11146;</a></td>
+			<td>${entry['ssh_hostname']}</td>
+			<td>${entry['os']}</td>
+			% if entry['vm_guest'] == 'Yes':
+			    <td style="color:green;">&#10003;</td>
+			% else:
+			    <td style="color:red">&#215;</td>
+			% endif
+			<td>${entry['vm_host']}</td>
+			<td>${entry['ansible_roles']}</td>
+			<td>${entry['last_user']}</td>
+			% if entry['nagios_link'] != 'No Nagios found':
+				<td><a href="${entry['nagios_link']}" style="color:red;">(Critical: ${entry['nagios_crit']}) (Warning; ${entry['nagios_warn']})</a></td>
+			% else:
+				<td></td>
+			% endif
+			<td>${entry['notes']}</td>
+		    </tr>
+		% endfor
+	   </table>
+	</div>
+
+</%def>

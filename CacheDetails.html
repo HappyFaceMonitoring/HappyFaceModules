@@ -53,6 +53,9 @@
     </tr>
   </table>
   % else:
-    <img src=${module.dataset["filename_plot"].getArchiveUrl()} />
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()}_filesize.png />
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()}_allocation.png />
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()}_maintain.png />
+    <img src=${module.dataset["filename_plot"].getArchiveUrl()}_score.png />
   % endif
 </%def>

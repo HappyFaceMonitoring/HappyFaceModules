@@ -94,7 +94,10 @@ class Storages(hf.module.ModuleBase):
 	    storage_dict['used'] = float('{0:.2f}'.format(storage_dict['total'] - storage_dict['available']))
 	    del storage_dict['available']
 	    storage_dict['total'] = float('{0:.2f}'.format(storage_dict['total']))
-	    storage_dict['use_perc'] = int(storage_dict['used']/storage_dict['total']*100)
+	    if storage_dict['total'] == 0:
+	    	storage_dict['use_perc'] = 0.0
+	    else:
+	        storage_dict['use_perc'] = int(storage_dict['used']/storage_dict['total']*100)
 	    self.statistics_db_value_list.append(storage_dict)
 	red_use = [1 for dictionary in self.statistics_db_value_list if dictionary['use_perc'] >= int(self.config['use_perc_critical'])]
 	yellow_use = [1 for dictionary in self.statistics_db_value_list if dictionary['use_perc'] >= int(self.config['use_perc_warning'])]
