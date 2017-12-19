@@ -2,7 +2,6 @@
 <%inherit file="/module_base.html" />
 
 <%def name="content()">
-	<!--<div class="DetailedInfo" id="${module.instance_name}_storage_statistics" style="display:none;">-->
 	<table class="TableData">
 	<tr class="TableHeader">
 		<th>Storage</th>
@@ -16,17 +15,20 @@
 			<td>${entry['Storage']}</td>
 			<td>${entry['used']}</td>
 			<td>${entry['total']}</td>
-			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']) or float(entry['use_perc']) == 0.0:
+			% if float(entry['use_perc']) >= float(module.config['use_perc_critical']):
 			    <td class="critical">
 			% elif float(entry['use_perc']) >= float(module.config['use_perc_warning']):
 			    <td class="warning">
+			% elif float(entry['use_perc']) == 0.0:
+			    <td style="background-color: gray">
 			% else:
 			    <td class="ok">
 			% endif
 			% if float(entry['use_perc']) == 0.0:
-				down</td>
+				down
 			% else:
-				${entry['use_perc']} %</td>
+				${entry['use_perc']} %
+			</td>
 			% endif
 			</tr>
 		% endif
@@ -50,5 +52,4 @@
 	%endfor
 
 	</table>
-	<!--</div>-->
 </%def>
