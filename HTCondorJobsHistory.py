@@ -95,7 +95,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			ad_index = 0
 			job_id = "undefined"
 			try:
-				for ads in htcondor.Schedd(classAd).history(requirement, self.condor_projection, 20000):
+				for ads in htcondor.Schedd(classAd).history(requirement, self.condor_projection, 60000):
 					job_id = ads.get("GlobalJobId")
 					self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
 					ad_index += 1
@@ -144,8 +144,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_jobhistory.set_xlabel('date')
 		axis_jobhistory.set_ylabel('number of jobs')
 		# Compute time range of displayed data.
-		days_past = abs(datetime.today() - datetime.fromtimestamp(min(axis_jobhistory.get_xticks()))).days + 1
-		axis_jobhistory.set_title('Jobs terminated within last {} days'.format(days_past))
+		axis_jobhistory.set_title('Jobs terminated within last 7 days')
 
 		y_min, y_max = axis_jobhistory.get_ylim()
 		axis_jobhistory.set_ylim(y_min,y_max*1.3)
@@ -200,10 +199,12 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_walltime_runtime.set_xticklabels([timedelta(seconds = t) if (t >= 0 and t <= 86400) else "" for t in time_ticks], rotation = 45)
 		axis_walltime_runtime.set_yticklabels([timedelta(seconds = t) if (t >= 0 and t <= 86400) else "" for t in time_ticks])
 
-		axis_walltime_runtime.legend(loc = 'upper center')
+		box_pos = axis_walltime_runtime.get_position()
+		axis_walltime_runtime.set_position([box_pos.x0, box_pos.y0, box_pos.width * 0.8, box_pos.height])
+		axis_walltime_runtime.legend(loc='upper left', bbox_to_anchor=(1., 1.))
 		axis_walltime_runtime.set_xlabel('requested walltime')
 		axis_walltime_runtime.set_ylabel('runtime')
-		axis_walltime_runtime.set_title('Runtime vs. requested Walltime for jobs successfully completed within last {} days'.format(days_past))
+		axis_walltime_runtime.set_title('Runtime vs. requested Walltime for jobs successfully completed within last 7 days')
 		axis_walltime_runtime.text(-2*60*60,60*60*20, '50 +/- 47.5% percentiles\nfor jobs grouped by user &\nrequested walltime with\nexplicitly shown outliers')
 
 		# Create plot of completed jobs per site
@@ -218,7 +219,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 		axis_completedjobs_site.set_xticks(range(len(self.sites_statistics)))
 		axis_completedjobs_site.set_xticklabels([site for site in self.sites_statistics])
 		axis_completedjobs_site.set_ylabel("number of completed jobs")
-		axis_completedjobs_site.set_title("Jobs completed within last {} days for available sites".format(days_past))
+		axis_completedjobs_site.set_title("Jobs completed within last 7 days for available sites")
 		y_min, y_max = axis_completedjobs_site.get_ylim()
 		axis_completedjobs_site.set_ylim(y_min, y_max*1.2)
 
