@@ -1,6 +1,9 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="/module_base.html" />
 
+<%!
+    import ipaddress
+%>
 <%def name="content()">
     <script type="text/javascript">
         function toggle(element, button) {
@@ -32,7 +35,7 @@
 		   <th>Nagios</th>
 		   <th>Notes</th>
 		</tr>
-		% for entry in statistics:
+		% for entry in sorted(statistics, key=lambda host: ipaddress.ip_address(host['ip'])):
 		    <%
 			import string
 			if entry['state'] == 'Down':
