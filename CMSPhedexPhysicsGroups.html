@@ -1,0 +1,37 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<form>
+  <table class="TableData">
+    <tr>
+      <th>Group</th><th>resident data [TiB]</th><th>percent of subscribed data</th>
+    </tr>
+    %for i,row in enumerate(details):
+    <tr class='${row['status']}'>
+      <td>${row['phys_group']}</td>
+      <td>${row['resident_data']}</td>
+      <td>${row['resident_data_perc']}</td>
+    </tr>
+    %endfor
+  </table>
+</form>
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+  <table class="TableData">
+    <tr>
+      <th>Group</th><th>resident data [TiB]</th><th>resident data [TiB]</th><th>resident files</th><th>subscribed files</th>
+    </tr>
+    %for i,row in enumerate(details):
+    <tr class='${row['status']}'>
+      <td>${row['phys_group']}</td>
+      <td>${row['resident_data']}</td>
+      <td>${row['subscribed_data']}</td>
+      <td>${row['resident_files']}</td>
+      <td>${row['subscribed_files']}</td>
+    </tr>
+    %endfor
+  </table>
+</div>
+</%def>
