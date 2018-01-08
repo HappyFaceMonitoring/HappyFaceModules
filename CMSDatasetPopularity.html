@@ -1,0 +1,22 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<form>
+  Usage on ${dataset['site']} ${dataset['timespan']}
+  <table class="TableData">
+    <tr>
+      <th>#</th><th>Dataset</th><th>Accesses</th><th>CPU time [h]</th><th>Users</th>
+    </tr>
+    %for i, row in enumerate(details):
+    <tr>
+      <td>${i+1}</td>
+      <td>${row['collname']}</td>
+      <td>${row['nacc']}</td>
+      <td>${row['totcpu']}</td>
+      <td>${row['nusers']}</td>
+    </tr>
+    %endfor
+  </table>
+</form>
+</%def>
