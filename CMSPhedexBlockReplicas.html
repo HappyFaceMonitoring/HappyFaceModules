@@ -1,0 +1,35 @@
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+
+<form>
+  Found ${dataset['n_incomplete']} incomplete replicas.
+</form>
+
+<input type="button" value="show/hide details" onfocus="this.blur()" onclick="$('#${module.instance_name}_details').slideToggle()" />
+<div class="DetailedInfo" id="${module.instance_name}_details" style="display:none;">
+  <table class="TableData">
+    <tr>
+      <th>dataset</th>
+      <th>block</th>
+      <th>block files</th>
+      <th>resident files</th>
+      <th>block size [MB]</th>
+      <th>resident size [MB]</th>
+      <th>group</th>
+    </tr>
+    %for i, row in enumerate(details):
+    <tr>
+      <td>${row['dataset']}</td>
+      <td>${row['block']}</td>
+      <td>${row['block_files']}</td>
+      <td>${row['resident_files']}</td>
+      <td>${row['block_size']}</td>
+      <td>${row['resident_size']}</td>
+      <td>${row['group']}</td>
+    </tr>
+    %endfor
+  </table>
+</div>
+
+</%def>
