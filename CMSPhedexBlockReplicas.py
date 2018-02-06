@@ -15,8 +15,11 @@
 #   limitations under the License.
 
 import hf
+import datetime
+import os
 import json
-from sqlalchemy import TEXT, INT, Column
+from sqlalchemy import TEXT, INT, Column, desc
+from sqlalchemy.orm import sessionmaker
 
 
 class CMSPhedexBlockReplicas(hf.module.ModuleBase):
@@ -24,6 +27,7 @@ class CMSPhedexBlockReplicas(hf.module.ModuleBase):
         'source_url': ('set url of source', 'both|--no-check-certificate|https://cmsweb.cern.ch/phedex/datasvc'),
         'instance': 'prod',
         'node': 'T2_DE_DESY',
+        'history': ('History [days]', '7'),
         'warning': ('Warning threshold [no. incomplete replicas]', '-1'),
         'critical': ('Critical threshold [no. incomplete replicas]', '-1'),
     }
@@ -53,9 +57,17 @@ class CMSPhedexBlockReplicas(hf.module.ModuleBase):
         self.warning_threshold = int(self.config['warning'])
         self.critical_threshold = int(self.config['critical'])
 
+        self.history_days = int(self.config['history'])
+        delta = datetime.timedelta(days=self.history_days)
+        stop = datetime.datetime.now()
+        self.history_start_time = stop - delta
+
         self.rows = []
 
     def extractData(self):
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
+
         with open(self.source.getTmpPath()) as in_f:
             data = json.load(in_f)
 
@@ -78,6 +90,30 @@ class CMSPhedexBlockReplicas(hf.module.ModuleBase):
                         'resident_size': replica['bytes'] / 1024**2,
                         'group': replica['group'],
                     })
+
+        # get history from DB
+        Session = sessionmaker(bind=hf.database.engine)
+        session = Session()
+        tab_runs = hf.module.database.hf_runs
+        history = session.query(tab_runs.c.time, self.module_table.c.n_incomplete).join(
+            self.module_table).filter(tab_runs.c.time >= self.history_start_time).all()
+        x, y = zip(*history)
+        fig = plt.figure()
+        plt.plot_date(x, y, '-')
+        plt.title('history (last %d days)' % self.history_days)
+        plt.xlabel('date')
+        plt.ylabel('no. incomplete replicas')
+        fig.autofmt_xdate()
+
+        # save to archive directory
+        plot_fn = self.instance_name + '_history.svg'
+        archive_path = hf.downloadService.getArchivePath(self.run, plot_fn)
+        fig.savefig(archive_path)
+        # eventually copy to remote archive directory
+        remote_archive_path = hf.downloadService.remote_archive_dir
+        if remote_archive_path:
+            remote_archive_path = os.path.join(remote_archive_path, plot_fn)
+            hf.downloadservice.DownloadFile.scp(archive_path, remote_archive_path)
 
         status = 1.
         if self.critical_threshold >= 0 and n_incomplete > self.critical_threshold:
