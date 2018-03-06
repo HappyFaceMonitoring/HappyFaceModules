@@ -1,0 +1,45 @@
+## -*- coding: utf-8 -*-
+<%inherit file="/module_base.html" />
+
+<%def name="content()">
+<style>
+#${module.instance_name}_histogram {
+	        position: relative;
+		height: ${height}px;
+		width: *;
+		z-index: 0;
+}
+
+#${module.instance_name}_histogram span {
+	        position: absolute;
+		height: 14px;
+		width: ${width-1}px;
+		z-index: 6;
+		border-left: 1px solid #000;
+		border-right: 1px solid #000;
+		border-top: 1px solid #000;
+		border-bottom: 1px solid #000;
+}
+#${module.instance_name}_histogram a {
+	        height: 14px;
+		width: 85.2%;
+		position: absolute;
+		z-index: 5;
+		font-size: small;
+		border-bottom: 1px solid #000;
+		display: block;
+		padding-bottom: 1px;
+}
+</style>
+
+<div id="${module.instance_name}_histogram">
+%for cols in node_list:
+    <span style="top:${15*cols['y']+50}px; left:${width*cols['x']+201}px; background:${cols['color']};"
+    title="node: ${cols['node']} &#xA;efficiency: ${cols['efficiency']}">
+    </span>
+%endfor
+%for site in sites:
+    <a style="top:${15*site['y']+50}px; padding-bottom:2px;">${site['site']}</a>
+%endfor
+</div>
+</%def>
