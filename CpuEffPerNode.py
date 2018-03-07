@@ -86,17 +86,19 @@ class CpuEffPerNode(hf.module.ModuleBase):
                 except ZeroDivisionError:
                     efficiency = 0.
                 try:
-                    if job['RemoteHost'] in node_dict.keys():
-                        if efficiency <= 1.:
-                            node_dict[job['RemoteHost']]['efficiency'].append(efficiency)
-                    else:
-                        if efficiency <= 1.:
-                            node_dict[job['RemoteHost']] = {
-                                    'site': job['MachineAttrCloudSite0'].lower(),
-                                    'efficiency': [efficiency]
-                                    }
+                    node = job['RemoteHost'].partition('@')[2].partition('.')[0]
                 except KeyError:
-                   print job['MachineAttrCloudSite0'] 
+                    print job['MachineAttrCloudSite0']
+                    continue
+                if node in node_dict.keys():
+                    if efficiency <= 1.:
+                        node_dict[node]['efficiency'].append(efficiency)
+                else:
+                    if efficiency <= 1.:
+                        node_dict[node] = {
+                                'site': job['MachineAttrCloudSite0'].lower(),
+                                'efficiency': [efficiency]
+                                }
         node_list = []
         # Build a list of the dictionaries and add the node in that dictionary.
         for node in node_dict.keys():
@@ -108,7 +110,7 @@ class CpuEffPerNode(hf.module.ModuleBase):
             keys = node_dict[node].keys()
             values = node_dict[node].values()
             keys.append('node')
-            values.append(node.partition('@')[2].partition('.')[0])
+            values.append(node)
             node_list.append(dict(zip(keys,
                                     values)))
         return node_list
