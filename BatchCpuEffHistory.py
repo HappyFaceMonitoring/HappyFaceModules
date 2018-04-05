@@ -112,7 +112,8 @@ class BatchCpuEffHistory(hf.module.ModuleBase):
         for htcondor_schedd_ad in htcondor_schedds_ads:
             htcondor_schedd = htcondor.Schedd(htcondor_schedd_ad)
             try:
-                htcondor_jobs = htcondor_schedd.query()
+                htcondor_jobs = htcondor_schedd.query(
+                                    "JobStartDate =!= undefined")
             except IOError: # Some schedd like gridka26.gridka.de do not return jobs, instead IOError is thrown
                 pass
             else:
@@ -193,8 +194,7 @@ class BatchCpuEffHistory(hf.module.ModuleBase):
         ax2.set_xlim((60, max_x))
         ax2.minorticks_off()
         ax2.set_ylabel('Accumulated IO in MB', color = self.config['i_color'])
-        #ax2.set_yscale('log')
-
+        
         for jobid in plot_data_x:
                 if not plot_data_x2[jobid]:
                         continue
@@ -210,7 +210,9 @@ class BatchCpuEffHistory(hf.module.ModuleBase):
                 ax2.plot(plot_data_x2[jobid], plot_data_y3[jobid], drawstyle = '-',
                         linewidth = 2, color = plot_color3[jobid], alpha = 0.03)
 
-        ax2.set_ylim((0., 1e4))
+        ax2.set_ylim((1e-3, 1e4))
+        ax2.set_yscale('log')
+
         lastTime_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(lastTime_all))
         ax.text(0, 1.05, 'Individual job history (last update: %s)' % lastTime_str, transform = ax.transAxes)
 	# Create lines for legend handles.
