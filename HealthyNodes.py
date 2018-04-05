@@ -24,6 +24,8 @@ class HealthyNodes(hf.module.ModuleBase):
 	
 	config_keys = {
 			'source_url': ('Not used, but filled to avoid warnings', 'www.google.com'),
+                        'warning_threshold': ('Upper threshold for the number of corrupt nodes above the status is on warning.', '3'),
+                        'critical_threshold': ('Upper threshold for the number of corrupt nodes above the status is critical.', '5')
 			}
 	
 	table_columns = [], []
@@ -45,7 +47,7 @@ class HealthyNodes(hf.module.ModuleBase):
 		
 		# Prepare htcondor queries
                 self.collector = htcondor.Collector()
-		self.requirement = '( CLOUDSITE=="condocker" || CLOUDSITE=="ekpsupermachines" ) && SlotTypeID == 1'
+		self.requirement = '( CLOUDSITE=="condocker" || CLOUDSITE=="ekpsupermachines" ) && SlotTypeID == 1 && NODE_IS_HEALTHY =!= undefined'
 			
 		# Prepare subtable list for database
                 self.statistics_db_value_list = []
@@ -55,7 +57,7 @@ class HealthyNodes(hf.module.ModuleBase):
 		result = self.collector.query(htcondor.AdTypes.Startd, self.requirement, self.condor_projection)
 		for node in result:
 			node_dict = {}
-			if node['NODE_IS_HEALTHY'] == True or node['NODE_IS_HEALTHY'] == 'undefined':
+			if node['NODE_IS_HEALTHY'] == True:
 				pass
 			else:
 				node_dict['message'] = node['NODE_IS_HEALTHY']
@@ -63,9 +65,9 @@ class HealthyNodes(hf.module.ModuleBase):
 			# Save only filled dictionaries.
 			if node_dict:
 				self.statistics_db_value_list.append(node_dict)
-		if len(self.statistics_db_value_list) <= 3:
+		if len(self.statistics_db_value_list) <= int(self.config['warning_threshold']):
 			data["status"] = 1.
-		elif len(self.statistics_db_value_list) <= 5:
+		elif len(self.statistics_db_value_list) <= int(self.config['critical_threshold']):
 			data["status"] = 0.5
 		else:
 			data["status"] = 0.
