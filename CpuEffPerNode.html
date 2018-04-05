@@ -26,9 +26,9 @@
 		position: absolute;
 		z-index: 5;
 		font-size: small;
-		border-bottom: 1px solid #000;
 		display: block;
 		padding-bottom: 1px;
+                color: black;
 }
 </style>
 
@@ -39,7 +39,15 @@
     </span>
 %endfor
 %for site in sites:
-    <a style="top:${15*site['y']+50}px; padding-bottom:2px;">${site['site']}</a>
+    <a style="top:${15*site['y']+49}px; padding-bottom:2px;">${site['site']}</a>
 %endfor
+%for y in lines:
+    <a style="top:${15*y+49}px; border-bottom: 1px solid #000;"></a>
+%endfor
+%for i, col in enumerate(color):
+    <span style="top:${15*(max(node_list, key=lambda node: node['y'])['y']+3)+50}px; left:${width*i+301}px; background:${col};"></span>
+%endfor
+<a style="top:${15*(max(node_list, key=lambda node: node['y'])['y']+3)+49}px; left:${-2*width+301}px;">0%</a>
+<a style="top:${15*(max(node_list, key=lambda node: node['y'])['y']+3)+49}px; left:${10*width+301}px;">100%</a>
 </div>
 </%def>
