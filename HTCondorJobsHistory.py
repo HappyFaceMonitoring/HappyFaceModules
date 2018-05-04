@@ -99,8 +99,9 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 					job_id = ads.get("GlobalJobId")
 					self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
 					ad_index += 1
-			except RuntimeError:
+			except RuntimeError as err:
 				print "Failed to get ad for scheduler", "after Job ID", job_id,"number",ad_index," --> Aborting"
+                                print "Error: {0}".format(err)
 
 		# Fill the main table and the user statistics information
 		for job in self.condor_jobs_information.itervalues():
