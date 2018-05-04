@@ -128,7 +128,10 @@ class Portals(hf.module.ModuleBase):
 		data['status'] = 0.5
 	else:
 		data['status'] = 1. 
-	sum_dict['use_perc'] = int(sum_dict['use'] / sum_dict['total'] * 100)
+        try:
+	    sum_dict['use_perc'] = int(sum_dict['use'] / sum_dict['total'] * 100)
+        except ZeroDivisionError:
+            sum_dict['use_perc'] = 100
 	self.statistics_db_value_list.append(sum_dict)
 	return data	
 				
