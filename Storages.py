@@ -114,7 +114,10 @@ class Storages(hf.module.ModuleBase):
 		for key in iter(dictionary):
 			if key != 'Storage' and key != 'use_perc':
 				sum_dict[key] += dictionary[key]
-        sum_dict['use_perc'] = int(sum_dict['used']/sum_dict['total']*100)
+        try:
+            sum_dict['use_perc'] = int(sum_dict['used']/sum_dict['total']*100)
+        except ZeroDivisionError:
+            sum_dict['use_perc'] = 100
 	sum_dict['used'] = float('{0:.2f}'.format(sum_dict['used']))
 	sum_dict['total'] = float('{0:.2f}'.format(sum_dict['total']))
 	self.statistics_db_value_list.append(sum_dict)
