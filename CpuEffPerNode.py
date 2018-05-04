@@ -83,8 +83,8 @@ class CpuEffPerNode(hf.module.ModuleBase):
         for htcondor_schedd_ad in htcondor_schedds_ads:
             htcondor_schedd = htcondor.Schedd(htcondor_schedd_ad)
             htcondor_jobs = htcondor_schedd.xquery(
-                    requirements="JobUniverse =!= 9 && JobStartDate =!= undefined && RemoteHost =!= undefined",
-                    projection=self.condor_projection)
+                    "JobUniverse =!= 9 && JobStartDate =!= undefined && RemoteHost =!= undefined",
+                    self.condor_projection)
             try:
                 for htcondor_job in htcondor_jobs:
                     yield htcondor_job
