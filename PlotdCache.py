@@ -125,7 +125,7 @@ class PlotdCache(hf.module.ModuleBase):
             'NFSV4.1-0|1': '#ADFF2F',
         }
         # Create Plot.
-        plot_height = len(self.plot_objects) * 10. / 12
+        plot_height = max(len(self.plot_objects),1) * 10. / 12
         fig = matplotlib.pyplot.figure(figsize=(7, plot_height))
         fig.subplots_adjust(left=0.03, right=0.97, top=0.99, bottom=0.075, wspace=0.95)
 
@@ -176,7 +176,8 @@ class PlotdCache(hf.module.ModuleBase):
 
         fig_diff = matplotlib.pyplot.figure(figsize=(7, 7))
         ax_diff = fig_diff.add_subplot(111)
-        n, bins, _ = ax_diff.hist(self.difference, max(self.difference) + 1, range=(-0.5, max(self.difference) + 0.5),
+        maximum = max(self.difference) if len(self.difference) > 0 else 0
+        n, bins, _ = ax_diff.hist(self.difference, maximum + 1, range=(-0.5, maximum + 0.5),
                                   color="slateblue", fill=True, histtype='bar', align='mid')
         ax_diff.set_xlabel('difference in s')
         ax_diff.set_ylabel('number of transfers')
