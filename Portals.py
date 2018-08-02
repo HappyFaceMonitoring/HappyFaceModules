@@ -21,12 +21,14 @@ import time
 import socket
 import logging
 import urllib2
+from string import strip
 from ConfigParser import RawConfigParser
 
 class Portals(hf.module.ModuleBase):
     config_keys = {'source_url': ('Not used, but filled to avoid warnings', 'http://monitor.ekp.kit.edu/ganglia/'),
 		   'use_perc_warning': ('Lower treshold for use percentage of the disk space above which a warning is given', '80'),
-		   'use_perc_critical': ('Lower treshold for use percentage of the disk space above which the status is critical', '90')
+		   'use_perc_critical': ('Lower treshold for use percentage of the disk space above which the status is critical', '90'),
+		   'portals': ('Comma separated list of portal machines the information is queried for.', '')
                   }
     table_columns = [], []
     subtable_columns = {
@@ -45,14 +47,9 @@ class Portals(hf.module.ModuleBase):
 	self.source_url = self.config["source_url"]
         #prepare acqusition function.
         self.logger = logging.getLogger(__name__)
-        self.portals = ['ams2.etp.kit.edu',
-			'ams3.etp.kit.edu',
-                        'ekpbms1.ekp.kit.edu',
-			'ekpbms2.ekp.kit.edu',
-			'bms3.etp.kit.edu',
-                        'cms6.etp.kit.edu'
-                       ]
+        self.portals = map(strip, self.config['portals'].split(','))
         self.infos = ['mem', 'load']
+	
         top_url = 'http://monitor.ekp.kit.edu/ganglia/'
 	cfg_parser = RawConfigParser()
         cfg_parser.read('config/ganglia.cfg')
