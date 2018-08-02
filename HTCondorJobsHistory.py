@@ -17,6 +17,7 @@
 import hf
 from sqlalchemy import TEXT, INT, FLOAT, Column
 import htcondor
+import classad
 import re
 import copy
 import time
@@ -55,7 +56,8 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			"EnteredCurrentStatus",
 			"JobStartDate",
 			"ExitCode",
-			"ExitBySignal"
+			"ExitBySignal",
+			"ExitStatus"
 	        ]
 		self.jobs_status_dict = {1 : "idle", 2 : "running", 3 : "removed", 4 : "completed", 5 : "held", 6 : "transferred", 7 : "suspended"}
 		self.jobs_status_colors = {
@@ -97,17 +99,17 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 			try:
 				for ads in htcondor.Schedd(classAd).history(requirement, self.condor_projection, 60000):
 					job_id = ads.get("GlobalJobId")
-					self.condor_jobs_information[job_id] = {quantity : ads.get(quantity) for quantity in self.quantities_list}
+					self.condor_jobs_information[job_id] = {quantity : (ads.get(quantity).eval() if isinstance(ads.get(quantity), classad.ExprTree) else ads.get(quantity)) for quantity in self.quantities_list}
 					ad_index += 1
 			except RuntimeError as err:
 				print "Failed to get ad for scheduler", "after Job ID", job_id,"number",ad_index," --> Aborting"
                                 print "Error: {0}".format(err)
 
 		# Fill the main table and the user statistics information
-		for job in self.condor_jobs_information.itervalues():
+		for ids, job in self.condor_jobs_information.iteritems():
 			# Determine user and set up user dependent statistics
 			user = job["User"]
-					# Summarize the status information
+			# Summarize the status information
 			status = self.jobs_status_dict.get(job["JobStatus"])
 			if status == "completed":
 				# Determine the site where the job was completed
@@ -117,7 +119,7 @@ class HTCondorJobsHistory(hf.module.ModuleBase):
 				# Determine the runtime and requested walltime of the completed job
 				if user not in self.walltime_runtime_statistics:
 					self.walltime_runtime_statistics[user] = {}
-				if job["CommittedTime"] - job["CommittedSuspensionTime"] >= 0 and job["ExitCode"] == 0 and job["RequestWalltime"]:
+				if job["CommittedTime"] - job["CommittedSuspensionTime"] >= 0 and job["ExitStatus"] == 0 and job["RequestWalltime"]:
 					self.walltime_runtime_statistics[user].setdefault(job["RequestWalltime"], []).\
 						append(job["CommittedTime"] - job["CommittedSuspensionTime"])
 			if job["EnteredCurrentStatus"]:
